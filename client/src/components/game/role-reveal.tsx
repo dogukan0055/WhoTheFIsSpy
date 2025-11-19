@@ -1,9 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { KeyRound, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { ScanFace, Eye, CheckCircle } from 'lucide-react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { playSound, vibrate } from '@/lib/audio';
 
 export default function RoleReveal() {
   const { state, dispatch } = useGame();
@@ -13,12 +14,19 @@ export default function RoleReveal() {
   const isLastPlayer = state.gameData.currentRevealIndex === state.players.length - 1;
 
   const handleNext = () => {
+    playSound('click');
     if (isLastPlayer) {
       dispatch({ type: 'START_PLAYING' });
     } else {
       setIsRevealed(false);
       dispatch({ type: 'NEXT_REVEAL' });
     }
+  };
+
+  const handleReveal = () => {
+    setIsRevealed(true);
+    playSound(currentPlayer.role === 'spy' ? 'alarm' : 'reveal');
+    vibrate(200);
   };
 
   return (
@@ -38,7 +46,7 @@ export default function RoleReveal() {
               animate={{ opacity: 1 }}
               className="space-y-6"
             >
-              <KeyRound className="w-24 h-24 text-muted-foreground/50" />
+              <ScanFace className="w-24 h-24 text-muted-foreground/50 animate-pulse" />
               <p className="text-lg font-medium">Pass the phone to <br/><span className="text-primary font-bold text-2xl">{currentPlayer.name}</span></p>
               <p className="text-sm text-muted-foreground">Tap below to reveal your role</p>
             </motion.div>
@@ -51,7 +59,7 @@ export default function RoleReveal() {
               {currentPlayer.role === 'spy' ? (
                 <div className="space-y-4">
                   <div className="w-24 h-24 mx-auto rounded-full bg-red-500/20 flex items-center justify-center border-2 border-red-500 animate-pulse">
-                    <KeyRound className="w-12 h-12 text-red-500" />
+                    <ScanFace className="w-12 h-12 text-red-500" />
                   </div>
                   <h2 className="text-3xl font-black text-red-500 font-mono uppercase">YOU ARE THE SPY</h2>
                   <p className="text-sm text-muted-foreground">Try to blend in. Figure out the location without getting caught.</p>
@@ -77,7 +85,7 @@ export default function RoleReveal() {
         size="lg" 
         className="w-full max-w-xs font-mono text-lg h-14"
         variant={isRevealed ? "default" : "secondary"}
-        onClick={() => isRevealed ? handleNext() : setIsRevealed(true)}
+        onClick={() => isRevealed ? handleNext() : handleReveal()}
       >
         {isRevealed ? (isLastPlayer ? "Start Game" : "Next Player") : "Reveal Role"}
       </Button>

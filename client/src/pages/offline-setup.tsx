@@ -1,56 +1,65 @@
 import React, { useState } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { useGame, Player } from '@/lib/game-context';
 import { containsProfanity } from '@/lib/locations';
 import Layout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { ArrowLeft, Users, Timer, UserPlus, X, KeyRound } from 'lucide-react';
+import { NumberPicker } from '@/components/ui/number-picker';
+import { ArrowLeft, Users, Timer, KeyRound, Play, Database, Settings as SettingsIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { playSound } from '@/lib/audio';
+import { cn } from '@/lib/utils';
 
 export default function OfflineSetup() {
   const { state, dispatch } = useGame();
   const [_, setLocation] = useLocation();
-  const [playerNames, setPlayerNames] = useState<string[]>(Array(4).fill('').map((_, i) => `Player ${i + 1}`));
-  const [timerVal, setTimerVal] = useState(5);
+  const [playerNames, setPlayerNames] = useState<string[]>(
+    state.players.length > 0 
+      ? state.players.map(p => p.name)
+      : Array(state.settings.playerCount).fill('').map((_, i) => `Player ${i + 1}`)
+  );
 
-  // Settings Handlers
-  const handlePlayerCountChange = (val: number) => {
-    const newCount = val;
-    let newNames = [...playerNames];
-    
-    if (newCount > playerNames.length) {
-      // Add players
-      for (let i = playerNames.length; i < newCount; i++) {
-        newNames.push(`Player ${i + 1}`);
-      }
-    } else {
-      // Remove players
-      newNames = newNames.slice(0, newCount);
+  // Sync internal state if needed
+  React.useEffect(() => {
+    if (playerNames.length !== state.settings.playerCount) {
+       setPlayerNames(prev => {
+          const newCount = state.settings.playerCount;
+          if (newCount > prev.length) {
+             return [...prev, ...Array(newCount - prev.length).fill('').map((_, i) => `Player ${prev.length + i + 1}`)];
+          } else {
+             return prev.slice(0, newCount);
+          }
+       });
     }
-    
-    setPlayerNames(newNames);
-    
-    // Auto adjust spies
-    let newSpyCount = state.settings.spyCount;
-    if (newCount <= 5) newSpyCount = 1;
-    
+  }, [state.settings.playerCount]);
+
+  const handlePlayerCountChange = (val: number) => {
+    playSound('click');
     dispatch({ 
       type: 'UPDATE_SETTINGS', 
       payload: { 
-        playerCount: newCount,
-        spyCount: newSpyCount 
+        playerCount: val,
+        spyCount: val <= 5 ? 1 : state.settings.spyCount // Auto-adjust spy logic
       } 
     });
   };
 
+  const handleSpyCountChange = (val: number) => {
+    playSound('click');
+    dispatch({ type: 'UPDATE_SETTINGS', payload: { spyCount: val } });
+  };
+
+  const handleTimerChange = (val: number) => {
+    playSound('click');
+    dispatch({ type: 'UPDATE_SETTINGS', payload: { timerDuration: val } });
+  };
+
   const handleNameChange = (index: number, value: string) => {
     if (value.length > 16) return;
-    if (!/^[a-zA-Z\s]*$/.test(value)) return; // Only A-Z
+    if (!/^[a-zA-Z\s]*$/.test(value)) return; 
     
     const newNames = [...playerNames];
     newNames[index] = value;
@@ -58,23 +67,28 @@ export default function OfflineSetup() {
   };
 
   const handleStartGame = () => {
+    playSound('click');
     // Validation
     for (const name of playerNames) {
       if (!name.trim()) {
         toast({ title: "Invalid Name", description: "All players must have a name.", variant: "destructive" });
+        playSound('error');
         return;
       }
       if (containsProfanity(name)) {
         toast({ title: "Name Rejected", description: `Name "${name}" is not allowed.`, variant: "destructive" });
+        playSound('error');
         return;
       }
     }
 
-    // Assign Roles
-    const totalPlayers = playerNames.length;
-    const spyCount = state.settings.spyCount;
-    
-    // Create player objects
+    // Check Categories
+    if (state.settings.selectedCategories.length === 0) {
+      toast({ title: "No Locations", description: "Please select at least one location category in Database.", variant: "destructive" });
+      playSound('error');
+      return;
+    }
+
     const players: Player[] = playerNames.map((name, idx) => ({
       id: `p-${idx}`,
       name,
@@ -83,20 +97,26 @@ export default function OfflineSetup() {
       votes: 0
     }));
 
-    // Randomly assign spies
     let spiesAssigned = 0;
-    while (spiesAssigned < spyCount) {
-      const randIdx = Math.floor(Math.random() * totalPlayers);
+    while (spiesAssigned < state.settings.spyCount) {
+      const randIdx = Math.floor(Math.random() * players.length);
       if (players[randIdx].role !== 'spy') {
         players[randIdx].role = 'spy';
         spiesAssigned++;
       }
     }
 
-    // Select Random Location
-    const categoryId = 'standard'; // For now hardcode or use state
-    const category = state.gameData.categories.find(c => c.id === categoryId) || state.gameData.categories[0];
-    const randomLoc = category.locations[Math.floor(Math.random() * category.locations.length)];
+    // Get random category from selected ones
+    const validCategories = state.gameData.categories.filter(c => state.settings.selectedCategories.includes(c.id));
+    const randomCat = validCategories[Math.floor(Math.random() * validCategories.length)];
+    
+    if (!randomCat || randomCat.locations.length === 0) {
+       toast({ title: "Empty Category", description: "Selected category has no locations.", variant: "destructive" });
+       playSound('error');
+       return;
+    }
+
+    const randomLoc = randomCat.locations[Math.floor(Math.random() * randomCat.locations.length)];
 
     dispatch({ type: 'SET_PLAYERS', payload: players });
     dispatch({ 
@@ -112,92 +132,92 @@ export default function OfflineSetup() {
 
   return (
     <Layout>
-      <div className="flex items-center mb-6">
-        <Button variant="ghost" size="icon" onClick={() => setLocation('/')}>
-          <ArrowLeft className="w-6 h-6" />
-        </Button>
-        <h1 className="text-2xl font-bold font-mono ml-2">MISSION SETUP</h1>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <Link href="/">
+            <Button variant="ghost" size="icon" onClick={() => playSound('click')}>
+              <ArrowLeft className="w-6 h-6" />
+            </Button>
+          </Link>
+          <h1 className="text-2xl font-bold font-mono ml-2">MISSION SETUP</h1>
+        </div>
+        
+        <Link href="/locations">
+          <Button variant="secondary" size="sm" className="font-mono text-xs" onClick={() => playSound('click')}>
+            <Database className="w-4 h-4 mr-2" />
+            LOCATIONS
+          </Button>
+        </Link>
       </div>
 
-      <div className="space-y-8 pb-20">
-        {/* Players Count */}
-        <section className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Label className="flex items-center text-lg"><Users className="mr-2 w-5 h-5 text-primary" /> Players</Label>
-            <span className="font-mono font-bold text-2xl">{state.settings.playerCount}</span>
-          </div>
-          <Slider 
-            defaultValue={[4]} 
-            min={4} 
-            max={8} 
-            step={1} 
-            value={[state.settings.playerCount]}
-            onValueChange={(val) => handlePlayerCountChange(val[0])}
-            className="py-4"
-          />
-        </section>
-
-        {/* Spy Count */}
-        <section className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Label className="flex items-center text-lg"><KeyRound className="mr-2 w-5 h-5 text-red-500" /> Spies</Label>
-            <span className="font-mono font-bold text-2xl text-red-500">{state.settings.spyCount}</span>
-          </div>
-           {state.settings.playerCount > 5 ? (
-             <Slider 
-              defaultValue={[1]} 
-              min={1} 
-              max={2} 
-              step={1} 
-              value={[state.settings.spyCount]}
-              onValueChange={(val) => dispatch({ type: 'UPDATE_SETTINGS', payload: { spyCount: val[0] } })}
-              className="py-4"
+      <div className="space-y-8 pb-24">
+        <div className="grid grid-cols-2 gap-4">
+          {/* Players Count */}
+          <section className="space-y-2">
+            <Label className="flex items-center text-sm text-muted-foreground"><Users className="mr-2 w-4 h-4" /> AGENTS</Label>
+            <NumberPicker 
+              min={4} max={8} 
+              value={state.settings.playerCount}
+              onChange={handlePlayerCountChange}
             />
-           ) : (
-             <p className="text-xs text-muted-foreground">Minimum 6 players required for 2 spies.</p>
-           )}
-        </section>
+          </section>
+
+          {/* Spy Count */}
+          <section className="space-y-2">
+            <Label className="flex items-center text-sm text-muted-foreground"><KeyRound className="mr-2 w-4 h-4" /> SPIES</Label>
+            {state.settings.playerCount > 5 ? (
+              <NumberPicker 
+                min={1} max={2} 
+                value={state.settings.spyCount}
+                onChange={handleSpyCountChange}
+                className="border-red-500/20 bg-red-500/5"
+              />
+            ) : (
+              <div className="h-14 flex items-center justify-center border border-white/5 rounded-lg bg-white/5 text-muted-foreground font-mono text-sm">
+                1 SPY MAX
+              </div>
+            )}
+          </section>
+        </div>
 
         {/* Timer */}
         <section className="space-y-4 bg-card/30 p-4 rounded-lg border border-white/5">
           <div className="flex justify-between items-center">
-            <Label className="flex items-center"><Timer className="mr-2 w-5 h-5 text-blue-500" /> Timer</Label>
+            <Label className="flex items-center"><Timer className="mr-2 w-5 h-5 text-blue-500" /> MISSION TIMER</Label>
             <Switch 
               checked={state.settings.isTimerOn} 
-              onCheckedChange={(checked) => dispatch({ type: 'UPDATE_SETTINGS', payload: { isTimerOn: checked } })}
+              onCheckedChange={(checked) => { playSound('click'); dispatch({ type: 'UPDATE_SETTINGS', payload: { isTimerOn: checked } }); }}
             />
           </div>
           
           {state.settings.isTimerOn && (
-            <div className="pt-2">
-              <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                <span>5 min</span>
-                <span className="font-mono font-bold text-foreground text-base">{state.settings.timerDuration} min</span>
-                <span>30 min</span>
-              </div>
-              <Slider 
-                min={5} 
-                max={30} 
-                step={1} 
-                value={[state.settings.timerDuration]}
-                onValueChange={(val) => dispatch({ type: 'UPDATE_SETTINGS', payload: { timerDuration: val[0] } })}
-              />
-            </div>
+            <NumberPicker 
+              min={5} max={30} step={1}
+              value={state.settings.timerDuration}
+              onChange={handleTimerChange}
+              label="MINUTES"
+              className="mt-2"
+            />
           )}
         </section>
 
-        {/* Player Names */}
+        {/* Player Names Management */}
         <section className="space-y-3">
-          <Label className="text-lg mb-2 block">Codnames</Label>
+          <div className="flex justify-between items-end">
+            <Label className="text-lg block">ROSTER</Label>
+            <span className="text-xs text-muted-foreground font-mono">Rename agents below</span>
+          </div>
           <div className="grid gap-3">
             {playerNames.map((name, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <span className="font-mono text-muted-foreground w-6">{idx + 1}.</span>
+              <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${idx * 50}ms` }}>
+                <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-muted-foreground font-mono text-xs border border-white/10">
+                  {idx + 1}
+                </div>
                 <Input 
                   value={name}
                   onChange={(e) => handleNameChange(idx, e.target.value)}
-                  placeholder={`Player ${idx + 1}`}
-                  className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50"
+                  placeholder={`Agent ${idx + 1}`}
+                  className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
                 />
               </div>
             ))}
@@ -206,10 +226,11 @@ export default function OfflineSetup() {
       </div>
 
       {/* Footer Action */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-white/5">
-        <div className="max-w-md mx-auto">
-          <Button size="lg" className="w-full h-14 font-bold text-lg uppercase" onClick={handleStartGame}>
-            Initialize Mission
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-white/5 z-50">
+        <div className="max-w-md mx-auto flex gap-3">
+          <Button size="lg" className="flex-1 h-14 font-bold text-lg font-mono" onClick={handleStartGame}>
+            <Play className="w-5 h-5 mr-2 fill-current" />
+            START
           </Button>
         </div>
       </div>

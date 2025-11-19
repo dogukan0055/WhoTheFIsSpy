@@ -2,12 +2,17 @@ import React from 'react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Trophy, MapPin, RotateCcw, Home } from 'lucide-react';
+import { Trophy, MapPin, RotateCcw, Home, ScanFace } from 'lucide-react';
 import { Link } from 'wouter';
+import { playSound } from '@/lib/audio';
 
 export default function Result() {
   const { state, dispatch } = useGame();
   const winner = state.gameData.winner;
+
+  React.useEffect(() => {
+    playSound('success');
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center h-full py-8 space-y-8 text-center">
@@ -42,6 +47,7 @@ export default function Result() {
           <h3 className="text-xs uppercase text-muted-foreground text-left mb-2">The Spies Were</h3>
           {state.players.filter(p => p.role === 'spy').map(spy => (
             <div key={spy.id} className="flex items-center bg-red-500/10 p-3 rounded border border-red-500/20">
+              <ScanFace className="w-4 h-4 mr-2 text-red-500" />
               <span className="font-mono font-bold text-red-400">{spy.name}</span>
               {spy.isDead && <span className="ml-auto text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">CAUGHT</span>}
             </div>
@@ -50,12 +56,12 @@ export default function Result() {
       </div>
 
       <div className="flex flex-col w-full gap-3 max-w-xs">
-        <Button size="lg" onClick={() => dispatch({ type: 'RESET_GAME' })}>
+        <Button size="lg" onClick={() => { playSound('click'); dispatch({ type: 'RESET_GAME' }); }}>
           <RotateCcw className="mr-2 w-4 h-4" />
           Play Again
         </Button>
         <Link href="/">
-          <Button variant="outline" size="lg" className="w-full">
+          <Button variant="outline" size="lg" className="w-full" onClick={() => playSound('click')}>
             <Home className="mr-2 w-4 h-4" />
             Back to Menu
           </Button>

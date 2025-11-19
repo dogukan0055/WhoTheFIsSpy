@@ -14,9 +14,17 @@ export type Player = {
 
 export type GamePhase = 'setup' | 'reveal' | 'playing' | 'voting' | 'result';
 
+export type AppSettings = {
+  sound: boolean;
+  vibrate: boolean;
+  music: boolean;
+  highContrast: boolean;
+};
+
 export type GameState = {
   mode: 'offline' | 'online' | null;
   players: Player[];
+  appSettings: AppSettings;
   settings: {
     playerCount: number;
     spyCount: number;
@@ -37,6 +45,7 @@ export type GameState = {
 type Action =
   | { type: 'SET_MODE'; payload: 'offline' | 'online' }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<GameState['settings']> }
+  | { type: 'UPDATE_APP_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'SET_PLAYERS'; payload: Player[] }
   | { type: 'START_GAME'; payload: { location: string; players: Player[] } }
   | { type: 'NEXT_REVEAL' }
@@ -48,11 +57,21 @@ type Action =
   | { type: 'GAME_OVER'; payload: 'spy' | 'civilian' }
   | { type: 'RESET_GAME' }
   | { type: 'ADD_CATEGORY'; payload: Category }
-  | { type: 'DELETE_CATEGORY'; payload: string };
+  | { type: 'DELETE_CATEGORY'; payload: string }
+  | { type: 'TOGGLE_CATEGORY'; payload: string } // id
+  | { type: 'ADD_LOCATION'; payload: { categoryId: string, location: string } }
+  | { type: 'REMOVE_LOCATION'; payload: { categoryId: string, location: string } };
+
+// Load settings from local storage
+const savedSettings = localStorage.getItem('spy-settings');
+const initialAppSettings: AppSettings = savedSettings 
+  ? JSON.parse(savedSettings) 
+  : { sound: true, vibrate: true, music: true, highContrast: false };
 
 const initialState: GameState = {
   mode: null,
   players: [],
+  appSettings: initialAppSettings,
   settings: {
     playerCount: 4,
     spyCount: 1,
@@ -79,10 +98,18 @@ const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case 'SET_MODE':
       return { ...state, mode: action.payload };
+      
     case 'UPDATE_SETTINGS':
       return { ...state, settings: { ...state.settings, ...action.payload } };
+      
+    case 'UPDATE_APP_SETTINGS':
+      const newAppSettings = { ...state.appSettings, ...action.payload };
+      localStorage.setItem('spy-settings', JSON.stringify(newAppSettings));
+      return { ...state, appSettings: newAppSettings };
+      
     case 'SET_PLAYERS':
       return { ...state, players: action.payload };
+      
     case 'START_GAME':
       return {
         ...state,
@@ -96,6 +123,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           winner: null,
         },
       };
+      
     case 'NEXT_REVEAL':
       return {
         ...state,
@@ -104,20 +132,24 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           currentRevealIndex: state.gameData.currentRevealIndex + 1,
         },
       };
+      
     case 'START_PLAYING':
       return { ...state, phase: 'playing' };
+      
     case 'TICK_TIMER':
       if (state.gameData.timeLeft <= 0) return state;
       return {
         ...state,
         gameData: { ...state.gameData, timeLeft: state.gameData.timeLeft - 1 },
       };
+      
     case 'START_VOTING':
       return { 
         ...state, 
         phase: 'voting',
         players: state.players.map(p => ({ ...p, votes: 0 })) // Reset votes
       };
+      
     case 'CAST_VOTE':
       return {
         ...state,
@@ -125,25 +157,48 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           p.id === action.payload ? { ...p, votes: p.votes + 1 } : p
         ),
       };
+      
     case 'ELIMINATE_PLAYER':
       const eliminatedPlayer = state.players.find(p => p.id === action.payload);
       const remainingPlayers = state.players.filter(p => p.id !== action.payload && !p.isDead);
       
-      // Check win condition immediately
+      const totalSpiesStart = state.players.filter(p => p.role === 'spy').length;
       const spiesLeft = remainingPlayers.filter(p => p.role === 'spy').length;
       const civiliansLeft = remainingPlayers.filter(p => p.role === 'civilian').length;
       
       let nextPhase = state.phase;
       let winner = state.gameData.winner;
 
-      if (eliminatedPlayer?.role === 'spy' && spiesLeft === 0) {
-        nextPhase = 'result';
-        winner = 'civilian';
-      } else if (spiesLeft >= civiliansLeft) {
-        nextPhase = 'result';
-        winner = 'spy'; // Spies win if they equal or outnumber civilians
+      if (eliminatedPlayer?.role === 'spy') {
+        if (spiesLeft === 0) {
+          // All spies caught -> Civilians Win
+          nextPhase = 'result';
+          winner = 'civilian';
+        } else {
+          // Still spies left -> Continue
+          nextPhase = 'playing';
+        }
       } else {
-        nextPhase = 'playing'; // Continue if no win condition met
+        // Civilian eliminated
+        if (totalSpiesStart > 1) {
+           if (spiesLeft > 1) {
+             nextPhase = 'playing';
+           } else {
+              // 1 Spy left, Civilian killed -> Spy Wins
+              nextPhase = 'result';
+              winner = 'spy';
+           }
+        } else {
+          // Only 1 spy in game, Civilian killed -> Spy Wins
+          nextPhase = 'result';
+          winner = 'spy';
+        }
+      }
+
+      // Default parity check (Spies >= Civilians -> Spies Win)
+      if (spiesLeft >= civiliansLeft) {
+        nextPhase = 'result';
+        winner = 'spy';
       }
 
       return {
@@ -154,18 +209,83 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         phase: nextPhase,
         gameData: { ...state.gameData, winner }
       };
+      
     case 'GAME_OVER':
       return {
         ...state,
         phase: 'result',
         gameData: { ...state.gameData, winner: action.payload },
       };
+      
     case 'RESET_GAME':
       return {
         ...initialState,
-        mode: state.mode, // Keep mode
-        gameData: { ...initialState.gameData, categories: state.gameData.categories }, // Keep categories
+        mode: state.mode,
+        appSettings: state.appSettings, // Preserve app settings
+        gameData: { ...initialState.gameData, categories: state.gameData.categories },
       };
+
+    case 'TOGGLE_CATEGORY':
+      const currentSelected = state.settings.selectedCategories;
+      const newSelected = currentSelected.includes(action.payload)
+        ? currentSelected.filter(id => id !== action.payload)
+        : [...currentSelected, action.payload];
+      
+      if (newSelected.length === 0) return state;
+
+      return {
+        ...state,
+        settings: { ...state.settings, selectedCategories: newSelected }
+      };
+
+    case 'ADD_CATEGORY':
+      return {
+        ...state,
+        gameData: {
+          ...state.gameData,
+          categories: [...state.gameData.categories, action.payload]
+        }
+      };
+
+    case 'DELETE_CATEGORY':
+      return {
+        ...state,
+        gameData: {
+          ...state.gameData,
+          categories: state.gameData.categories.filter(c => c.id !== action.payload)
+        },
+        settings: {
+          ...state.settings,
+          selectedCategories: state.settings.selectedCategories.filter(id => id !== action.payload)
+        }
+      };
+
+    case 'ADD_LOCATION':
+      return {
+        ...state,
+        gameData: {
+          ...state.gameData,
+          categories: state.gameData.categories.map(c => 
+            c.id === action.payload.categoryId 
+              ? { ...c, locations: [...c.locations, action.payload.location] }
+              : c
+          )
+        }
+      };
+
+    case 'REMOVE_LOCATION':
+      return {
+        ...state,
+        gameData: {
+          ...state.gameData,
+          categories: state.gameData.categories.map(c => 
+            c.id === action.payload.categoryId 
+              ? { ...c, locations: c.locations.filter(l => l !== action.payload.location) }
+              : c
+          )
+        }
+      };
+      
     default:
       return state;
   }
@@ -174,7 +294,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
 
-  // Timer Effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (state.phase === 'playing' && state.settings.isTimerOn && state.gameData.timeLeft > 0) {
@@ -182,7 +301,6 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         dispatch({ type: 'TICK_TIMER' });
       }, 1000);
     } else if (state.gameData.timeLeft === 0 && state.phase === 'playing') {
-      // Time runs out -> Spies win
       dispatch({ type: 'GAME_OVER', payload: 'spy' });
     }
     return () => clearInterval(interval);

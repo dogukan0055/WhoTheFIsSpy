@@ -3,18 +3,28 @@ import Layout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { useGame } from '@/lib/game-context';
-import { KeyRound, Wifi, MonitorSmartphone, HelpCircle } from 'lucide-react';
+import { KeyRound, Wifi, MonitorSmartphone, HelpCircle, Settings } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { playSound } from '@/lib/audio';
 
 export default function Home() {
   const { dispatch } = useGame();
 
   const handleModeSelect = (mode: 'offline' | 'online') => {
     dispatch({ type: 'SET_MODE', payload: mode });
+    playSound('click');
   };
 
   return (
     <Layout className="justify-center space-y-12">
+      <div className="absolute top-4 right-4">
+        <Link href="/settings">
+          <Button variant="ghost" size="icon" onClick={() => playSound('click')}>
+            <Settings className="w-6 h-6 text-muted-foreground hover:text-foreground" />
+          </Button>
+        </Link>
+      </div>
+
       <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
         <div className="inline-block p-4 rounded-full bg-primary/10 border border-primary/20 mb-4 ring-4 ring-primary/5">
           <KeyRound className="w-16 h-16 text-primary" />
@@ -47,7 +57,7 @@ export default function Home() {
       <div className="text-center">
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+            <Button variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={() => playSound('click')}>
               <HelpCircle className="mr-2 w-4 h-4" />
               How to Play
             </Button>
@@ -76,13 +86,20 @@ export default function Home() {
                   <li>If you suspect someone, call a vote!</li>
                 </ol>
               </section>
+              <section>
+                <h3 className="font-bold text-foreground mb-1">WIN CONDITIONS</h3>
+                <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+                  <li><strong>Spy Wins if:</strong> A civilian is eliminated (unless there are multiple spies), or if spies outnumber civilians, or if timer runs out.</li>
+                  <li><strong>Civilians Win if:</strong> All spies are eliminated.</li>
+                </ul>
+              </section>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
       <footer className="absolute bottom-4 left-0 right-0 text-center text-xs text-muted-foreground/30 font-mono">
-        v1.0.0-PROTO // MOCKUP_MODE
+        v1.1.0-PROTO // MOCKUP_MODE
       </footer>
     </Layout>
   );

@@ -8,6 +8,8 @@ import Home from "@/pages/home";
 import OfflineSetup from "@/pages/offline-setup";
 import GameRoom from "@/pages/game-room";
 import OnlineMenu from "@/pages/online-menu";
+import Settings from "@/pages/settings";
+import LocationManager from "@/pages/location-manager";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -15,6 +17,8 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/setup" component={OfflineSetup} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/locations" component={LocationManager} />
       <Route path="/game" component={GameRoom} />
       <Route path="/online-menu" component={OnlineMenu} />
       <Route component={NotFound} />
