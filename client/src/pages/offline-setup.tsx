@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useGame, Player } from '@/lib/game-context';
-import { containsProfanity } from '@/lib/locations';
+import { containsProfanity, isValidPlayerName, getSavedPlayerNames, savePlayerNames } from '@/lib/locations';
 import Layout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,24 +13,22 @@ import { toast } from '@/hooks/use-toast';
 import { playSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useTranslation } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
 
 export default function OfflineSetup() {
   const { state, dispatch } = useGame();
-  const t = useTranslation(state.appSettings.language);
   const [_, setLocation] = useLocation();
   
-  // Load saved names or generate defaults
-  const savedNames = JSON.parse(localStorage.getItem('spy-player-names') || '[]');
+  // Load saved names from localStorage
+  const savedNames = getSavedPlayerNames();
   const getInitialNames = () => {
      const count = state.settings.playerCount;
-     let names = [...savedNames];
-     if (names.length < count) {
-        for(let i = names.length; i < count; i++) {
-           names.push(`${t('setup.agent')} ${i + 1}`);
-        }
-     } else if (names.length > count) {
-        names = names.slice(0, count);
+     if (savedNames.length >= count) {
+       return savedNames.slice(0, count);
+     }
+     const names = [...savedNames];
+     while (names.length < count) {
+       names.push(`Player ${names.length + 1}`);
      }
      return names;
   };
@@ -38,21 +36,19 @@ export default function OfflineSetup() {
   const [playerNames, setPlayerNames] = useState<string[]>(getInitialNames());
   const [isRenaming, setIsRenaming] = useState(false);
 
-  // Sync internal state if needed
+  // Sync internal state when player count changes
   React.useEffect(() => {
     if (playerNames.length !== state.settings.playerCount) {
        setPlayerNames(prev => {
           const newCount = state.settings.playerCount;
           if (newCount > prev.length) {
-             // Add new players
-             return [...prev, ...Array(newCount - prev.length).fill('').map((_, i) => `${t('setup.agent')} ${prev.length + i + 1}`)];
+             return [...prev, ...Array(newCount - prev.length).fill('').map((_, i) => `Player ${prev.length + i + 1}`)];
           } else {
-             // Remove players
              return prev.slice(0, newCount);
           }
        });
     }
-  }, [state.settings.playerCount, t]);
+  }, [state.settings.playerCount]);
 
   const handlePlayerCountChange = (val: number) => {
     playSound('click');
@@ -77,12 +73,13 @@ export default function OfflineSetup() {
 
   const handleNameChange = (index: number, value: string) => {
     if (value.length > 16) return;
-    // Allow UTF-8 chars for A-Z (including Turkish chars)
-    if (!/^[a-zA-Z\s\u00C0-\u017F\u0131\u011F\u015F\u00FC\u00F6\u00E7\u0130\u011E\u015E\u00DC\u00D6\u00C7]*$/.test(value)) return; 
+    // Use isValidPlayerName for UTF-8 letter validation
+    if (value.length > 0 && !isValidPlayerName(value)) return;
     
     const newNames = [...playerNames];
     newNames[index] = value;
     setPlayerNames(newNames);
+    savePlayerNames(newNames); // Persist to localStorage
   };
 
   const handleStartGame = () => {
@@ -90,12 +87,12 @@ export default function OfflineSetup() {
     // Validation
     for (const name of playerNames) {
       if (!name.trim()) {
-        toast({ title: t('toast.invalidName'), description: t('toast.allPlayersName'), variant: "destructive" });
+        toast({ title: t('invalidName'), description: t('allPlayersNeed'), variant: "destructive" });
         playSound('error');
         return;
       }
       if (containsProfanity(name)) {
-        toast({ title: t('toast.nameRejected'), description: t('toast.nameNotAllowed'), variant: "destructive" });
+        toast({ title: t('nameRejected'), description: t('nameNotAllowed', { name }), variant: "destructive" });
         playSound('error');
         return;
       }
@@ -103,7 +100,7 @@ export default function OfflineSetup() {
 
     // Check Categories
     if (state.settings.selectedCategories.length === 0) {
-      toast({ title: t('toast.noLocations'), description: t('toast.selectOne'), variant: "destructive" });
+      toast({ title: t('noLocations'), description: t('selectCategory'), variant: "destructive" });
       playSound('error');
       return;
     }

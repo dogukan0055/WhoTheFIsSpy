@@ -7,12 +7,12 @@ import Layout from '@/components/layout';
 import { ArrowLeft, Volume2, VolumeX, Smartphone, Music, Eye, EyeOff, Languages } from 'lucide-react';
 import { Link } from 'wouter';
 import { playSound } from '@/lib/audio';
-import { useTranslation } from '@/lib/i18n';
+import { t, getLanguage, setLanguage, type Language } from '@/lib/i18n';
 
 export default function Settings() {
   const { state, dispatch } = useGame();
-  const { sound, vibrate, music, highContrast, language } = state.appSettings;
-  const t = useTranslation(language);
+  const { sound, vibrate, music, highContrast } = state.appSettings;
+  const currentLang = getLanguage();
 
   const toggleSetting = (key: keyof typeof state.appSettings) => {
     dispatch({ 
@@ -22,12 +22,9 @@ export default function Settings() {
     playSound('click');
   };
 
-  const toggleLanguage = () => {
-    dispatch({ 
-      type: 'UPDATE_APP_SETTINGS', 
-      payload: { language: language === 'en' ? 'tr' : 'en' } 
-    });
+  const handleLanguageChange = (lang: Language) => {
     playSound('click');
+    setLanguage(lang);
   };
 
   return (
@@ -38,30 +35,46 @@ export default function Settings() {
             <ArrowLeft className="w-6 h-6" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold font-mono ml-2">{t('settings.title')}</h1>
+        <h1 className="text-2xl font-bold font-mono ml-2">{t('systemConfig')}</h1>
       </div>
 
       <div className="space-y-6">
-        {/* Language Setting */}
+        {/* Language Selection */}
         <div className="bg-card/30 border border-white/10 rounded-xl overflow-hidden">
-           <div className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/20 text-primary">
-                   <Languages className="w-5 h-5" />
-                </div>
-                <div>
-                  <Label className="text-base">{t('settings.language')}</Label>
-                </div>
-              </div>
-              <Button variant="outline" onClick={toggleLanguage} className="w-24 font-mono font-bold">
-                {language === 'en' ? '🇺🇸 EN' : '🇹🇷 TR'}
-              </Button>
+          <div className="p-4 border-b border-white/10">
+            <h2 className="font-mono text-sm text-muted-foreground uppercase tracking-wider">{t('language')}</h2>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => handleLanguageChange('en')}
+                className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                  currentLang === 'en' 
+                    ? 'border-primary bg-primary/10 text-primary' 
+                    : 'border-border bg-card hover:border-primary/50'
+                }`}
+              >
+                <span className="text-2xl">🇬🇧</span>
+                <span className="font-bold font-mono">EN</span>
+              </button>
+              <button
+                onClick={() => handleLanguageChange('tr')}
+                className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
+                  currentLang === 'tr' 
+                    ? 'border-primary bg-primary/10 text-primary' 
+                    : 'border-border bg-card hover:border-primary/50'
+                }`}
+              >
+                <span className="text-2xl">🇹🇷</span>
+                <span className="font-bold font-mono">TR</span>
+              </button>
             </div>
+          </div>
         </div>
 
         <div className="bg-card/30 border border-white/10 rounded-xl overflow-hidden">
           <div className="p-4 border-b border-white/10">
-            <h2 className="font-mono text-sm text-muted-foreground uppercase tracking-wider">{t('settings.audio')}</h2>
+            <h2 className="font-mono text-sm text-muted-foreground uppercase tracking-wider">{t('audioHaptics')}</h2>
           </div>
           
           <div className="p-4 space-y-6">
@@ -71,8 +84,8 @@ export default function Settings() {
                   {sound ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
                 </div>
                 <div>
-                  <Label className="text-base">{t('settings.sound')}</Label>
-                  <p className="text-xs text-muted-foreground">{t('settings.soundDesc')}</p>
+                  <Label className="text-base">{t('soundEffects')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('soundDesc')}</p>
                 </div>
               </div>
               <Switch checked={sound} onCheckedChange={() => toggleSetting('sound')} />
@@ -84,8 +97,8 @@ export default function Settings() {
                    <Music className="w-5 h-5" />
                 </div>
                 <div>
-                  <Label className="text-base">{t('settings.ambience')}</Label>
-                  <p className="text-xs text-muted-foreground">{t('settings.ambienceDesc')}</p>
+                  <Label className="text-base">{t('bgAmbience')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('bgDesc')}</p>
                 </div>
               </div>
               <Switch checked={music} onCheckedChange={() => toggleSetting('music')} />
@@ -97,8 +110,8 @@ export default function Settings() {
                    <Smartphone className="w-5 h-5" />
                 </div>
                 <div>
-                  <Label className="text-base">{t('settings.haptic')}</Label>
-                  <p className="text-xs text-muted-foreground">{t('settings.hapticDesc')}</p>
+                  <Label className="text-base">{t('hapticFeedback')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('hapticDesc')}</p>
                 </div>
               </div>
               <Switch checked={vibrate} onCheckedChange={() => toggleSetting('vibrate')} />
@@ -108,7 +121,7 @@ export default function Settings() {
 
         <div className="bg-card/30 border border-white/10 rounded-xl overflow-hidden">
            <div className="p-4 border-b border-white/10">
-            <h2 className="font-mono text-sm text-muted-foreground uppercase tracking-wider">{t('settings.accessibility')}</h2>
+            <h2 className="font-mono text-sm text-muted-foreground uppercase tracking-wider">{t('accessibility')}</h2>
           </div>
           <div className="p-4">
             <div className="flex items-center justify-between">
@@ -117,8 +130,8 @@ export default function Settings() {
                    {highContrast ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                 </div>
                 <div>
-                  <Label className="text-base">{t('settings.highContrast')}</Label>
-                  <p className="text-xs text-muted-foreground">{t('settings.highContrastDesc')}</p>
+                  <Label className="text-base">{t('highContrast')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('highContrastDesc')}</p>
                 </div>
               </div>
               <Switch checked={highContrast} onCheckedChange={() => toggleSetting('highContrast')} />
@@ -127,9 +140,9 @@ export default function Settings() {
         </div>
 
         <div className="pt-8 text-center space-y-2">
-          <h3 className="text-xs font-mono text-muted-foreground">{t('settings.credits')}</h3>
+          <h3 className="text-xs font-mono text-muted-foreground">{t('credits')}</h3>
           <div className="p-4 bg-card/10 rounded-lg text-sm text-muted-foreground border border-white/5">
-            <p className="mb-2">{t('settings.designedBy')}</p>
+            <p className="mb-2">{t('creditsText')}</p>
             <p className="font-bold text-foreground mb-4">REPLIT AGENT</p>
             <p className="text-xs opacity-50">
               Sound effects generated procedurally.<br/>

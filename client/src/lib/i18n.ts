@@ -1,224 +1,295 @@
-import { Language } from './game-context';
+export type Language = 'en' | 'tr';
 
 type Translations = {
-  [key in Language]: {
-    [key: string]: string;
-  };
+  [key: string]: string | Translations;
 };
 
-export const translations: Translations = {
+const translations: Record<Language, Translations> = {
   en: {
-    // Home
-    'home.title': 'WHO THE F*** IS SPY?',
-    'home.subtitle': 'Deception, deduction, and betrayal. Can you find the impostor among us?',
-    'home.offline': 'OFFLINE MODE',
-    'home.online': 'ONLINE MODE',
-    'home.howToPlay': 'How to Play',
-    'home.settings': 'Settings',
+    // Main Menu
+    mainTitle: "WHO THE F*** IS SPY?",
+    mainSubtitle: "Deception, deduction, and betrayal. Can you find the impostor among us?",
+    offlineMode: "OFFLINE MODE",
+    onlineMode: "ONLINE MODE",
+    howToPlay: "How to Play",
     
-    // Setup
-    'setup.title': 'MISSION SETUP',
-    'setup.agents': 'AGENTS',
-    'setup.spies': 'SPIES',
-    'setup.timer': 'MISSION TIMER',
-    'setup.manageLocations': 'MANAGE LOCATIONS',
-    'setup.manageRoster': 'MANAGE AGENT ROSTER',
-    'setup.start': 'START MISSION',
-    'setup.min': 'MIN',
-    'setup.max': 'MAX',
-    'setup.minutes': 'MINUTES',
-    'setup.agent': 'Agent',
-    'setup.locked': 'LOCKED',
-    'setup.spyMax': '1 SPY MAX',
-
-    // Reveal
-    'reveal.player': 'Agent',
-    'reveal.pass': 'Pass the phone to',
-    'reveal.tap': 'Tap below to reveal your role',
-    'reveal.spyTitle': 'YOU ARE THE SPY',
-    'reveal.spyDesc': 'Try to blend in. Figure out the location without getting caught.',
-    'reveal.civTitle': 'CIVILIAN',
-    'reveal.location': 'Location',
-    'reveal.next': 'Next Agent',
-    'reveal.start': 'Start Mission',
-    'reveal.reveal': 'Reveal Identity',
-    
-    // Discussion
-    'discussion.noTimer': 'NO TIMER',
-    'discussion.takeTime': 'Take your time to discuss',
-    'discussion.phase': 'Interrogation Phase',
-    'discussion.civInst': 'CIVILIANS: Ask questions to verify others. Don\'t give away the location!',
-    'discussion.spyInst': 'SPIES: Listen carefully. Infer the location. Blend in with vague answers.',
-    'discussion.active': 'Agents Active',
-    'discussion.spiesLeft': 'Spies Remaining',
-    'discussion.callVote': 'Call Vote',
-    
-    // Voting
-    'voting.title': 'Emergency Meeting',
-    'voting.desc': 'Who is the most suspicious?',
-    'voting.cancel': 'Cancel',
-    'voting.eliminate': 'Eliminate',
-    
-    // Result
-    'result.winner': 'Winner',
-    'result.spiesWin': 'SPIES',
-    'result.civsWin': 'CIVILIANS',
-    'result.secretLoc': 'Secret Location',
-    'result.spiesWere': 'The Spies Were',
-    'result.caught': 'CAUGHT',
-    'result.playAgain': 'Play Again',
-    'result.backMenu': 'Back to Menu',
-
     // Settings
-    'settings.title': 'SYSTEM CONFIG',
-    'settings.audio': 'Audio & Haptics',
-    'settings.sound': 'Sound Effects',
-    'settings.soundDesc': 'UI interaction sounds',
-    'settings.ambience': 'Background Ambience',
-    'settings.ambienceDesc': 'Immersive spy theme audio',
-    'settings.haptic': 'Haptic Feedback',
-    'settings.hapticDesc': 'Vibrate on interactions',
-    'settings.accessibility': 'Accessibility',
-    'settings.highContrast': 'High Contrast',
-    'settings.highContrastDesc': 'Increase visual distinction',
-    'settings.language': 'Language / Dil',
-    'settings.credits': 'CREDITS',
-    'settings.designedBy': 'Designed & Developed by',
-
-    // Database
-    'db.title': 'DATABASE',
-    'db.create': 'CREATE NEW CATEGORY',
-    'db.addLoc': 'Add Location',
-    'db.confirm': 'Confirm',
-    'db.newCat': 'New Category',
-    'db.newLoc': 'New Location for',
+    systemConfig: "SYSTEM CONFIG",
+    audioHaptics: "Audio & Haptics",
+    soundEffects: "Sound Effects",
+    soundDesc: "UI interaction sounds",
+    bgAmbience: "Background Ambience",
+    bgDesc: "Immersive spy theme audio",
+    hapticFeedback: "Haptic Feedback",
+    hapticDesc: "Vibrate on interactions",
+    accessibility: "Accessibility",
+    highContrast: "High Contrast",
+    highContrastDesc: "Increase visual distinction",
+    language: "Language",
+    credits: "CREDITS",
+    creditsText: "Designed & Developed by",
+    
+    // Offline Setup
+    missionSetup: "MISSION SETUP",
+    agents: "AGENTS",
+    spies: "SPIES",
+    missionTimer: "MISSION TIMER",
+    minutes: "MINUTES",
+    manageLocations: "MANAGE LOCATIONS",
+    manageRoster: "MANAGE AGENT ROSTER",
+    startMission: "START MISSION",
+    minMax: "MIN: {min} | MAX: {max}",
+    locked: "LOCKED",
+    
+    // Location Manager
+    database: "DATABASE",
+    createCategory: "CREATE NEW CATEGORY",
+    addLocation: "Add Location",
+    newCategory: "New Category",
+    newLocationFor: "New Location for {name}",
+    confirm: "Confirm",
+    create: "Create",
+    
+    // Game
+    agentNum: "Agent {current} / {total}",
+    revealIdentity: "Reveal Identity",
+    nextAgent: "Next Agent",
+    startGame: "Start Mission",
+    youAreSpy: "YOU ARE THE SPY",
+    spyDesc: "Try to blend in. Figure out the location without getting caught.",
+    civilian: "CIVILIAN",
+    location: "Location",
+    noTimer: "NO TIMER",
+    takeYourTime: "Take your time to discuss",
+    interrogationPhase: "Interrogation Phase",
+    civiliansDesc: "CIVILIANS: Ask questions to verify others. Don't give away the location!",
+    spiesDesc: "SPIES: Listen carefully. Infer the location. Blend in with vague answers.",
+    agentsActive: "Agents Active",
+    spiesRemaining: "Spies Remaining",
+    callVote: "Call Vote",
+    emergencyMeeting: "Emergency Meeting",
+    whoSuspicious: "Who is the most suspicious?",
+    cancel: "Cancel",
+    eliminate: "Eliminate",
+    winner: "Winner",
+    secretLocation: "Secret Location",
+    spiesWere: "The Spies Were",
+    caught: "CAUGHT",
+    playAgain: "Play Again",
+    backToMenu: "Back to Menu",
     
     // Toasts
-    'toast.invalidName': 'Invalid Name',
-    'toast.allPlayersName': 'All players must have a name.',
-    'toast.nameRejected': 'Name Rejected',
-    'toast.nameNotAllowed': 'Name is not allowed.',
-    'toast.noLocations': 'No Locations',
-    'toast.selectOne': 'Please select at least one location category in Database.',
-    'toast.emptyCat': 'Empty Category',
-    'toast.catEmpty': 'Selected category has no locations.',
-    'toast.catAdded': 'Category Added',
-    'toast.locAdded': 'Location Added',
-    'toast.actionDenied': 'Action Denied',
-    'toast.lastCat': 'Cannot delete the last category.',
-    'toast.coreProtocols': 'Core protocols cannot be deleted.',
-    'toast.coreLoc': 'Core locations cannot be removed.',
-    'toast.spyCaught': 'SPY CAUGHT!',
-    'toast.spyCaughtDesc': 'A spy has been eliminated. The mission continues!',
+    invalidName: "Invalid Name",
+    allPlayersNeed: "All players must have a name.",
+    nameRejected: "Name Rejected",
+    nameNotAllowed: "Name \"{name}\" is not allowed.",
+    noLocations: "No Locations",
+    selectCategory: "Please select at least one location category in Database.",
+    emptyCategory: "Empty Category",
+    noCategoryLocs: "Selected category has no locations.",
+    categoryAdded: "Category Added",
+    addedToDb: "{name} added to database.",
+    locationAdded: "Location Added",
+    addedToCat: "{name} added to category.",
+    actionDenied: "Action Denied",
+    coreProtocols: "Core protocols cannot be deleted.",
+    lastCategory: "Cannot delete the last category.",
+    categoryEmpty: "Category Empty",
+    emptyFirst: "Cannot enable empty category. Add locations first.",
+    warning: "Warning",
+    oneActive: "At least one category must be active.",
+    coreLocations: "Core locations cannot be removed.",
+    
+    // Online
+    identifyYourself: "IDENTIFY YOURSELF",
+    enterCodename: "Enter your codename to access the encrypted network.",
+    codename: "Codename",
+    establishUplink: "ESTABLISH UPLINK",
+    connectedAs: "CONNECTED AS: {name}",
+    createOperation: "CREATE OPERATION",
+    hostNewGame: "Host a new game lobby",
+    joinOperation: "JOIN OPERATION",
+    enterRoom: "Enter an existing room code",
+    enterAccessCode: "ENTER ACCESS CODE",
+    accessMainframe: "ACCESS MAINFRAME",
+    operationCode: "Operation Code",
+    waiting: "Waiting for agents...",
+    readyToDeploy: "Ready to deploy",
+    host: "HOST",
+    searching: "Searching Signal...",
+    
+    // How to Play
+    missionBriefing: "MISSION BRIEFING",
+    classified: "Classified Information. Read carefully.",
+    objective: "OBJECTIVE",
+    civObjective: "Civilians: Find the Spy. Ask questions to prove you know the location.",
+    spyObjective: "Spy: Blend in. Figure out the location. Don't get caught.",
+    gameplay: "GAMEPLAY",
+    step1: "Pass the phone around to reveal roles.",
+    step2: "Once everyone knows their role, start the timer.",
+    step3: "Take turns asking Yes/No questions.",
+    step4: "If you suspect someone, call a vote!",
+    winConditions: "WIN CONDITIONS",
+    spyWins: "Spy Wins if: A civilian is eliminated (unless there are multiple spies), or if spies outnumber civilians, or if timer runs out.",
+    civilWins: "Civilians Win if: All spies are eliminated.",
   },
   tr: {
-    // Home
-    'home.title': 'CASUS KİM A.Q?',
-    'home.subtitle': 'Aldatmaca, çıkarım ve ihanet. Aramızdaki haini bulabilir misin?',
-    'home.offline': 'ÇEVRİMDIŞI MOD',
-    'home.online': 'ÇEVRİMİÇİ MOD',
-    'home.howToPlay': 'Nasıl Oynanır',
-    'home.settings': 'Ayarlar',
-
-    // Setup
-    'setup.title': 'GÖREV KURULUMU',
-    'setup.agents': 'AJANLAR',
-    'setup.spies': 'CASUSLAR',
-    'setup.timer': 'GÖREV SÜRESİ',
-    'setup.manageLocations': 'LOKASYONLARI YÖNET',
-    'setup.manageRoster': 'AJAN LİSTESİNİ DÜZENLE',
-    'setup.start': 'GÖREVİ BAŞLAT',
-    'setup.min': 'MİN',
-    'setup.max': 'MAKS',
-    'setup.minutes': 'DAKİKA',
-    'setup.agent': 'Ajan',
-    'setup.locked': 'KİLİTLİ',
-    'setup.spyMax': '1 CASUS MAKS',
-
-    // Reveal
-    'reveal.player': 'Ajan',
-    'reveal.pass': 'Telefonu şuna ver:',
-    'reveal.tap': 'Rolünü görmek için dokun',
-    'reveal.spyTitle': 'SEN CASUSSUN',
-    'reveal.spyDesc': 'Dikkat çekmemeye çalış. Yakalanmadan lokasyonu tahmin et.',
-    'reveal.civTitle': 'SİVİL',
-    'reveal.location': 'Lokasyon',
-    'reveal.next': 'Sıradaki Ajan',
-    'reveal.start': 'Görevi Başlat',
-    'reveal.reveal': 'Kimliği Göster',
-
-    // Discussion
-    'discussion.noTimer': 'SÜRE YOK',
-    'discussion.takeTime': 'Tartışmak için acele etmeyin',
-    'discussion.phase': 'Sorgu Aşaması',
-    'discussion.civInst': 'SİVİLLER: Diğerlerini doğrulamak için sorular sorun. Lokasyonu açık etmeyin!',
-    'discussion.spyInst': 'CASUSLAR: Dikkatlice dinleyin. Lokasyonu tahmin etmeye çalışın. Kaçamak cevaplarla gizlenin.',
-    'discussion.active': 'Aktif Ajanlar',
-    'discussion.spiesLeft': 'Kalan Casus',
-    'discussion.callVote': 'Oylama Başlat',
-
-    // Voting
-    'voting.title': 'Acil Durum Toplantısı',
-    'voting.desc': 'En şüpheli kim?',
-    'voting.cancel': 'İptal',
-    'voting.eliminate': 'Ortadan Kaldır',
-
-    // Result
-    'result.winner': 'Kazanan',
-    'result.spiesWin': 'CASUSLAR',
-    'result.civsWin': 'SİVİLLER',
-    'result.secretLoc': 'Gizli Lokasyon',
-    'result.spiesWere': 'Casuslar Şunlardı',
-    'result.caught': 'YAKALANDI',
-    'result.playAgain': 'Tekrar Oyna',
-    'result.backMenu': 'Menüye Dön',
-
-    // Settings
-    'settings.title': 'SİSTEM AYARLARI',
-    'settings.audio': 'Ses & Titreşim',
-    'settings.sound': 'Ses Efektleri',
-    'settings.soundDesc': 'Arayüz etkileşim sesleri',
-    'settings.ambience': 'Arkaplan Ambiyansı',
-    'settings.ambienceDesc': 'Casus temalı atmosfer sesi',
-    'settings.haptic': 'Titreşim Geri Bildirimi',
-    'settings.hapticDesc': 'Etkileşimlerde titreşim',
-    'settings.accessibility': 'Erişilebilirlik',
-    'settings.highContrast': 'Yüksek Karşıtlık',
-    'settings.highContrastDesc': 'Görsel ayrımı artır',
-    'settings.language': 'Dil / Language',
-    'settings.credits': 'EMEĞİ GEÇENLER',
-    'settings.designedBy': 'Tasarım & Geliştirme',
-
-    // Database
-    'db.title': 'VERİTABANI',
-    'db.create': 'YENİ KATEGORİ OLUŞTUR',
-    'db.addLoc': 'Lokasyon Ekle',
-    'db.confirm': 'Onayla',
-    'db.newCat': 'Yeni Kategori',
-    'db.newLoc': 'Yeni Lokasyon:',
-
-    // Toasts
-    'toast.invalidName': 'Geçersiz İsim',
-    'toast.allPlayersName': 'Tüm oyuncuların bir ismi olmalı.',
-    'toast.nameRejected': 'İsim Reddedildi',
-    'toast.nameNotAllowed': 'Bu isim kullanılamaz.',
-    'toast.noLocations': 'Lokasyon Yok',
-    'toast.selectOne': 'Lütfen Veritabanından en az bir kategori seçin.',
-    'toast.emptyCat': 'Boş Kategori',
-    'toast.catEmpty': 'Seçilen kategoride lokasyon yok.',
-    'toast.catAdded': 'Kategori Eklendi',
-    'toast.locAdded': 'Lokasyon Eklendi',
-    'toast.actionDenied': 'İşlem Reddedildi',
-    'toast.lastCat': 'Son kalan kategori silinemez.',
-    'toast.coreProtocols': 'Ana protokoller silinemez.',
-    'toast.coreLoc': 'Ana lokasyonlar kaldırılamaz.',
-    'toast.spyCaught': 'CASUS YAKALANDI!',
-    'toast.spyCaughtDesc': 'Bir casus ortadan kaldırıldı. Görev devam ediyor!',
+    // Ana Menü
+    mainTitle: "CASUSları BUL!",
+    mainSubtitle: "Aldatma, çıkarım ve ihanet. Aranızdaki sahtekârı bulabilir misin?",
+    offlineMode: "ÇEVRİMDIŞI MOD",
+    onlineMode: "ÇEVRİMİÇİ MOD",
+    howToPlay: "Nasıl Oynanır",
+    
+    // Ayarlar
+    systemConfig: "SİSTEM AYARLARI",
+    audioHaptics: "Ses & Titreşim",
+    soundEffects: "Ses Efektleri",
+    soundDesc: "Arayüz etkileşim sesleri",
+    bgAmbience: "Arka Plan Müziği",
+    bgDesc: "Sürükleyici casus teması",
+    hapticFeedback: "Dokunsal Geri Bildirim",
+    hapticDesc: "Etkileşimlerde titreşim",
+    accessibility: "Erişilebilirlik",
+    highContrast: "Yüksek Kontrast",
+    highContrastDesc: "Görsel ayrımı artır",
+    language: "Dil",
+    credits: "HAZIRLAYANLAR",
+    creditsText: "Tasarlayan & Geliştiren",
+    
+    // Çevrimdışı Kurulum
+    missionSetup: "GÖREV KURULUMU",
+    agents: "AJANLAR",
+    spies: "CASUSLAR",
+    missionTimer: "GÖREV ZAMANI",
+    minutes: "DAKİKA",
+    manageLocations: "LOKASYONLARI YÖNET",
+    manageRoster: "AJAN KADROSUNU YÖNET",
+    startMission: "GÖREVİ BAŞLAT",
+    minMax: "MIN: {min} | MAKS: {max}",
+    locked: "KİLİTLİ",
+    
+    // Lokasyon Yöneticisi
+    database: "VERİ TABANI",
+    createCategory: "YENİ KATEGORİ OLUŞTUR",
+    addLocation: "Lokasyon Ekle",
+    newCategory: "Yeni Kategori",
+    newLocationFor: "{name} için Yeni Lokasyon",
+    confirm: "Onayla",
+    create: "Oluştur",
+    
+    // Oyun
+    agentNum: "Ajan {current} / {total}",
+    revealIdentity: "Kimliği Göster",
+    nextAgent: "Sonraki Ajan",
+    startGame: "Görevi Başlat",
+    youAreSpy: "SEN CASUSSUN",
+    spyDesc: "Uyum sağlamaya çalış. Lokasyonu anla. Yakalanma.",
+    civilian: "SİVİL",
+    location: "Lokasyon",
+    noTimer: "ZAMAN YOK",
+    takeYourTime: "Tartışmak için zamanınız var",
+    interrogationPhase: "Sorgulama Aşaması",
+    civiliansDesc: "SİVİLLER: Diğerlerini doğrulamak için sorular sorun. Lokasyonu belli etmeyin!",
+    spiesDesc: "CASUSLAR: Dikkatle dinleyin. Lokasyonu çıkarın. Belirsiz cevaplarla uyum sağlayın.",
+    agentsActive: "Aktif Ajanlar",
+    spiesRemaining: "Kalan Casuslar",
+    callVote: "Oylama Başlat",
+    emergencyMeeting: "Acil Toplantı",
+    whoSuspicious: "Kim en şüpheli?",
+    cancel: "İptal",
+    eliminate: "Elendir",
+    winner: "Kazanan",
+    secretLocation: "Gizli Lokasyon",
+    spiesWere: "Casuslar Şunlardı",
+    caught: "YAKALANDI",
+    playAgain: "Tekrar Oyna",
+    backToMenu: "Ana Menüye Dön",
+    
+    // Bildirimler
+    invalidName: "Geçersiz İsim",
+    allPlayersNeed: "Tüm oyuncuların bir ismi olmalı.",
+    nameRejected: "İsim Reddedildi",
+    nameNotAllowed: "\"{name}\" ismine izin verilmiyor.",
+    noLocations: "Lokasyon Yok",
+    selectCategory: "Lütfen Veri Tabanı'nda en az bir lokasyon kategorisi seçin.",
+    emptyCategory: "Boş Kategori",
+    noCategoryLocs: "Seçili kategoride lokasyon yok.",
+    categoryAdded: "Kategori Eklendi",
+    addedToDb: "{name} veri tabanına eklendi.",
+    locationAdded: "Lokasyon Eklendi",
+    addedToCat: "{name} kategoriye eklendi.",
+    actionDenied: "İşlem Reddedildi",
+    coreProtocols: "Temel protokoller silinemez.",
+    lastCategory: "Son kategori silinemez.",
+    categoryEmpty: "Kategori Boş",
+    emptyFirst: "Boş kategori etkinleştirilemez. Önce lokasyon ekleyin.",
+    warning: "Uyarı",
+    oneActive: "En az bir kategori aktif olmalı.",
+    coreLocations: "Temel lokasyonlar kaldırılamaz.",
+    
+    // Çevrimiçi
+    identifyYourself: "KİMLİĞİNİ DOĞRULA",
+    enterCodename: "Şifreli ağa erişmek için kod adınızı girin.",
+    codename: "Kod Adı",
+    establishUplink: "BAĞLANTI KUR",
+    connectedAs: "BAĞLANDI: {name}",
+    createOperation: "OPERASYON OLUŞTUR",
+    hostNewGame: "Yeni oyun odası oluştur",
+    joinOperation: "OPERASYONA KATIL",
+    enterRoom: "Mevcut oda kodunu gir",
+    enterAccessCode: "ERİŞİM KODUNU GİR",
+    accessMainframe: "ANA SİSTEME ERİŞ",
+    operationCode: "Operasyon Kodu",
+    waiting: "Ajanlar bekleniyor...",
+    readyToDeploy: "Dağıtmaya hazır",
+    host: "HOST",
+    searching: "Sinyal aranıyor...",
+    
+    // Nasıl Oynanır
+    missionBriefing: "GÖREV BRİFİNGİ",
+    classified: "Gizli Bilgi. Dikkatle okuyun.",
+    objective: "AMAÇ",
+    civObjective: "Siviller: Casusu bulun. Lokasyonu bildiğinizi kanıtlamak için sorular sorun.",
+    spyObjective: "Casus: Uyum sağlayın. Lokasyonu anlayın. Yakalanmayın.",
+    gameplay: "OYNANIS",
+    step1: "Rolleri açığa çıkarmak için telefonu dolaştırın.",
+    step2: "Herkes rolünü öğrendikten sonra, zamanlayıcıyı başlatın.",
+    step3: "Sırayla Evet/Hayır soruları sorun.",
+    step4: "Birisinden şüpheleniyorsanız, oylama başlatın!",
+    winConditions: "KAZANMA KOŞULLARI",
+    spyWins: "Casus Kazanır: Bir sivil elenirse (birden fazla casus yoksa), casuslar sivilleri geçerse veya zaman biterse.",
+    civilWins: "Siviller Kazanır: Tüm casuslar yakalanırsa.",
   }
 };
 
-export const useTranslation = (lang: Language) => {
-  return (key: string) => {
-    return translations[lang][key] || key;
-  };
-};
+// Get translation with optional parameter substitution
+export function t(key: string, params?: Record<string, string | number>): string {
+  const lang = (localStorage.getItem('spy-language') as Language) || 'en';
+  const keys = key.split('.');
+  let value: any = translations[lang];
+  
+  for (const k of keys) {
+    value = value?.[k];
+  }
+  
+  if (typeof value !== 'string') return key;
+  
+  // Replace parameters
+  if (params) {
+    return Object.entries(params).reduce((str, [param, val]) => {
+      return str.replace(new RegExp(`\\{${param}\\}`, 'g'), String(val));
+    }, value);
+  }
+  
+  return value;
+}
+
+export function getLanguage(): Language {
+  return (localStorage.getItem('spy-language') as Language) || 'en';
+}
+
+export function setLanguage(lang: Language) {
+  localStorage.setItem('spy-language', lang);
+  window.location.reload(); // Reload to apply translations
+}
