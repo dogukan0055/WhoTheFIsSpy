@@ -6,9 +6,11 @@ import { useGame } from '@/lib/game-context';
 import { KeyRound, Wifi, MonitorSmartphone, HelpCircle, Settings, VenetianMask } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { playSound } from '@/lib/audio';
+import { useTranslation } from '@/lib/i18n';
 
 export default function Home() {
-  const { dispatch } = useGame();
+  const { state, dispatch } = useGame();
+  const t = useTranslation(state.appSettings.language);
 
   const handleModeSelect = (mode: 'offline' | 'online') => {
     dispatch({ type: 'SET_MODE', payload: mode });
@@ -29,11 +31,11 @@ export default function Home() {
         <div className="inline-block p-4 rounded-full bg-primary/10 border border-primary/20 mb-4 ring-4 ring-primary/5">
           <VenetianMask className="w-16 h-16 text-primary" />
         </div>
-        <h1 className="text-5xl font-black font-mono tracking-tighter text-foreground">
-          WHO THE <span className="text-primary italic">F***</span><br/>IS SPY?
+        <h1 className="text-5xl font-black font-mono tracking-tighter text-foreground whitespace-pre-line">
+          {t('home.title')}
         </h1>
         <p className="text-muted-foreground max-w-xs mx-auto">
-          Deception, deduction, and betrayal. Can you find the impostor among us?
+          {t('home.subtitle')}
         </p>
       </div>
 
@@ -42,14 +44,14 @@ export default function Home() {
           <Button size="lg" className="w-full h-16 text-lg font-bold font-mono tracking-wide relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
             <MonitorSmartphone className="mr-3 w-6 h-6" />
-            OFFLINE MODE
+            {t('home.offline')}
           </Button>
         </Link>
         
         <Link href="/online-menu" onClick={() => handleModeSelect('online')}>
           <Button variant="secondary" size="lg" className="w-full h-16 text-lg font-bold font-mono tracking-wide opacity-80">
             <Wifi className="mr-3 w-6 h-6" />
-            ONLINE MODE
+            {t('home.online')}
           </Button>
         </Link>
       </div>
@@ -59,7 +61,7 @@ export default function Home() {
           <DialogTrigger asChild>
             <Button variant="ghost" className="text-muted-foreground hover:text-foreground" onClick={() => playSound('click')}>
               <HelpCircle className="mr-2 w-4 h-4" />
-              How to Play
+              {t('home.howToPlay')}
             </Button>
           </DialogTrigger>
           <DialogContent className="border-border bg-card/95 backdrop-blur-xl max-h-[80vh] overflow-y-auto">
@@ -99,7 +101,7 @@ export default function Home() {
       </div>
 
       <footer className="absolute bottom-4 left-0 right-0 text-center text-xs text-muted-foreground/30 font-mono">
-        v1.1.0-PROTO // MOCKUP_MODE
+        v1.2.0-PROTO // MOCKUP_MODE
       </footer>
     </Layout>
   );

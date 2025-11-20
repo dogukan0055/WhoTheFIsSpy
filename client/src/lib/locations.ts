@@ -1,3 +1,12 @@
+// Simple bad word filter
+const BANNED_WORDS = [
+  'fuck', 'shit', 'ass', 'bitch', 'cunt', 'dick', 'pussy', 'cock', 'whore', 'slut', 
+  'bastard', 'damn', 'crap', 'piss', 'nigger', 'faggot', 'retard', 'kill', 'die', 'suicide',
+  // Turkish bad words
+  'amk', 'aq', 'piç', 'yarrak', 'oç', 'orosbu', 'orospu', 'siktir', 'sik', 'göt', 'meme', 'taşak',
+  'yarak', 'ibne', 'gavat', 'kaltak', 'fahişe', 'pezevenk', 'amcık'
+];
+
 export type Category = {
   id: string;
   name: string;
@@ -57,12 +66,6 @@ export const INITIAL_CATEGORIES: Category[] = [
       'News Room'
     ]
   }
-];
-
-// Simple bad word filter
-const BANNED_WORDS = [
-  'fuck', 'shit', 'ass', 'bitch', 'cunt', 'dick', 'pussy', 'cock', 'whore', 'slut', 
-  'bastard', 'damn', 'crap', 'piss', 'nigger', 'faggot', 'retard', 'kill', 'die', 'suicide'
 ];
 
 export const containsProfanity = (text: string): boolean => {
