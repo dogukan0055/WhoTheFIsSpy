@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { NumberPicker } from '@/components/ui/number-picker';
-import { ArrowLeft, Users, Timer, KeyRound, Play, Database, Settings as SettingsIcon } from 'lucide-react';
+import { ArrowLeft, Users, Timer, KeyRound, Play, Map, Edit2, VenetianMask } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { playSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function OfflineSetup() {
   const { state, dispatch } = useGame();
@@ -21,6 +22,7 @@ export default function OfflineSetup() {
       ? state.players.map(p => p.name)
       : Array(state.settings.playerCount).fill('').map((_, i) => `Player ${i + 1}`)
   );
+  const [isRenaming, setIsRenaming] = useState(false);
 
   // Sync internal state if needed
   React.useEffect(() => {
@@ -139,15 +141,11 @@ export default function OfflineSetup() {
               <ArrowLeft className="w-6 h-6" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold font-mono ml-2">MISSION SETUP</h1>
+          <h1 className="text-2xl font-bold font-mono ml-2 flex items-center gap-2">
+             <VenetianMask className="w-6 h-6 text-primary" />
+             MISSION SETUP
+          </h1>
         </div>
-        
-        <Link href="/locations">
-          <Button variant="secondary" size="sm" className="font-mono text-xs" onClick={() => playSound('click')}>
-            <Database className="w-4 h-4 mr-2" />
-            LOCATIONS
-          </Button>
-        </Link>
       </div>
 
       <div className="space-y-8 pb-24">
@@ -160,6 +158,7 @@ export default function OfflineSetup() {
               value={state.settings.playerCount}
               onChange={handlePlayerCountChange}
             />
+            <div className="text-[10px] text-muted-foreground text-center">MIN: 4 | MAX: 8</div>
           </section>
 
           {/* Spy Count */}
@@ -177,6 +176,9 @@ export default function OfflineSetup() {
                 1 SPY MAX
               </div>
             )}
+            <div className="text-[10px] text-muted-foreground text-center">
+              {state.settings.playerCount > 5 ? "MIN: 1 | MAX: 2" : "LOCKED"}
+            </div>
           </section>
         </div>
 
@@ -191,38 +193,57 @@ export default function OfflineSetup() {
           </div>
           
           {state.settings.isTimerOn && (
-            <NumberPicker 
-              min={5} max={30} step={1}
-              value={state.settings.timerDuration}
-              onChange={handleTimerChange}
-              label="MINUTES"
-              className="mt-2"
-            />
+            <div className="mt-2 space-y-2">
+              <NumberPicker 
+                min={5} max={30} step={1}
+                value={state.settings.timerDuration}
+                onChange={handleTimerChange}
+                label="MINUTES"
+              />
+               <div className="text-[10px] text-muted-foreground text-center">MIN: 5m | MAX: 30m</div>
+            </div>
           )}
+
+          {/* Locations Button (Moved under Timer) */}
+          <Link href="/locations">
+            <Button variant="outline" className="w-full mt-4 border-dashed border-white/20 text-muted-foreground hover:text-primary hover:border-primary h-12" onClick={() => playSound('click')}>
+              <Map className="w-4 h-4 mr-2" />
+              MANAGE LOCATIONS
+            </Button>
+          </Link>
         </section>
 
-        {/* Player Names Management */}
-        <section className="space-y-3">
-          <div className="flex justify-between items-end">
-            <Label className="text-lg block">ROSTER</Label>
-            <span className="text-xs text-muted-foreground font-mono">Rename agents below</span>
-          </div>
-          <div className="grid gap-3">
-            {playerNames.map((name, idx) => (
-              <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${idx * 50}ms` }}>
-                <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-muted-foreground font-mono text-xs border border-white/10">
-                  {idx + 1}
-                </div>
-                <Input 
-                  value={name}
-                  onChange={(e) => handleNameChange(idx, e.target.value)}
-                  placeholder={`Agent ${idx + 1}`}
-                  className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
-                />
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Player Management Button */}
+        <Dialog open={isRenaming} onOpenChange={setIsRenaming}>
+          <DialogTrigger asChild>
+             <Button variant="secondary" className="w-full h-12" onClick={() => playSound('click')}>
+               <Edit2 className="w-4 h-4 mr-2" />
+               MANAGE AGENT ROSTER
+             </Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[80vh] overflow-y-auto">
+             <DialogHeader>
+               <DialogTitle>Agent Roster</DialogTitle>
+             </DialogHeader>
+             <div className="space-y-3 py-4">
+               {playerNames.map((name, idx) => (
+                  <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${idx * 50}ms` }}>
+                    <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-muted-foreground font-mono text-xs border border-white/10">
+                      {idx + 1}
+                    </div>
+                    <Input 
+                      value={name}
+                      onChange={(e) => handleNameChange(idx, e.target.value)}
+                      placeholder={`Agent ${idx + 1}`}
+                      className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
+                    />
+                  </div>
+                ))}
+             </div>
+             <Button onClick={() => setIsRenaming(false)} className="w-full">Done</Button>
+          </DialogContent>
+        </Dialog>
+
       </div>
 
       {/* Footer Action */}
@@ -230,7 +251,7 @@ export default function OfflineSetup() {
         <div className="max-w-md mx-auto flex gap-3">
           <Button size="lg" className="flex-1 h-14 font-bold text-lg font-mono" onClick={handleStartGame}>
             <Play className="w-5 h-5 mr-2 fill-current" />
-            START
+            START MISSION
           </Button>
         </div>
       </div>

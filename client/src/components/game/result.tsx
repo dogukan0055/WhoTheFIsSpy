@@ -2,7 +2,7 @@ import React from 'react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Trophy, MapPin, RotateCcw, Home, ScanFace } from 'lucide-react';
+import { Trophy, MapPin, RotateCcw, Home, Fingerprint, User } from 'lucide-react';
 import { Link } from 'wouter';
 import { playSound } from '@/lib/audio';
 
@@ -47,7 +47,7 @@ export default function Result() {
           <h3 className="text-xs uppercase text-muted-foreground text-left mb-2">The Spies Were</h3>
           {state.players.filter(p => p.role === 'spy').map(spy => (
             <div key={spy.id} className="flex items-center bg-red-500/10 p-3 rounded border border-red-500/20">
-              <ScanFace className="w-4 h-4 mr-2 text-red-500" />
+              <Fingerprint className="w-4 h-4 mr-2 text-red-500" />
               <span className="font-mono font-bold text-red-400">{spy.name}</span>
               {spy.isDead && <span className="ml-auto text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">CAUGHT</span>}
             </div>

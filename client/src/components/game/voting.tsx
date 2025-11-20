@@ -3,7 +3,7 @@ import { useGame, Player } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
-import { Skull, Fingerprint } from 'lucide-react';
+import { Skull, Fingerprint, User } from 'lucide-react';
 
 export default function Voting() {
   const { state, dispatch } = useGame();
@@ -41,11 +41,9 @@ export default function Voting() {
                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500" />
              )}
 
-            <Avatar className="h-10 w-10 mr-4 border border-white/10">
-              <AvatarFallback className="bg-background text-foreground font-mono">
-                {player.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="h-10 w-10 mr-4 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+               <User className="w-5 h-5 text-muted-foreground" />
+            </div>
             
             <div className="text-left flex-1">
               <p className={cn("font-bold font-mono truncate", selectedPlayerId === player.id && "text-red-400")}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
-import { Clock, AlertTriangle, Vote } from 'lucide-react';
+import { Clock, HelpCircle, Vote, MessageCircleQuestion } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Discussion() {
@@ -13,25 +13,20 @@ export default function Discussion() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progress = (state.gameData.timeLeft / (state.settings.timerDuration * 60)) * 100;
+  // Don't use progress bar, use something else as requested.
+  // Maybe a circular timer or just a clean digital display with an icon.
 
   return (
     <div className="flex flex-col items-center h-full space-y-8 py-6">
       {/* Timer Header */}
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-4 text-center">
         {state.settings.isTimerOn && (
-          <div className="relative pt-4 pb-8 flex flex-col items-center">
-            <div className="text-6xl font-mono font-bold tracking-tighter tabular-nums relative z-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-              {formatTime(state.gameData.timeLeft)}
-            </div>
-            {/* Simple Progress Bar */}
-            <div className="w-full h-2 bg-secondary/20 rounded-full mt-4 overflow-hidden">
-              <div 
-                className={cn("h-full transition-all duration-1000 ease-linear", 
-                  state.gameData.timeLeft < 60 ? "bg-red-500 animate-pulse" : "bg-primary"
-                )}
-                style={{ width: `${progress}%` }}
-              />
+          <div className="relative py-8 flex flex-col items-center justify-center">
+            <div className="flex items-center gap-3 text-6xl font-mono font-bold tracking-tighter tabular-nums relative z-10 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+               <Clock className={cn("w-12 h-12 animate-pulse", state.gameData.timeLeft < 60 ? "text-red-500" : "text-primary")} />
+               <span className={cn(state.gameData.timeLeft < 60 && "text-red-500")}>
+                 {formatTime(state.gameData.timeLeft)}
+               </span>
             </div>
           </div>
         )}
@@ -43,28 +38,31 @@ export default function Discussion() {
         )}
       </div>
 
-      {/* Instructions */}
+      {/* Instructions - Colorful Description */}
       <div className="flex-1 w-full space-y-6 text-center">
         <div className="bg-card/50 border border-border p-6 rounded-xl backdrop-blur-sm">
-          <h3 className="text-lg font-bold mb-2 flex items-center justify-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-yellow-500" />
-            Question Phase
+          <h3 className="text-xl font-bold mb-4 flex items-center justify-center gap-2 text-foreground">
+            <MessageCircleQuestion className="w-6 h-6 text-blue-400" />
+            Interrogation Phase
           </h3>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Ask each other questions to find the spy. <br/>
-            Spies: Try to figure out the location. <br/>
-            Civilians: Don't be too obvious!
-          </p>
+          <div className="text-sm leading-relaxed space-y-2">
+            <p>
+              <span className="text-blue-400 font-bold">CIVILIANS:</span> Ask questions to verify others. Don't give away the location!
+            </p>
+            <p>
+              <span className="text-red-400 font-bold">SPIES:</span> Listen carefully. Infer the location. Blend in with vague answers.
+            </p>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
            <div className="bg-card/30 p-4 rounded-lg border border-white/5">
              <span className="block text-2xl font-bold font-mono mb-1">{state.players.filter(p => !p.isDead).length}</span>
-             <span className="text-xs uppercase text-muted-foreground">Players Left</span>
+             <span className="text-xs uppercase text-muted-foreground">Agents Active</span>
            </div>
            <div className="bg-card/30 p-4 rounded-lg border border-white/5">
              <span className="block text-2xl font-bold font-mono mb-1">{state.settings.spyCount}</span>
-             <span className="text-xs uppercase text-muted-foreground">Spies Hidden</span>
+             <span className="text-xs uppercase text-muted-foreground">Spies Remaining</span>
            </div>
         </div>
       </div>

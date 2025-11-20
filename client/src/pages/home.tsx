@@ -3,7 +3,7 @@ import Layout from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { useGame } from '@/lib/game-context';
-import { KeyRound, Wifi, MonitorSmartphone, HelpCircle, Settings } from 'lucide-react';
+import { KeyRound, Wifi, MonitorSmartphone, HelpCircle, Settings, VenetianMask } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { playSound } from '@/lib/audio';
 
@@ -27,7 +27,7 @@ export default function Home() {
 
       <div className="text-center space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
         <div className="inline-block p-4 rounded-full bg-primary/10 border border-primary/20 mb-4 ring-4 ring-primary/5">
-          <KeyRound className="w-16 h-16 text-primary" />
+          <VenetianMask className="w-16 h-16 text-primary" />
         </div>
         <h1 className="text-5xl font-black font-mono tracking-tighter text-foreground">
           WHO THE <span className="text-primary italic">F***</span><br/>IS SPY?

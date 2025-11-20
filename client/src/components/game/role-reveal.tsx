@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ScanFace, Eye, CheckCircle } from 'lucide-react';
+import { Fingerprint, Eye, EyeOff, User } from 'lucide-react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -14,6 +14,7 @@ export default function RoleReveal() {
   const isLastPlayer = state.gameData.currentRevealIndex === state.players.length - 1;
 
   const handleNext = () => {
+    // Sound allowed on navigation clicks
     playSound('click');
     if (isLastPlayer) {
       dispatch({ type: 'START_PLAYING' });
@@ -25,15 +26,16 @@ export default function RoleReveal() {
 
   const handleReveal = () => {
     setIsRevealed(true);
-    playSound(currentPlayer.role === 'spy' ? 'alarm' : 'reveal');
-    vibrate(200);
+    // SILENT REVEAL for Offline Mode as requested
+    // "Do not allow sounds in offline reveal role section. It's a hint for other players."
+    vibrate(50); // Short vibration is discreet enough
   };
 
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-8 py-12">
       <div className="text-center space-y-2">
         <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-mono">
-          Player {state.gameData.currentRevealIndex + 1} / {state.players.length}
+          Agent {state.gameData.currentRevealIndex + 1} / {state.players.length}
         </h2>
         <h1 className="text-4xl font-bold font-mono tracking-tighter">{currentPlayer.name}</h1>
       </div>
@@ -46,7 +48,7 @@ export default function RoleReveal() {
               animate={{ opacity: 1 }}
               className="space-y-6"
             >
-              <ScanFace className="w-24 h-24 text-muted-foreground/50 animate-pulse" />
+              <Fingerprint className="w-24 h-24 text-muted-foreground/50 animate-pulse" />
               <p className="text-lg font-medium">Pass the phone to <br/><span className="text-primary font-bold text-2xl">{currentPlayer.name}</span></p>
               <p className="text-sm text-muted-foreground">Tap below to reveal your role</p>
             </motion.div>
@@ -59,7 +61,7 @@ export default function RoleReveal() {
               {currentPlayer.role === 'spy' ? (
                 <div className="space-y-4">
                   <div className="w-24 h-24 mx-auto rounded-full bg-red-500/20 flex items-center justify-center border-2 border-red-500 animate-pulse">
-                    <ScanFace className="w-12 h-12 text-red-500" />
+                    <Fingerprint className="w-12 h-12 text-red-500" />
                   </div>
                   <h2 className="text-3xl font-black text-red-500 font-mono uppercase">YOU ARE THE SPY</h2>
                   <p className="text-sm text-muted-foreground">Try to blend in. Figure out the location without getting caught.</p>
@@ -67,7 +69,7 @@ export default function RoleReveal() {
               ) : (
                 <div className="space-y-4">
                    <div className="w-24 h-24 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center border-2 border-blue-500">
-                    <CheckCircle className="w-12 h-12 text-blue-500" />
+                    <User className="w-12 h-12 text-blue-500" />
                   </div>
                   <h2 className="text-xl font-bold text-blue-400 font-mono uppercase">CIVILIAN</h2>
                   <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
@@ -87,7 +89,7 @@ export default function RoleReveal() {
         variant={isRevealed ? "default" : "secondary"}
         onClick={() => isRevealed ? handleNext() : handleReveal()}
       >
-        {isRevealed ? (isLastPlayer ? "Start Game" : "Next Player") : "Reveal Role"}
+        {isRevealed ? (isLastPlayer ? "Start Mission" : "Next Agent") : "Reveal Identity"}
       </Button>
     </div>
   );
