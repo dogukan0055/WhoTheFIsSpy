@@ -135,9 +135,6 @@ export default function RoleReveal() {
                   />
                 )}
                 <Fingerprint className="w-16 h-16 text-primary drop-shadow-[0_0_12px_rgba(59,130,246,0.35)]" />
-                <div className="absolute bottom-3 left-0 right-0 text-[11px] text-muted-foreground font-mono uppercase tracking-wide">
-                  {t('reveal.tap')}
-                </div>
               </div>
               <p className="text-sm text-muted-foreground">{t('reveal.hold')}</p>
             </motion.div>
@@ -174,7 +171,7 @@ export default function RoleReveal() {
 
       <Button
         size="lg"
-        className="w-full max-w-xs font-mono text-lg h-14"
+        className="w-full max-w-xs font-mono h-14"
         variant={isRevealed ? "default" : "secondary"}
         disabled={!isRevealed}
         onClick={() => handleNext()}
@@ -186,7 +183,7 @@ export default function RoleReveal() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.25 }}
-            className="flex items-center gap-2 text-center"
+            className="flex items-center gap-2 text-center whitespace-normal leading-tight text-sm sm:text-base"
           >
             {isRevealed ? (isLastPlayer ? t('reveal.startMission') : t('reveal.nextAgent')) : t('reveal.tap')}
           </motion.span>

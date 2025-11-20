@@ -96,6 +96,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'reveal.location': 'Location',
     'reveal.nextAgent': 'Next Agent',
     'reveal.startMission': 'Start Mission',
+    'voting.spyCaught': 'Spy caught!',
+    'voting.spyRemain': 'Another spy is still at large. Stay sharp.',
     'discussion.exit': 'Exit Game',
     'discussion.exitDesc': 'Reset the current match and jump back to the menu.',
   },
@@ -194,6 +196,8 @@ export const translations: Record<Language, Record<string, string>> = {
     'reveal.location': 'Lokasyon',
     'reveal.nextAgent': 'Sonraki Ajan',
     'reveal.startMission': 'Görevi Başlat',
+    'voting.spyCaught': 'Casus yakalandı!',
+    'voting.spyRemain': 'Diğer casus hâlâ saklanıyor. Dikkatli olun.',
     'discussion.exit': 'Oyundan Çık',
     'discussion.exitDesc': 'Mevcut maçı sıfırla ve menüye dön.',
   }

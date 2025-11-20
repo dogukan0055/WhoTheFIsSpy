@@ -191,13 +191,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       } else {
         // Civilian eliminated
         if (totalSpiesStart > 1) {
-           if (spiesLeft > 1) {
-             nextPhase = 'playing';
-           } else {
-              // 1 Spy left, Civilian killed -> Spy Wins
-              nextPhase = 'result';
-              winner = 'spy';
-           }
+          // Multiple spies scenario: any civilian elimination hands spies the win
+          nextPhase = 'result';
+          winner = 'spy';
         } else {
           // Only 1 spy in game, Civilian killed -> Spy Wins
           nextPhase = 'result';
@@ -206,7 +202,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       }
 
       // Default parity check (Spies >= Civilians -> Spies Win)
-      if (spiesLeft >= civiliansLeft) {
+      if (!winner && spiesLeft >= civiliansLeft) {
         nextPhase = 'result';
         winner = 'spy';
       }

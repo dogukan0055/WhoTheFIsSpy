@@ -1,18 +1,29 @@
 import React, { useState } from 'react';
 import { useGame, Player } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Skull, Fingerprint, User } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function Voting() {
   const { state, dispatch } = useGame();
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const livingPlayers = state.players.filter(p => !p.isDead);
 
   const handleVote = () => {
     if (selectedPlayerId) {
+      const target = state.players.find(p => p.id === selectedPlayerId);
+      const activeSpies = state.players.filter(p => !p.isDead && p.role === 'spy');
+      const spiesAfterVote = target?.role === 'spy'
+        ? activeSpies.filter(spy => spy.id !== selectedPlayerId).length
+        : activeSpies.length;
+
+      if (target?.role === 'spy' && spiesAfterVote >= 1) {
+        toast({ title: t('voting.spyCaught'), description: t('voting.spyRemain') });
+      }
       dispatch({ type: 'ELIMINATE_PLAYER', payload: selectedPlayerId });
     }
   };
