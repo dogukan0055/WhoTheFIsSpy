@@ -5,10 +5,12 @@ import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { playSound, vibrate } from '@/lib/audio';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function RoleReveal() {
   const { state, dispatch } = useGame();
   const [isRevealed, setIsRevealed] = React.useState(false);
+  const { t } = useTranslation();
   
   const currentPlayer = state.players[state.gameData.currentRevealIndex];
   const isLastPlayer = state.gameData.currentRevealIndex === state.players.length - 1;
@@ -43,14 +45,16 @@ export default function RoleReveal() {
       <Card className="w-full aspect-[3/4] max-w-xs relative overflow-hidden border-2 border-border bg-card/50 backdrop-blur-sm">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
           {!isRevealed ? (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="space-y-6"
+              className="space-y-6 w-full"
             >
-              <Fingerprint className="w-24 h-24 text-muted-foreground/50 animate-pulse" />
-              <p className="text-lg font-medium">Pass the phone to <br/><span className="text-primary font-bold text-2xl">{currentPlayer.name}</span></p>
-              <p className="text-sm text-muted-foreground">Tap below to reveal your role</p>
+              <div className="flex items-center justify-center">
+                <Fingerprint className="w-24 h-24 text-muted-foreground/50 animate-pulse" />
+              </div>
+              <p className="text-lg font-medium">{t('reveal.pass')} <br/><span className="text-primary font-bold text-2xl">{currentPlayer.name}</span></p>
+              <p className="text-sm text-muted-foreground">{t('reveal.tap')}</p>
             </motion.div>
           ) : (
             <motion.div
@@ -63,17 +67,17 @@ export default function RoleReveal() {
                   <div className="w-24 h-24 mx-auto rounded-full bg-red-500/20 flex items-center justify-center border-2 border-red-500 animate-pulse">
                     <Fingerprint className="w-12 h-12 text-red-500" />
                   </div>
-                  <h2 className="text-3xl font-black text-red-500 font-mono uppercase">YOU ARE THE SPY</h2>
-                  <p className="text-sm text-muted-foreground">Try to blend in. Figure out the location without getting caught.</p>
+                  <h2 className="text-3xl font-black text-red-500 font-mono uppercase">{t('reveal.spy')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('reveal.spyDesc')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                    <div className="w-24 h-24 mx-auto rounded-full bg-blue-500/20 flex items-center justify-center border-2 border-blue-500">
                     <User className="w-12 h-12 text-blue-500" />
                   </div>
-                  <h2 className="text-xl font-bold text-blue-400 font-mono uppercase">CIVILIAN</h2>
+                  <h2 className="text-xl font-bold text-blue-400 font-mono uppercase">{t('reveal.civilian')}</h2>
                   <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <p className="text-xs text-blue-300 uppercase mb-1">Location</p>
+                    <p className="text-xs text-blue-300 uppercase mb-1">{t('reveal.location')}</p>
                     <p className="text-2xl font-bold text-blue-100">{state.gameData.currentLocation}</p>
                   </div>
                 </div>
@@ -83,13 +87,13 @@ export default function RoleReveal() {
         </div>
       </Card>
 
-      <Button 
-        size="lg" 
+      <Button
+        size="lg"
         className="w-full max-w-xs font-mono text-lg h-14"
         variant={isRevealed ? "default" : "secondary"}
         onClick={() => isRevealed ? handleNext() : handleReveal()}
       >
-        {isRevealed ? (isLastPlayer ? "Start Mission" : "Next Agent") : "Reveal Identity"}
+        {isRevealed ? (isLastPlayer ? t('reveal.startMission') : t('reveal.nextAgent')) : t('reveal.revealIdentity')}
       </Button>
     </div>
   );

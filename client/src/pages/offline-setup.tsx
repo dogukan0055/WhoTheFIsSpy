@@ -8,21 +8,23 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { NumberPicker } from '@/components/ui/number-picker';
-import { ArrowLeft, Users, Timer, KeyRound, Play, Map, Edit2, VenetianMask } from 'lucide-react';
+import { ArrowLeft, Users, Timer, Mask, Play, Map, Edit2, VenetianMask } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { playSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function OfflineSetup() {
   const { state, dispatch } = useGame();
   const [_, setLocation] = useLocation();
   const [playerNames, setPlayerNames] = useState<string[]>(
-    state.players.length > 0 
+    state.players.length > 0
       ? state.players.map(p => p.name)
       : Array(state.settings.playerCount).fill('').map((_, i) => `Player ${i + 1}`)
   );
   const [isRenaming, setIsRenaming] = useState(false);
+  const { t } = useTranslation();
 
   // Sync internal state if needed
   React.useEffect(() => {
@@ -73,12 +75,12 @@ export default function OfflineSetup() {
     // Validation
     for (const name of playerNames) {
       if (!name.trim()) {
-        toast({ title: "Invalid Name", description: "All players must have a name.", variant: "destructive" });
+        toast({ title: t('setup.invalidName'), description: t('setup.invalidNameDesc'), variant: "destructive" });
         playSound('error');
         return;
       }
       if (containsProfanity(name)) {
-        toast({ title: "Name Rejected", description: `Name "${name}" is not allowed.`, variant: "destructive" });
+        toast({ title: t('setup.nameRejected'), description: `Name "${name}" is not allowed.`, variant: "destructive" });
         playSound('error');
         return;
       }
@@ -86,7 +88,7 @@ export default function OfflineSetup() {
 
     // Check Categories
     if (state.settings.selectedCategories.length === 0) {
-      toast({ title: "No Locations", description: "Please select at least one location category in Database.", variant: "destructive" });
+      toast({ title: t('setup.noLocations'), description: t('setup.noLocationsDesc'), variant: "destructive" });
       playSound('error');
       return;
     }
@@ -108,17 +110,24 @@ export default function OfflineSetup() {
       }
     }
 
-    // Get random category from selected ones
-    const validCategories = state.gameData.categories.filter(c => state.settings.selectedCategories.includes(c.id));
+    // Get random category from selected ones with enabled locations
+    const validCategories = state.gameData.categories
+      .filter(c => state.settings.selectedCategories.includes(c.id))
+      .map(c => ({
+        ...c,
+        enabledLocations: c.locations.filter(loc => !(state.settings.disabledLocations[c.id] || []).includes(loc))
+      }))
+      .filter(c => c.enabledLocations.length > 0);
+
     const randomCat = validCategories[Math.floor(Math.random() * validCategories.length)];
-    
-    if (!randomCat || randomCat.locations.length === 0) {
-       toast({ title: "Empty Category", description: "Selected category has no locations.", variant: "destructive" });
+
+    if (!randomCat) {
+       toast({ title: t('setup.locationDisabled'), description: t('setup.locationDisabledDesc'), variant: "destructive" });
        playSound('error');
        return;
     }
 
-    const randomLoc = randomCat.locations[Math.floor(Math.random() * randomCat.locations.length)];
+    const randomLoc = randomCat.enabledLocations[Math.floor(Math.random() * randomCat.enabledLocations.length)];
 
     dispatch({ type: 'SET_PLAYERS', payload: players });
     dispatch({ 
@@ -143,7 +152,7 @@ export default function OfflineSetup() {
           </Link>
           <h1 className="text-2xl font-bold font-mono ml-2 flex items-center gap-2">
              <VenetianMask className="w-6 h-6 text-primary" />
-             MISSION SETUP
+             {t('setup.title')}
           </h1>
         </div>
       </div>
@@ -152,32 +161,32 @@ export default function OfflineSetup() {
         <div className="grid grid-cols-2 gap-4">
           {/* Players Count */}
           <section className="space-y-2">
-            <Label className="flex items-center text-sm text-muted-foreground"><Users className="mr-2 w-4 h-4" /> AGENTS</Label>
-            <NumberPicker 
-              min={4} max={8} 
+            <Label className="flex items-center text-sm text-muted-foreground"><Users className="mr-2 w-4 h-4" /> {t('setup.agents')}</Label>
+            <NumberPicker
+              min={4} max={8}
               value={state.settings.playerCount}
               onChange={handlePlayerCountChange}
             />
-            <div className="text-[10px] text-muted-foreground text-center">MIN: 4 | MAX: 8</div>
+            <div className="text-[10px] text-muted-foreground text-center">{t('setup.minMaxAgents')}</div>
           </section>
 
           {/* Spy Count */}
           <section className="space-y-2">
-            <Label className="flex items-center text-sm text-muted-foreground"><KeyRound className="mr-2 w-4 h-4" /> SPIES</Label>
+            <Label className="flex items-center text-sm text-muted-foreground"><Mask className="mr-2 w-4 h-4" /> {t('setup.spies')}</Label>
             {state.settings.playerCount > 5 ? (
-              <NumberPicker 
-                min={1} max={2} 
+              <NumberPicker
+                min={1} max={2}
                 value={state.settings.spyCount}
                 onChange={handleSpyCountChange}
                 className="border-red-500/20 bg-red-500/5"
               />
             ) : (
               <div className="h-14 flex items-center justify-center border border-white/5 rounded-lg bg-white/5 text-muted-foreground font-mono text-sm">
-                1 SPY MAX
+                {t('setup.oneSpyMax')}
               </div>
             )}
             <div className="text-[10px] text-muted-foreground text-center">
-              {state.settings.playerCount > 5 ? "MIN: 1 | MAX: 2" : "LOCKED"}
+              {state.settings.playerCount > 5 ? t('setup.minMaxSpies') : t('setup.locked')}
             </div>
           </section>
         </div>
@@ -185,45 +194,45 @@ export default function OfflineSetup() {
         {/* Timer */}
         <section className="space-y-4 bg-card/30 p-4 rounded-lg border border-white/5">
           <div className="flex justify-between items-center">
-            <Label className="flex items-center"><Timer className="mr-2 w-5 h-5 text-blue-500" /> MISSION TIMER</Label>
-            <Switch 
-              checked={state.settings.isTimerOn} 
+            <Label className="flex items-center"><Timer className="mr-2 w-5 h-5 text-blue-500" /> {t('setup.timer')}</Label>
+            <Switch
+              checked={state.settings.isTimerOn}
               onCheckedChange={(checked) => { playSound('click'); dispatch({ type: 'UPDATE_SETTINGS', payload: { isTimerOn: checked } }); }}
             />
           </div>
           
           {state.settings.isTimerOn && (
             <div className="mt-2 space-y-2">
-              <NumberPicker 
+              <NumberPicker
                 min={5} max={30} step={1}
                 value={state.settings.timerDuration}
                 onChange={handleTimerChange}
-                label="MINUTES"
+                label={t('setup.minutes')}
               />
-               <div className="text-[10px] text-muted-foreground text-center">MIN: 5m | MAX: 30m</div>
+               <div className="text-[10px] text-muted-foreground text-center">{t('setup.minMaxTimer')}</div>
             </div>
           )}
-
-          {/* Locations Button (Moved under Timer) */}
-          <Link href="/locations">
-            <Button variant="outline" className="w-full mt-4 border-dashed border-white/20 text-muted-foreground hover:text-primary hover:border-primary h-12" onClick={() => playSound('click')}>
-              <Map className="w-4 h-4 mr-2" />
-              MANAGE LOCATIONS
-            </Button>
-          </Link>
         </section>
+
+        {/* Locations Button */}
+        <Link href="/locations">
+          <Button variant="outline" className="w-full h-12 border-dashed border-white/20 text-muted-foreground hover:text-primary hover:border-primary" onClick={() => playSound('click')}>
+            <Map className="w-4 h-4 mr-2" />
+            {t('setup.locations')}
+          </Button>
+        </Link>
 
         {/* Player Management Button */}
         <Dialog open={isRenaming} onOpenChange={setIsRenaming}>
           <DialogTrigger asChild>
              <Button variant="secondary" className="w-full h-12" onClick={() => playSound('click')}>
                <Edit2 className="w-4 h-4 mr-2" />
-               MANAGE AGENT ROSTER
+               {t('setup.manageRoster')}
              </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[80vh] overflow-y-auto">
              <DialogHeader>
-               <DialogTitle>Agent Roster</DialogTitle>
+               <DialogTitle>{t('setup.manageRoster')}</DialogTitle>
              </DialogHeader>
              <div className="space-y-3 py-4">
                {playerNames.map((name, idx) => (
@@ -231,16 +240,16 @@ export default function OfflineSetup() {
                     <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-muted-foreground font-mono text-xs border border-white/10">
                       {idx + 1}
                     </div>
-                    <Input 
+                    <Input
                       value={name}
                       onChange={(e) => handleNameChange(idx, e.target.value)}
-                      placeholder={`Agent ${idx + 1}`}
+                      placeholder={`${t('setup.agents')} ${idx + 1}`}
                       className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
                     />
                   </div>
                 ))}
              </div>
-             <Button onClick={() => setIsRenaming(false)} className="w-full">Done</Button>
+             <Button onClick={() => setIsRenaming(false)} className="w-full">OK</Button>
           </DialogContent>
         </Dialog>
 
@@ -251,7 +260,7 @@ export default function OfflineSetup() {
         <div className="max-w-md mx-auto flex gap-3">
           <Button size="lg" className="flex-1 h-14 font-bold text-lg font-mono" onClick={handleStartGame}>
             <Play className="w-5 h-5 mr-2 fill-current" />
-            START MISSION
+            {t('setup.start')}
           </Button>
         </div>
       </div>

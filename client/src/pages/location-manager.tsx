@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from '@/lib/utils';
 import { INITIAL_CATEGORIES } from '@/lib/locations';
+import { Switch } from '@/components/ui/switch';
+import { useTranslation } from '@/hooks/use-translation';
 
 const PREDEFINED_IDS = INITIAL_CATEGORIES.map(c => c.id);
 
@@ -27,6 +29,7 @@ export default function LocationManager() {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [isAddingCat, setIsAddingCat] = useState(false);
   const [isAddingLoc, setIsAddingLoc] = useState(false);
+  const { t } = useTranslation();
 
   const handleAddCategory = () => {
     if (!newCatName.trim()) return;
@@ -43,7 +46,7 @@ export default function LocationManager() {
     setNewCatName('');
     setIsAddingCat(false);
     playSound('success');
-    toast({ title: "Category Added", description: `${newCatName} added to database.` });
+    toast({ title: t('locations.categoryAdded'), description: `${newCatName} ${t('locations.categoryAddedDesc')}` });
   };
 
   const handleAddLocation = () => {
@@ -58,19 +61,19 @@ export default function LocationManager() {
     setNewLocName('');
     setIsAddingLoc(false);
     playSound('success');
-    toast({ title: "Location Added", description: `${newLocName} added to category.` });
+    toast({ title: t('locations.locationAdded'), description: `${newLocName} ${t('locations.locationAddedDesc')}` });
   };
 
   const handleDeleteCategory = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (PREDEFINED_IDS.includes(id)) {
-      toast({ title: "Action Denied", description: "Core protocols cannot be deleted.", variant: "destructive" });
+      toast({ title: t('locations.actionDenied'), description: t('locations.coreCategory'), variant: "destructive" });
       playSound('error');
       return;
     }
-    
+
     if (state.gameData.categories.length <= 1) {
-      toast({ title: "Action Denied", description: "Cannot delete the last category.", variant: "destructive" });
+      toast({ title: t('locations.actionDenied'), description: t('locations.lastCategory'), variant: "destructive" });
       return;
     }
     dispatch({ type: 'DELETE_CATEGORY', payload: id });
@@ -81,14 +84,14 @@ export default function LocationManager() {
     e.stopPropagation();
     
     if (cat.locations.length === 0) {
-      toast({ title: "Category Empty", description: "Cannot enable empty category. Add locations first.", variant: "destructive" });
+      toast({ title: t('locations.categoryEmpty'), description: t('locations.categoryEmptyDesc'), variant: "destructive" });
       playSound('error');
       return;
     }
 
     // Prevent disabling if it's the last one
     if (state.settings.selectedCategories.includes(cat.id) && state.settings.selectedCategories.length === 1) {
-      toast({ title: "Warning", description: "At least one category must be active.", variant: "destructive" });
+      toast({ title: t('locations.warning'), description: t('locations.mustKeepOne'), variant: "destructive" });
       playSound('error');
       return;
     }
@@ -102,11 +105,16 @@ export default function LocationManager() {
         // Wait, user said "Pre-defined locations of the game can not be deleted. Only allow user to enable and disable them."
         // To simplify "enable/disable" individual locations without massive schema changes, 
         // I will interpret this as: Predefined locations can't be removed from the list at all.
-        toast({ title: "Action Denied", description: "Core locations cannot be removed.", variant: "destructive" });
+        toast({ title: t('locations.actionDenied'), description: t('locations.coreLocation'), variant: "destructive" });
         playSound('error');
         return;
      }
      dispatch({ type: 'REMOVE_LOCATION', payload: { categoryId: catId, location: loc } });
+  };
+
+  const toggleLocation = (categoryId: string, location: string) => {
+    dispatch({ type: 'TOGGLE_LOCATION', payload: { categoryId, location } });
+    playSound('click');
   };
 
   return (
@@ -117,7 +125,7 @@ export default function LocationManager() {
             <ArrowLeft className="w-6 h-6" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold font-mono ml-2">DATABASE</h1>
+        <h1 className="text-2xl font-bold font-mono ml-2">{t('locations.title')}</h1>
       </div>
 
       <div className="space-y-6 pb-24">
@@ -164,14 +172,23 @@ export default function LocationManager() {
                       <div className="grid grid-cols-2 gap-2 mt-4">
                         {cat.locations.map((loc, idx) => {
                           // Check if this location is originally from predefined set
-                          const originalCat = INITIAL_CATEGORIES.find(c => c.id === cat.id);
-                          const isCoreLoc = originalCat?.locations.includes(loc);
+                      const originalCat = INITIAL_CATEGORIES.find(c => c.id === cat.id);
+                      const isCoreLoc = originalCat?.locations.includes(loc);
+                      const isDisabled = (state.settings.disabledLocations[cat.id] || []).includes(loc);
 
-                          return (
+                      return (
                             <div key={idx} className="flex items-center justify-between p-2 rounded bg-white/5 text-sm group">
-                              <span className="truncate mr-2">{loc}</span>
+                              <div className="flex items-center gap-2">
+                                <Switch
+                                  checked={!isDisabled}
+                                  onCheckedChange={() => toggleLocation(cat.id, loc)}
+                                  className="shrink-0"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <span className={cn("truncate mr-2", isDisabled && "line-through text-muted-foreground/60")}>{loc}</span>
+                              </div>
                               {!isCoreLoc ? (
-                                <button 
+                                <button
                                   onClick={() => handleRemoveLocation(cat.id, loc, false)}
                                   className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
@@ -186,22 +203,22 @@ export default function LocationManager() {
                         <Dialog open={isAddingLoc} onOpenChange={setIsAddingLoc}>
                           <DialogTrigger asChild>
                             <Button variant="outline" className="border-dashed border-white/20 text-muted-foreground hover:text-primary hover:border-primary">
-                              <Plus className="w-4 h-4 mr-2" /> Add Location
+                              <Plus className="w-4 h-4 mr-2" /> {t('locations.addLocation')}
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>New Location for {cat.name}</DialogTitle>
+                              <DialogTitle>{t('locations.newLocationFor')} {cat.name}</DialogTitle>
                             </DialogHeader>
                             <div className="py-4">
-                              <Input 
-                                placeholder="E.g. Submarine Base" 
+                              <Input
+                                placeholder="E.g. Submarine Base"
                                 value={newLocName}
                                 onChange={(e) => setNewLocName(e.target.value)}
                               />
                             </div>
                             <DialogFooter>
-                              <Button onClick={handleAddLocation}>Confirm</Button>
+                              <Button onClick={handleAddLocation}>{t('locations.confirm')}</Button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
@@ -217,22 +234,22 @@ export default function LocationManager() {
         <Dialog open={isAddingCat} onOpenChange={setIsAddingCat}>
           <DialogTrigger asChild>
             <Button variant="outline" className="w-full h-12 border-dashed border-white/20 text-muted-foreground hover:text-primary hover:border-primary">
-              <Plus className="w-4 h-4 mr-2" /> CREATE NEW CATEGORY
+              <Plus className="w-4 h-4 mr-2" /> {t('locations.addCategory')}
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>New Category</DialogTitle>
+              <DialogTitle>{t('locations.newCategory')}</DialogTitle>
             </DialogHeader>
             <div className="py-4">
-              <Input 
-                placeholder="E.g. Sci-Fi Movies" 
+              <Input
+                placeholder="E.g. Sci-Fi Movies"
                 value={newCatName}
                 onChange={(e) => setNewCatName(e.target.value)}
               />
             </div>
             <DialogFooter>
-              <Button onClick={handleAddCategory}>Create</Button>
+              <Button onClick={handleAddCategory}>{t('locations.create')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

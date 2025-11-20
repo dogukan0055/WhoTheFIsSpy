@@ -19,6 +19,7 @@ export type AppSettings = {
   vibrate: boolean;
   music: boolean;
   highContrast: boolean;
+  language: 'en' | 'tr';
 };
 
 export type GameState = {
@@ -31,6 +32,7 @@ export type GameState = {
     isTimerOn: boolean;
     timerDuration: number; // in minutes
     selectedCategories: string[];
+    disabledLocations: Record<string, string[]>;
   };
   gameData: {
     currentLocation: string;
@@ -60,13 +62,20 @@ type Action =
   | { type: 'DELETE_CATEGORY'; payload: string }
   | { type: 'TOGGLE_CATEGORY'; payload: string } // id
   | { type: 'ADD_LOCATION'; payload: { categoryId: string, location: string } }
-  | { type: 'REMOVE_LOCATION'; payload: { categoryId: string, location: string } };
+  | { type: 'REMOVE_LOCATION'; payload: { categoryId: string, location: string } }
+  | { type: 'TOGGLE_LOCATION'; payload: { categoryId: string, location: string } };
 
 // Load settings from local storage
 const savedSettings = localStorage.getItem('spy-settings');
-const initialAppSettings: AppSettings = savedSettings 
-  ? JSON.parse(savedSettings) 
-  : { sound: true, vibrate: true, music: true, highContrast: false };
+const parsedSettings = savedSettings ? JSON.parse(savedSettings) : {};
+const initialAppSettings: AppSettings = {
+  sound: true,
+  vibrate: true,
+  music: true,
+  highContrast: false,
+  language: 'en',
+  ...parsedSettings,
+};
 
 const initialState: GameState = {
   mode: null,
@@ -78,6 +87,7 @@ const initialState: GameState = {
     isTimerOn: true,
     timerDuration: 5,
     selectedCategories: ['standard'],
+    disabledLocations: {},
   },
   gameData: {
     currentLocation: '',
@@ -256,7 +266,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         },
         settings: {
           ...state.settings,
-          selectedCategories: state.settings.selectedCategories.filter(id => id !== action.payload)
+          selectedCategories: state.settings.selectedCategories.filter(id => id !== action.payload),
+          disabledLocations: Object.fromEntries(
+            Object.entries(state.settings.disabledLocations).filter(([id]) => id !== action.payload)
+          )
         }
       };
 
@@ -265,11 +278,19 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ...state,
         gameData: {
           ...state.gameData,
-          categories: state.gameData.categories.map(c => 
-            c.id === action.payload.categoryId 
+          categories: state.gameData.categories.map(c =>
+            c.id === action.payload.categoryId
               ? { ...c, locations: [...c.locations, action.payload.location] }
               : c
           )
+        },
+        settings: {
+          ...state.settings,
+          disabledLocations: {
+            ...state.settings.disabledLocations,
+            [action.payload.categoryId]: (state.settings.disabledLocations[action.payload.categoryId] || [])
+              .filter(l => l !== action.payload.location)
+          }
         }
       };
 
@@ -278,13 +299,40 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ...state,
         gameData: {
           ...state.gameData,
-          categories: state.gameData.categories.map(c => 
-            c.id === action.payload.categoryId 
+          categories: state.gameData.categories.map(c =>
+            c.id === action.payload.categoryId
               ? { ...c, locations: c.locations.filter(l => l !== action.payload.location) }
               : c
           )
+        },
+        settings: {
+          ...state.settings,
+          disabledLocations: {
+            ...state.settings.disabledLocations,
+            [action.payload.categoryId]: (state.settings.disabledLocations[action.payload.categoryId] || [])
+              .filter(l => l !== action.payload.location)
+          }
         }
       };
+
+    case 'TOGGLE_LOCATION': {
+      const currentDisabled = state.settings.disabledLocations[action.payload.categoryId] || [];
+      const isCurrentlyDisabled = currentDisabled.includes(action.payload.location);
+      const updatedList = isCurrentlyDisabled
+        ? currentDisabled.filter(l => l !== action.payload.location)
+        : [...currentDisabled, action.payload.location];
+
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          disabledLocations: {
+            ...state.settings.disabledLocations,
+            [action.payload.categoryId]: updatedList
+          }
+        }
+      };
+    }
       
     default:
       return state;
