@@ -157,8 +157,8 @@ export default function OfflineSetup() {
         </div>
       </div>
 
-      <div className="space-y-8 pb-24 max-w-3xl mx-auto">
-        <div className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-8 pb-24 max-w-4xl mx-auto">
+        <div className="grid gap-4 md:grid-cols-2">
           {/* Players Count */}
           <section className="space-y-3 bg-card/30 p-4 rounded-lg border border-white/5">
             <div className="flex items-center justify-between">
@@ -170,7 +170,7 @@ export default function OfflineSetup() {
               value={state.settings.playerCount}
               onChange={handlePlayerCountChange}
             />
-            <p className="text-xs text-muted-foreground">{t('setup.agentsHelper')}</p>
+            <p className="text-xs text-muted-foreground text-balance">{t('setup.agentsHelper')}</p>
           </section>
 
           {/* Spy Count */}
@@ -191,14 +191,14 @@ export default function OfflineSetup() {
                 {t('setup.oneSpyMax')}
               </div>
             )}
-            <p className="text-xs text-muted-foreground">{t('setup.spiesHelper')}</p>
+            <p className="text-xs text-muted-foreground text-balance">{t('setup.spiesHelper')}</p>
           </section>
         </div>
 
         {/* Timer */}
         <section className="space-y-4 bg-card/30 p-4 rounded-lg border border-white/5">
           <div className="flex justify-between items-start gap-4">
-            <div>
+            <div className="space-y-1 text-balance">
               <Label className="flex items-center"><Timer className="mr-2 w-5 h-5 text-blue-500" /> {t('setup.timer')}</Label>
               <p className="text-xs text-muted-foreground mt-1">{t('setup.timerHelper')}</p>
             </div>
@@ -221,20 +221,34 @@ export default function OfflineSetup() {
           )}
         </section>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 items-start">
           {/* Locations Button */}
-          <div className="space-y-2">
+          <div className="space-y-3 bg-card/30 p-4 rounded-lg border border-white/5 h-full">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Map className="w-4 h-4" />
+                {t('setup.locations')}
+              </div>
+              <span className="text-[10px] uppercase text-muted-foreground text-right">{t('setup.locationsHelper')}</span>
+            </div>
             <Link href="/locations">
               <Button variant="outline" className="w-full h-12 border-dashed border-white/20 text-muted-foreground hover:text-primary hover:border-primary" onClick={() => playSound('click')}>
                 <Map className="w-4 h-4 mr-2" />
-                {t('setup.locations')}
+                {t('setup.manageLocations') ?? t('setup.locations')}
               </Button>
             </Link>
-            <p className="text-xs text-muted-foreground text-center">{t('setup.locationsHelper')}</p>
+            <p className="text-xs text-muted-foreground text-balance">{t('setup.locationsDeepHelper') ?? t('setup.locationsHelper')}</p>
           </div>
 
           {/* Player Management Button */}
-          <div className="space-y-2">
+          <div className="space-y-3 bg-card/30 p-4 rounded-lg border border-white/5 h-full">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Edit2 className="w-4 h-4" />
+                {t('setup.manageRoster')}
+              </div>
+              <span className="text-[10px] uppercase text-muted-foreground text-right">{t('setup.rosterHelper')}</span>
+            </div>
             <Dialog open={isRenaming} onOpenChange={setIsRenaming}>
               <DialogTrigger asChild>
                  <Button variant="secondary" className="w-full h-12" onClick={() => playSound('click')}>
@@ -259,23 +273,26 @@ export default function OfflineSetup() {
                           className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
                         />
                       </div>
-                    ))}
+                   ))}
                  </div>
-                 <Button onClick={() => setIsRenaming(false)} className="w-full">OK</Button>
+                 <div className="flex justify-end pt-2 gap-2">
+                   <Button variant="ghost" onClick={() => setIsRenaming(false)}>{t('setup.cancelRoster') ?? 'Cancel'}</Button>
+                   <Button onClick={() => { setIsRenaming(false); dispatch({ type: 'UPDATE_PLAYERS', payload: playerNames }); playSound('success'); }}>{t('setup.saveRoster')}</Button>
+                 </div>
               </DialogContent>
             </Dialog>
-            <p className="text-xs text-muted-foreground text-center">{t('setup.manageRosterHelper')}</p>
+            <p className="text-xs text-muted-foreground text-balance">{t('setup.rosterDeepHelper') ?? t('setup.manageRosterHelper')}</p>
           </div>
         </div>
 
       </div>
 
       {/* Footer Action */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-white/5 z-50">
-        <div className="max-w-md mx-auto flex gap-3">
-          <Button size="lg" className="flex-1 h-14 font-bold text-lg font-mono" onClick={handleStartGame}>
-            <Play className="w-5 h-5 mr-2 fill-current" />
-            {t('setup.start')}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-white/5 z-50">
+          <div className="max-w-3xl mx-auto flex gap-3">
+            <Button size="lg" className="flex-1 h-14 font-bold text-lg font-mono" onClick={handleStartGame}>
+              <Play className="w-5 h-5 mr-2 fill-current" />
+              {t('setup.start')}
           </Button>
         </div>
       </div>

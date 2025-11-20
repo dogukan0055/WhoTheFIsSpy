@@ -28,7 +28,12 @@ export default function Layout({ children, className }: { children: React.ReactN
       )}
 
       {/* Main Content */}
-      <main className={cn("relative z-10 flex flex-col min-h-screen p-4 md:p-8 max-w-md mx-auto", className)}>
+      <main
+        className={cn(
+          "relative z-10 flex flex-col min-h-screen p-4 md:p-8 lg:p-10 w-full max-w-5xl mx-auto",
+          className
+        )}
+      >
         {children}
       </main>
     </div>

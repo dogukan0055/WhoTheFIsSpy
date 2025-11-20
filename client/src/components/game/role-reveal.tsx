@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Fingerprint, User } from 'lucide-react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ export default function RoleReveal() {
   const holdStartRef = React.useRef<number | null>(null);
   const holdRafRef = React.useRef<number | null>(null);
   const { t, language } = useTranslation();
+  const [isHolding, setIsHolding] = React.useState(false);
   
   const currentPlayer = state.players[state.gameData.currentRevealIndex];
   const isLastPlayer = state.gameData.currentRevealIndex === state.players.length - 1;
@@ -41,6 +42,7 @@ export default function RoleReveal() {
     if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
     holdRafRef.current = null;
     holdStartRef.current = null;
+    setIsHolding(false);
     if (!skipReset && !isRevealed) {
       setHoldProgress(0);
     }
@@ -48,6 +50,7 @@ export default function RoleReveal() {
 
   const beginHold = () => {
     if (isRevealed || holdStartRef.current !== null) return;
+    setIsHolding(true);
     holdStartRef.current = performance.now();
 
     const step = (now: number) => {
@@ -82,7 +85,7 @@ export default function RoleReveal() {
         <h1 className="text-4xl font-bold font-mono tracking-tighter">{currentPlayer.name}</h1>
       </div>
 
-      <Card className="w-full aspect-[3/4] max-w-xs relative overflow-hidden border-2 border-border bg-card/50 backdrop-blur-sm">
+      <Card className="w-full aspect-[3/4] max-w-xs relative overflow-hidden border-2 border-border bg-card/50 backdrop-blur-sm shadow-xl">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center gap-6">
           {!isRevealed ? (
             <motion.div
@@ -92,7 +95,7 @@ export default function RoleReveal() {
             >
               <p className="text-lg font-medium leading-tight">{t('reveal.pass')}<br/><span className="text-primary font-bold text-2xl">{currentPlayer.name}</span></p>
               <div
-                className="relative w-32 h-32 mx-auto rounded-full border border-dashed border-primary/40 bg-white/5 flex items-center justify-center"
+                className="relative w-32 h-32 mx-auto rounded-full border border-dashed border-primary/40 bg-white/5 flex items-center justify-center overflow-hidden"
                 onPointerDown={beginHold}
                 onPointerUp={() => stopHold()}
                 onPointerLeave={() => stopHold()}
@@ -105,10 +108,33 @@ export default function RoleReveal() {
                     style={{ transform: `translateY(${100 - holdProgress}%)` }}
                   />
                   {holdProgress > 0 && holdProgress < 100 && (
-                    <div className="absolute inset-x-0 top-1/2 h-10 bg-primary/10 blur-2xl" />
+                    <motion.div
+                      className="absolute inset-x-0 top-1/2 h-10 bg-primary/10 blur-2xl"
+                      animate={{ opacity: [0.2, 0.8, 0.2] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    />
+                  )}
+                  {isHolding && !isRevealed && (
+                    <motion.div
+                      className="absolute inset-3 rounded-full border border-primary/50"
+                      animate={{ scale: [1, 1.05, 1], opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 1.2, repeat: Infinity }}
+                    />
                   )}
                 </div>
-                <Fingerprint className="w-16 h-16 text-primary" />
+                <motion.div
+                  className="absolute inset-4 rounded-full border border-primary/20"
+                  animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.9, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                {isHolding && (
+                  <motion.div
+                    className="absolute inset-3 rounded-full bg-gradient-to-b from-transparent via-primary/15 to-primary/30"
+                    animate={{ y: ['-20%', '60%', '-20%'] }}
+                    transition={{ duration: 1.4, repeat: Infinity }}
+                  />
+                )}
+                <Fingerprint className="w-16 h-16 text-primary drop-shadow-[0_0_12px_rgba(59,130,246,0.35)]" />
                 <div className="absolute bottom-3 left-0 right-0 text-[11px] text-muted-foreground font-mono uppercase tracking-wide">
                   {t('reveal.tap')}
                 </div>
@@ -153,7 +179,18 @@ export default function RoleReveal() {
         disabled={!isRevealed}
         onClick={() => handleNext()}
       >
-        {isLastPlayer ? t('reveal.startMission') : t('reveal.nextAgent')}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={isRevealed ? 'continue' : 'hold'}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.25 }}
+            className="flex items-center gap-2 text-center"
+          >
+            {isRevealed ? (isLastPlayer ? t('reveal.startMission') : t('reveal.nextAgent')) : t('reveal.tap')}
+          </motion.span>
+        </AnimatePresence>
       </Button>
     </div>
   );

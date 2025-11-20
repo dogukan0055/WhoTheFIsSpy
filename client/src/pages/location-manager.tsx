@@ -139,24 +139,24 @@ export default function LocationManager() {
 
              return (
                <div key={cat.id} className={cn("border rounded-xl overflow-hidden transition-all duration-300", isExpanded ? "bg-card/50 border-primary/50" : "bg-card/20 border-white/5")}>
-                 <div 
-                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
+                 <div
+                    className="p-4 flex flex-wrap items-center justify-between gap-3 cursor-pointer hover:bg-white/5"
                     onClick={() => {
                       setSelectedCatId(isExpanded ? null : cat.id);
                       playSound('click');
                     }}
                  >
-                   <div className="flex items-center gap-3">
+                   <div className="flex items-center gap-3 min-w-0">
                       <div
                         onClick={(e) => toggleCategory(cat, e)}
                         className={cn("w-6 h-6 rounded border flex items-center justify-center transition-colors", isSelected ? "bg-primary border-primary" : "border-muted-foreground")}
                       >
                         {isSelected && <Check className="w-4 h-4 text-white" />}
                       </div>
-                      <span className="font-bold font-mono text-lg">{getCategoryName(language, cat)}</span>
+                      <span className="font-bold font-mono text-lg break-words">{getCategoryName(language, cat)}</span>
                       <span className="text-xs text-muted-foreground">({cat.locations.length})</span>
                    </div>
-                   
+
                    <div className="flex items-center gap-2">
                      {isPredefined && <Lock className="w-3 h-3 text-muted-foreground/50" />}
                      {!isPredefined && (
@@ -174,7 +174,7 @@ export default function LocationManager() {
                         <span className={cn('inline-flex h-2 w-2 rounded-full', isSelected ? 'bg-green-400' : 'bg-muted-foreground/50')} />
                         {isSelected ? t('locations.allOn') : t('locations.allOff')}
                       </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                         {cat.locations.map((loc, idx) => {
                           const originalCat = INITIAL_CATEGORIES.find(c => c.id === cat.id);
                           const isCoreLoc = originalCat?.locations.includes(loc);
@@ -182,7 +182,7 @@ export default function LocationManager() {
 
                           return (
                             <div key={idx} className="flex items-center justify-between p-3 rounded bg-white/5 text-sm group">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 min-w-0">
                                 <Switch
                                   checked={!isDisabled}
                                   disabled={!isSelected}
@@ -190,7 +190,7 @@ export default function LocationManager() {
                                   className="shrink-0"
                                   onClick={(e) => e.stopPropagation()}
                                 />
-                                <span className={cn("truncate mr-2", isDisabled && "line-through text-muted-foreground/60")}>{getLocationName(language, loc)}</span>
+                                <span className={cn("mr-2 break-words text-sm", !isSelected && "text-muted-foreground/60", isDisabled && "line-through text-muted-foreground/60")}>{getLocationName(language, loc)}</span>
                               </div>
                               {!isCoreLoc ? (
                                 <button

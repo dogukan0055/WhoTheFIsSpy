@@ -1,11 +1,16 @@
 import React from 'react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
-import { Clock, HelpCircle, Vote, MessageCircleQuestion } from 'lucide-react';
+import { Clock, Vote, MessageCircleQuestion, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from '@/hooks/use-translation';
+import { useLocation } from 'wouter';
+import { playSound } from '@/lib/audio';
 
 export default function Discussion() {
   const { state, dispatch } = useGame();
+  const { t } = useTranslation();
+  const [, navigate] = useLocation();
   
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -15,6 +20,12 @@ export default function Discussion() {
 
   // Don't use progress bar, use something else as requested.
   // Maybe a circular timer or just a clean digital display with an icon.
+
+  const handleExit = () => {
+    playSound('click');
+    dispatch({ type: 'RESET_GAME' });
+    navigate('/');
+  };
 
   return (
     <div className="flex flex-col items-center h-full space-y-8 py-6">
@@ -68,16 +79,25 @@ export default function Discussion() {
       </div>
 
       {/* Action */}
-      <div className="w-full pt-8">
-        <Button 
-          size="lg" 
-          variant="destructive" 
+      <div className="w-full pt-8 space-y-3">
+        <Button
+          size="lg"
+          variant="destructive"
           className="w-full h-16 text-lg font-bold font-mono uppercase tracking-wider shadow-[0_0_20px_rgba(220,38,38,0.3)] hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] transition-all"
           onClick={() => dispatch({ type: 'START_VOTING' })}
         >
           <Vote className="mr-2 w-6 h-6" />
           Call Vote
         </Button>
+        <Button
+          variant="ghost"
+          className="w-full h-12 text-sm justify-center gap-2 text-muted-foreground hover:text-foreground"
+          onClick={handleExit}
+        >
+          <Home className="w-4 h-4" />
+          {t('discussion.exit')}
+        </Button>
+        <p className="text-xs text-muted-foreground text-center text-balance">{t('discussion.exitDesc')}</p>
       </div>
     </div>
   );

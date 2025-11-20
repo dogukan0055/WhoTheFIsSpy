@@ -12,7 +12,12 @@ import { useTranslation } from '@/hooks/use-translation';
 const FlagIcon = ({ country }: { country: 'us' | 'tr' }) => {
   if (country === 'tr') {
     return (
-      <svg viewBox="0 0 640 480" className="w-5 h-5 rounded-sm shadow" aria-hidden>
+      <svg
+        viewBox="0 0 640 480"
+        className="w-5 h-5 rounded-sm shadow shrink-0"
+        aria-hidden
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <path fill="#e30a17" d="M0 0h640v480H0z" />
         <path fill="#fff" d="M304 240a96 96 0 1 1-191.9 0 96 96 0 1 1 191.9 0z" />
         <path fill="#e30a17" d="M320 240a80 80 0 1 1-160 0 80 80 0 1 1 160 0z" />
@@ -22,7 +27,13 @@ const FlagIcon = ({ country }: { country: 'us' | 'tr' }) => {
   }
 
   return (
-    <svg viewBox="0 0 7410 3900" className="w-5 h-5 rounded-sm shadow" aria-hidden>
+    <svg
+      viewBox="0 0 7410 3900"
+      className="w-5 h-5 rounded-sm shadow shrink-0"
+      aria-hidden
+      xmlns="http://www.w3.org/2000/svg"
+      xmlnsXlink="http://www.w3.org/1999/xlink"
+    >
       <path fill="#b22234" d="M0 0h7410v3900H0z" />
       <path stroke="#fff" strokeWidth="300" d="M0 450h7410M0 1050h7410M0 1650h7410M0 2250h7410M0 2850h7410M0 3450h7410" />
       <path fill="#3c3b6e" d="M0 0h2964v2100H0z" />
@@ -142,10 +153,10 @@ export default function Settings() {
           <div className="p-4 border-b border-white/10">
             <h2 className="font-mono text-sm text-muted-foreground uppercase tracking-wider">{t('settings.language')}</h2>
           </div>
-          <div className="p-4 flex items-center justify-between">
-            <div>
+          <div className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="space-y-1">
               <Label className="text-base">{t('settings.language')}</Label>
-              <p className="text-xs text-muted-foreground">{t('settings.languageDesc')}</p>
+              <p className="text-xs text-muted-foreground text-balance">{t('settings.languageDesc')}</p>
             </div>
             <div className="flex items-center gap-2">
               <Button
