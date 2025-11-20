@@ -4,3 +4,16 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache
+.dart_tool
+build
+ios/Pods
+android/.gradle
+flutter_app/.dart_tool
+flutter_app/build
+flutter_app/ios/Pods
+flutter_app/android/.gradle
