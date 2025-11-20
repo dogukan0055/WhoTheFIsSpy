@@ -266,14 +266,12 @@ const translations: Record<Language, Translations> = {
 // Get translation with optional parameter substitution
 export function t(key: string, params?: Record<string, string | number>): string {
   const lang = (localStorage.getItem('spy-language') as Language) || 'en';
-  const keys = key.split('.');
-  let value: any = translations[lang];
+  const value = translations[lang][key];
   
-  for (const k of keys) {
-    value = value?.[k];
+  if (typeof value !== 'string') {
+    console.warn(`Translation missing for key: ${key}`);
+    return key;
   }
-  
-  if (typeof value !== 'string') return key;
   
   // Replace parameters
   if (params) {
