@@ -14,14 +14,11 @@ export type Player = {
 
 export type GamePhase = 'setup' | 'reveal' | 'playing' | 'voting' | 'result';
 
-export type Language = 'en' | 'tr';
-
 export type AppSettings = {
   sound: boolean;
   vibrate: boolean;
   music: boolean;
   highContrast: boolean;
-  language: Language;
 };
 
 export type GameState = {
@@ -69,7 +66,7 @@ type Action =
 const savedSettings = localStorage.getItem('spy-settings');
 const initialAppSettings: AppSettings = savedSettings 
   ? JSON.parse(savedSettings) 
-  : { sound: true, vibrate: true, music: true, highContrast: false, language: 'en' };
+  : { sound: true, vibrate: true, music: true, highContrast: false };
 
 const initialState: GameState = {
   mode: null,
@@ -111,8 +108,6 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return { ...state, appSettings: newAppSettings };
       
     case 'SET_PLAYERS':
-      // Save player names to localStorage when set
-      localStorage.setItem('spy-player-names', JSON.stringify(action.payload.map(p => p.name)));
       return { ...state, players: action.payload };
       
     case 'START_GAME':
@@ -181,17 +176,27 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           winner = 'civilian';
         } else {
           // Still spies left -> Continue
-          // TODO: Announce spy caught in UI
           nextPhase = 'playing';
         }
       } else {
-        // Civilian eliminated -> Spy Wins immediately
-        nextPhase = 'result';
-        winner = 'spy';
+        // Civilian eliminated
+        if (totalSpiesStart > 1) {
+           if (spiesLeft > 1) {
+             nextPhase = 'playing';
+           } else {
+              // 1 Spy left, Civilian killed -> Spy Wins
+              nextPhase = 'result';
+              winner = 'spy';
+           }
+        } else {
+          // Only 1 spy in game, Civilian killed -> Spy Wins
+          nextPhase = 'result';
+          winner = 'spy';
+        }
       }
 
       // Default parity check (Spies >= Civilians -> Spies Win)
-      if (spiesLeft >= civiliansLeft && nextPhase !== 'result') {
+      if (spiesLeft >= civiliansLeft) {
         nextPhase = 'result';
         winner = 'spy';
       }
