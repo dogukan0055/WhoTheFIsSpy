@@ -235,18 +235,30 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         gameData: { ...initialState.gameData, categories: state.gameData.categories },
       };
 
-    case 'TOGGLE_CATEGORY':
+    case 'TOGGLE_CATEGORY': {
       const currentSelected = state.settings.selectedCategories;
-      const newSelected = currentSelected.includes(action.payload)
+      const category = state.gameData.categories.find(c => c.id === action.payload);
+      if (!category) return state;
+
+      const isCurrentlyOn = currentSelected.includes(action.payload);
+      const newSelected = isCurrentlyOn
         ? currentSelected.filter(id => id !== action.payload)
         : [...currentSelected, action.payload];
-      
+
       if (newSelected.length === 0) return state;
 
       return {
         ...state,
-        settings: { ...state.settings, selectedCategories: newSelected }
+        settings: {
+          ...state.settings,
+          selectedCategories: newSelected,
+          disabledLocations: {
+            ...state.settings.disabledLocations,
+            [action.payload]: isCurrentlyOn ? [...category.locations] : [],
+          },
+        }
       };
+    }
 
     case 'ADD_CATEGORY':
       return {
@@ -316,6 +328,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       };
 
     case 'TOGGLE_LOCATION': {
+      if (!state.settings.selectedCategories.includes(action.payload.categoryId)) {
+        return state;
+      }
+
       const currentDisabled = state.settings.disabledLocations[action.payload.categoryId] || [];
       const isCurrentlyDisabled = currentDisabled.includes(action.payload.location);
       const updatedList = isCurrentlyDisabled

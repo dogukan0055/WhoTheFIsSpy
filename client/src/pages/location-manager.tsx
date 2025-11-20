@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from '@/lib/utils';
 import { INITIAL_CATEGORIES } from '@/lib/locations';
+import { getCategoryName, getLocationName } from '@/lib/location-i18n';
 import { Switch } from '@/components/ui/switch';
 import { useTranslation } from '@/hooks/use-translation';
 
@@ -29,7 +30,7 @@ export default function LocationManager() {
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [isAddingCat, setIsAddingCat] = useState(false);
   const [isAddingLoc, setIsAddingLoc] = useState(false);
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const handleAddCategory = () => {
     if (!newCatName.trim()) return;
@@ -128,7 +129,7 @@ export default function LocationManager() {
         <h1 className="text-2xl font-bold font-mono ml-2">{t('locations.title')}</h1>
       </div>
 
-      <div className="space-y-6 pb-24">
+      <div className="space-y-6 pb-24 max-w-4xl mx-auto">
         {/* Categories List */}
         <div className="grid gap-3">
            {state.gameData.categories.map(cat => {
@@ -146,13 +147,13 @@ export default function LocationManager() {
                     }}
                  >
                    <div className="flex items-center gap-3">
-                      <div 
+                      <div
                         onClick={(e) => toggleCategory(cat, e)}
                         className={cn("w-6 h-6 rounded border flex items-center justify-center transition-colors", isSelected ? "bg-primary border-primary" : "border-muted-foreground")}
                       >
                         {isSelected && <Check className="w-4 h-4 text-white" />}
                       </div>
-                      <span className="font-bold font-mono text-lg">{cat.name}</span>
+                      <span className="font-bold font-mono text-lg">{getCategoryName(language, cat)}</span>
                       <span className="text-xs text-muted-foreground">({cat.locations.length})</span>
                    </div>
                    
@@ -168,24 +169,28 @@ export default function LocationManager() {
 
                  {/* Expanded Locations */}
                  {isExpanded && (
-                   <div className="p-4 pt-0 bg-black/20 border-t border-white/5">
-                      <div className="grid grid-cols-2 gap-2 mt-4">
+                   <div className="p-4 pt-0 bg-black/20 border-t border-white/5 space-y-3">
+                      <p className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span className={cn('inline-flex h-2 w-2 rounded-full', isSelected ? 'bg-green-400' : 'bg-muted-foreground/50')} />
+                        {isSelected ? t('locations.allOn') : t('locations.allOff')}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {cat.locations.map((loc, idx) => {
-                          // Check if this location is originally from predefined set
-                      const originalCat = INITIAL_CATEGORIES.find(c => c.id === cat.id);
-                      const isCoreLoc = originalCat?.locations.includes(loc);
-                      const isDisabled = (state.settings.disabledLocations[cat.id] || []).includes(loc);
+                          const originalCat = INITIAL_CATEGORIES.find(c => c.id === cat.id);
+                          const isCoreLoc = originalCat?.locations.includes(loc);
+                          const isDisabled = (state.settings.disabledLocations[cat.id] || []).includes(loc) || !isSelected;
 
-                      return (
-                            <div key={idx} className="flex items-center justify-between p-2 rounded bg-white/5 text-sm group">
+                          return (
+                            <div key={idx} className="flex items-center justify-between p-3 rounded bg-white/5 text-sm group">
                               <div className="flex items-center gap-2">
                                 <Switch
                                   checked={!isDisabled}
+                                  disabled={!isSelected}
                                   onCheckedChange={() => toggleLocation(cat.id, loc)}
                                   className="shrink-0"
                                   onClick={(e) => e.stopPropagation()}
                                 />
-                                <span className={cn("truncate mr-2", isDisabled && "line-through text-muted-foreground/60")}>{loc}</span>
+                                <span className={cn("truncate mr-2", isDisabled && "line-through text-muted-foreground/60")}>{getLocationName(language, loc)}</span>
                               </div>
                               {!isCoreLoc ? (
                                 <button
@@ -208,7 +213,7 @@ export default function LocationManager() {
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>{t('locations.newLocationFor')} {cat.name}</DialogTitle>
+                              <DialogTitle>{t('locations.newLocationFor')} {getCategoryName(language, cat)}</DialogTitle>
                             </DialogHeader>
                             <div className="py-4">
                               <Input

@@ -157,22 +157,28 @@ export default function OfflineSetup() {
         </div>
       </div>
 
-      <div className="space-y-8 pb-24">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-8 pb-24 max-w-3xl mx-auto">
+        <div className="grid gap-4 sm:grid-cols-2">
           {/* Players Count */}
-          <section className="space-y-2">
-            <Label className="flex items-center text-sm text-muted-foreground"><Users className="mr-2 w-4 h-4" /> {t('setup.agents')}</Label>
+          <section className="space-y-3 bg-card/30 p-4 rounded-lg border border-white/5">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center text-sm text-muted-foreground"><Users className="mr-2 w-4 h-4" /> {t('setup.agents')}</Label>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{t('setup.minMaxAgents')}</span>
+            </div>
             <NumberPicker
               min={4} max={8}
               value={state.settings.playerCount}
               onChange={handlePlayerCountChange}
             />
-            <div className="text-[10px] text-muted-foreground text-center">{t('setup.minMaxAgents')}</div>
+            <p className="text-xs text-muted-foreground">{t('setup.agentsHelper')}</p>
           </section>
 
           {/* Spy Count */}
-          <section className="space-y-2">
-            <Label className="flex items-center text-sm text-muted-foreground"><VenetianMask className="mr-2 w-4 h-4" /> {t('setup.spies')}</Label>
+          <section className="space-y-3 bg-card/30 p-4 rounded-lg border border-white/5">
+            <div className="flex items-center justify-between">
+              <Label className="flex items-center text-sm text-muted-foreground"><VenetianMask className="mr-2 w-4 h-4" /> {t('setup.spies')}</Label>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wide">{state.settings.playerCount > 5 ? t('setup.minMaxSpies') : t('setup.locked')}</span>
+            </div>
             {state.settings.playerCount > 5 ? (
               <NumberPicker
                 min={1} max={2}
@@ -185,22 +191,23 @@ export default function OfflineSetup() {
                 {t('setup.oneSpyMax')}
               </div>
             )}
-            <div className="text-[10px] text-muted-foreground text-center">
-              {state.settings.playerCount > 5 ? t('setup.minMaxSpies') : t('setup.locked')}
-            </div>
+            <p className="text-xs text-muted-foreground">{t('setup.spiesHelper')}</p>
           </section>
         </div>
 
         {/* Timer */}
         <section className="space-y-4 bg-card/30 p-4 rounded-lg border border-white/5">
-          <div className="flex justify-between items-center">
-            <Label className="flex items-center"><Timer className="mr-2 w-5 h-5 text-blue-500" /> {t('setup.timer')}</Label>
+          <div className="flex justify-between items-start gap-4">
+            <div>
+              <Label className="flex items-center"><Timer className="mr-2 w-5 h-5 text-blue-500" /> {t('setup.timer')}</Label>
+              <p className="text-xs text-muted-foreground mt-1">{t('setup.timerHelper')}</p>
+            </div>
             <Switch
               checked={state.settings.isTimerOn}
               onCheckedChange={(checked) => { playSound('click'); dispatch({ type: 'UPDATE_SETTINGS', payload: { isTimerOn: checked } }); }}
             />
           </div>
-          
+
           {state.settings.isTimerOn && (
             <div className="mt-2 space-y-2">
               <NumberPicker
@@ -214,44 +221,52 @@ export default function OfflineSetup() {
           )}
         </section>
 
-        {/* Locations Button */}
-        <Link href="/locations">
-          <Button variant="outline" className="w-full h-12 border-dashed border-white/20 text-muted-foreground hover:text-primary hover:border-primary" onClick={() => playSound('click')}>
-            <Map className="w-4 h-4 mr-2" />
-            {t('setup.locations')}
-          </Button>
-        </Link>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {/* Locations Button */}
+          <div className="space-y-2">
+            <Link href="/locations">
+              <Button variant="outline" className="w-full h-12 border-dashed border-white/20 text-muted-foreground hover:text-primary hover:border-primary" onClick={() => playSound('click')}>
+                <Map className="w-4 h-4 mr-2" />
+                {t('setup.locations')}
+              </Button>
+            </Link>
+            <p className="text-xs text-muted-foreground text-center">{t('setup.locationsHelper')}</p>
+          </div>
 
-        {/* Player Management Button */}
-        <Dialog open={isRenaming} onOpenChange={setIsRenaming}>
-          <DialogTrigger asChild>
-             <Button variant="secondary" className="w-full h-12" onClick={() => playSound('click')}>
-               <Edit2 className="w-4 h-4 mr-2" />
-               {t('setup.manageRoster')}
-             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[80vh] overflow-y-auto">
-             <DialogHeader>
-               <DialogTitle>{t('setup.manageRoster')}</DialogTitle>
-             </DialogHeader>
-             <div className="space-y-3 py-4">
-               {playerNames.map((name, idx) => (
-                  <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${idx * 50}ms` }}>
-                    <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-muted-foreground font-mono text-xs border border-white/10">
-                      {idx + 1}
-                    </div>
-                    <Input
-                      value={name}
-                      onChange={(e) => handleNameChange(idx, e.target.value)}
-                      placeholder={`${t('setup.agents')} ${idx + 1}`}
-                      className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
-                    />
-                  </div>
-                ))}
-             </div>
-             <Button onClick={() => setIsRenaming(false)} className="w-full">OK</Button>
-          </DialogContent>
-        </Dialog>
+          {/* Player Management Button */}
+          <div className="space-y-2">
+            <Dialog open={isRenaming} onOpenChange={setIsRenaming}>
+              <DialogTrigger asChild>
+                 <Button variant="secondary" className="w-full h-12" onClick={() => playSound('click')}>
+                   <Edit2 className="w-4 h-4 mr-2" />
+                   {t('setup.manageRoster')}
+                 </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[80vh] overflow-y-auto">
+                 <DialogHeader>
+                   <DialogTitle>{t('setup.manageRoster')}</DialogTitle>
+                 </DialogHeader>
+                 <div className="space-y-3 py-4">
+                   {playerNames.map((name, idx) => (
+                      <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-2 duration-300" style={{ animationDelay: `${idx * 50}ms` }}>
+                        <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-muted-foreground font-mono text-xs border border-white/10">
+                          {idx + 1}
+                        </div>
+                        <Input
+                          value={name}
+                          onChange={(e) => handleNameChange(idx, e.target.value)}
+                          placeholder={`${t('setup.agents')} ${idx + 1}`}
+                          className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
+                        />
+                      </div>
+                    ))}
+                 </div>
+                 <Button onClick={() => setIsRenaming(false)} className="w-full">OK</Button>
+              </DialogContent>
+            </Dialog>
+            <p className="text-xs text-muted-foreground text-center">{t('setup.manageRosterHelper')}</p>
+          </div>
+        </div>
 
       </div>
 

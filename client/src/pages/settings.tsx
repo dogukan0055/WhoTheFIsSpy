@@ -9,6 +9,43 @@ import { Link } from 'wouter';
 import { playSound } from '@/lib/audio';
 import { useTranslation } from '@/hooks/use-translation';
 
+const FlagIcon = ({ country }: { country: 'us' | 'tr' }) => {
+  if (country === 'tr') {
+    return (
+      <svg viewBox="0 0 640 480" className="w-5 h-5 rounded-sm shadow" aria-hidden>
+        <path fill="#e30a17" d="M0 0h640v480H0z" />
+        <path fill="#fff" d="M304 240a96 96 0 1 1-191.9 0 96 96 0 1 1 191.9 0z" />
+        <path fill="#e30a17" d="M320 240a80 80 0 1 1-160 0 80 80 0 1 1 160 0z" />
+        <path fill="#fff" d="m320 240 112-36-69 96V180l69 96z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 7410 3900" className="w-5 h-5 rounded-sm shadow" aria-hidden>
+      <path fill="#b22234" d="M0 0h7410v3900H0z" />
+      <path stroke="#fff" strokeWidth="300" d="M0 450h7410M0 1050h7410M0 1650h7410M0 2250h7410M0 2850h7410M0 3450h7410" />
+      <path fill="#3c3b6e" d="M0 0h2964v2100H0z" />
+      <g fill="#fff">
+        <g id="s">
+          <g id="t">
+            <path d="m247 90 70.534 217.082L32 176.918h430L176.466 307.082 247 90z" />
+            <use xlinkHref="#t" x="247" />
+            <use xlinkHref="#t" x="494" />
+            <use xlinkHref="#t" x="741" />
+            <use xlinkHref="#t" x="988" />
+          </g>
+          <use xlinkHref="#t" y="210" />
+        </g>
+        <use xlinkHref="#s" y="420" />
+        <use xlinkHref="#s" y="840" />
+        <use xlinkHref="#s" y="1260" />
+        <use xlinkHref="#s" y="1680" />
+      </g>
+    </svg>
+  );
+};
+
 export default function Settings() {
   const { state, dispatch } = useGame();
   const { sound, vibrate, music, highContrast } = state.appSettings;
@@ -116,14 +153,14 @@ export default function Settings() {
                 onClick={() => dispatch({ type: 'UPDATE_APP_SETTINGS', payload: { language: 'en' } })}
                 className="flex items-center gap-2"
               >
-                🇺🇸 EN
+                <FlagIcon country="us" /> EN
               </Button>
               <Button
                 variant={language === 'tr' ? 'default' : 'outline'}
                 onClick={() => dispatch({ type: 'UPDATE_APP_SETTINGS', payload: { language: 'tr' } })}
                 className="flex items-center gap-2"
               >
-                🇹🇷 TR
+                <FlagIcon country="tr" /> TR
               </Button>
             </div>
           </div>
