@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { NumberPicker } from '@/components/ui/number-picker';
-import { ArrowLeft, Users, Timer, Mask, Play, Map, Edit2, VenetianMask } from 'lucide-react';
+import { ArrowLeft, Users, Timer, Play, Map, Edit2, VenetianMask } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { playSound } from '@/lib/audio';
 import { cn } from '@/lib/utils';
@@ -172,7 +172,7 @@ export default function OfflineSetup() {
 
           {/* Spy Count */}
           <section className="space-y-2">
-            <Label className="flex items-center text-sm text-muted-foreground"><Mask className="mr-2 w-4 h-4" /> {t('setup.spies')}</Label>
+            <Label className="flex items-center text-sm text-muted-foreground"><VenetianMask className="mr-2 w-4 h-4" /> {t('setup.spies')}</Label>
             {state.settings.playerCount > 5 ? (
               <NumberPicker
                 min={1} max={2}
