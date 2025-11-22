@@ -72,7 +72,7 @@ export default function Discussion() {
              <span className="text-xs uppercase text-muted-foreground">Agents Active</span>
            </div>
            <div className="bg-card/30 p-4 rounded-lg border border-white/5">
-             <span className="block text-2xl font-bold font-mono mb-1">{state.settings.spyCount}</span>
+             <span className="block text-2xl font-bold font-mono mb-1">{state.gameData.spiesRemaining || state.settings.spyCount}</span>
              <span className="text-xs uppercase text-muted-foreground">Spies Remaining</span>
            </div>
         </div>

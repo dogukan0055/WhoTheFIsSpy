@@ -18,13 +18,38 @@ import { useTranslation } from '@/hooks/use-translation';
 export default function OfflineSetup() {
   const { state, dispatch } = useGame();
   const [_, setLocation] = useLocation();
-  const [playerNames, setPlayerNames] = useState<string[]>(
-    state.players.length > 0
-      ? state.players.map(p => p.name)
-      : Array(state.settings.playerCount).fill('').map((_, i) => `Player ${i + 1}`)
-  );
+  const [playerNames, setPlayerNames] = useState<string[]>(() => {
+    if (state.players.length > 0) {
+      return state.players.map(p => p.name);
+    }
+
+    const saved = localStorage.getItem('spy-player-names');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const sanitized = parsed
+            .filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
+            .map((name, idx) => name.slice(0, 16) || `Player ${idx + 1}`)
+            .slice(0, state.settings.playerCount);
+          while (sanitized.length < state.settings.playerCount) {
+            sanitized.push(`Player ${sanitized.length + 1}`);
+          }
+          return sanitized;
+        }
+      } catch {
+        /* ignore parse errors */
+      }
+    }
+
+    return Array(state.settings.playerCount).fill('').map((_, i) => `Player ${i + 1}`);
+  });
   const [isRenaming, setIsRenaming] = useState(false);
   const { t } = useTranslation();
+
+  React.useEffect(() => {
+    localStorage.setItem('spy-player-names', JSON.stringify(playerNames));
+  }, [playerNames]);
 
   // Sync internal state if needed
   React.useEffect(() => {
@@ -129,10 +154,12 @@ export default function OfflineSetup() {
 
     const randomLoc = randomCat.enabledLocations[Math.floor(Math.random() * randomCat.enabledLocations.length)];
 
+    localStorage.setItem('spy-player-names', JSON.stringify(playerNames));
+
     dispatch({ type: 'SET_PLAYERS', payload: players });
-    dispatch({ 
-      type: 'START_GAME', 
-      payload: { 
+    dispatch({
+      type: 'START_GAME',
+      payload: {
         location: randomLoc,
         players 
       } 

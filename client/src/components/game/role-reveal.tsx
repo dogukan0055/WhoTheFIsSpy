@@ -121,6 +121,26 @@ export default function RoleReveal() {
                       transition={{ duration: 1.2, repeat: Infinity }}
                     />
                   )}
+                  {(isHolding || holdProgress > 0) && !isRevealed && (
+                    <>
+                      <motion.div
+                        className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.2)_0%,rgba(59,130,246,0)_55%)]"
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                      />
+                      <motion.div
+                        className="absolute inset-1 overflow-hidden rounded-full pointer-events-none"
+                        animate={{ opacity: [0.35, 0.8, 0.35] }}
+                        transition={{ duration: 1.6, repeat: Infinity }}
+                      >
+                        <motion.div
+                          className="absolute left-3 right-3 h-16 bg-gradient-to-b from-transparent via-primary/35 to-transparent blur-sm"
+                          animate={{ y: ['-30%', '120%', '-30%'] }}
+                          transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                      </motion.div>
+                    </>
+                  )}
                 </div>
                 <motion.div
                   className="absolute inset-4 rounded-full border border-primary/20"

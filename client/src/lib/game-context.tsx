@@ -39,6 +39,7 @@ export type GameState = {
     currentRevealIndex: number;
     timeLeft: number; // in seconds
     winner: 'spy' | 'civilian' | null;
+    spiesRemaining: number;
     categories: Category[];
   };
   phase: GamePhase;
@@ -94,6 +95,7 @@ const initialState: GameState = {
     currentRevealIndex: 0,
     timeLeft: 300,
     winner: null,
+    spiesRemaining: 0,
     categories: INITIAL_CATEGORIES,
   },
   phase: 'setup',
@@ -121,6 +123,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       return { ...state, players: action.payload };
       
     case 'START_GAME':
+      const spiesAssigned = action.payload.players.filter(p => p.role === 'spy').length;
       return {
         ...state,
         phase: 'reveal',
@@ -131,6 +134,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           currentRevealIndex: 0,
           timeLeft: state.settings.timerDuration * 60,
           winner: null,
+          spiesRemaining: spiesAssigned,
         },
       };
       
@@ -178,8 +182,10 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
       let nextPhase = state.phase;
       let winner = state.gameData.winner;
+      let spiesRemaining = state.gameData.spiesRemaining || spiesLeft;
 
       if (eliminatedPlayer?.role === 'spy') {
+        spiesRemaining = Math.max(0, spiesRemaining - 1);
         if (spiesLeft === 0) {
           // All spies caught -> Civilians Win
           nextPhase = 'result';
@@ -213,9 +219,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           p.id === action.payload ? { ...p, isDead: true } : p
         ),
         phase: nextPhase,
-        gameData: { ...state.gameData, winner }
+        gameData: { ...state.gameData, winner, spiesRemaining }
       };
-      
+
     case 'GAME_OVER':
       return {
         ...state,
