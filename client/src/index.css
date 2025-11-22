@@ -94,6 +94,12 @@ body {
   min-height: 100vh;
 }
 
+html {
+  /* Keep layout width stable across pages and accordions */
+  overflow-y: scroll;
+  scrollbar-gutter: stable both-edges;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

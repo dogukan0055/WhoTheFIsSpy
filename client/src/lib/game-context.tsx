@@ -179,10 +179,11 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const totalSpiesStart = state.players.filter(p => p.role === 'spy').length;
       const spiesLeft = remainingPlayers.filter(p => p.role === 'spy').length;
       const civiliansLeft = remainingPlayers.filter(p => p.role === 'civilian').length;
-      
+
       let nextPhase = state.phase;
       let winner = state.gameData.winner;
-      let spiesRemaining = state.gameData.spiesRemaining || spiesLeft;
+      // Track spies based on active roster rather than previous state to avoid double-subtracting
+      let spiesRemaining = spiesLeft;
 
       if (eliminatedPlayer?.role === 'spy') {
         spiesRemaining = Math.max(0, spiesRemaining - 1);

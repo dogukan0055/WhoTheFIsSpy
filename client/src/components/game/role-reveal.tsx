@@ -103,43 +103,41 @@ export default function RoleReveal() {
                 onTouchEnd={() => stopHold()}
               >
                 <div className="absolute inset-2 rounded-full overflow-hidden">
-                  <div
-                    className="absolute inset-0 bg-gradient-to-b from-primary/30 via-primary/5 to-transparent"
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-b from-primary/40 via-transparent to-transparent"
                     style={{ transform: `translateY(${100 - holdProgress}%)` }}
                   />
-                  {holdProgress > 0 && holdProgress < 100 && (
-                    <motion.div
-                      className="absolute inset-x-0 top-1/2 h-10 bg-primary/10 blur-2xl"
-                      animate={{ opacity: [0.2, 0.8, 0.2] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                    />
-                  )}
-                  {isHolding && !isRevealed && (
-                    <motion.div
-                      className="absolute inset-3 rounded-full border border-primary/50"
-                      animate={{ scale: [1, 1.05, 1], opacity: [0.6, 1, 0.6] }}
-                      transition={{ duration: 1.2, repeat: Infinity }}
-                    />
-                  )}
                   {(isHolding || holdProgress > 0) && !isRevealed && (
                     <>
                       <motion.div
-                        className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.2)_0%,rgba(59,130,246,0)_55%)]"
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+                        className="absolute inset-0 bg-[conic-gradient(from_90deg_at_50%_50%,rgba(59,130,246,0.18)_0deg,transparent_70deg,transparent_290deg,rgba(59,130,246,0.18)_360deg)]"
+                        animate={{ rotate: [0, 360] }}
+                        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                       />
                       <motion.div
-                        className="absolute inset-1 overflow-hidden rounded-full pointer-events-none"
-                        animate={{ opacity: [0.35, 0.8, 0.35] }}
-                        transition={{ duration: 1.6, repeat: Infinity }}
+                        className="absolute inset-1 rounded-full overflow-hidden"
+                        animate={{ opacity: [0.35, 0.85, 0.35] }}
+                        transition={{ duration: 1.4, repeat: Infinity }}
                       >
                         <motion.div
-                          className="absolute left-3 right-3 h-16 bg-gradient-to-b from-transparent via-primary/35 to-transparent blur-sm"
-                          animate={{ y: ['-30%', '120%', '-30%'] }}
+                          className="absolute left-2 right-2 h-14 bg-gradient-to-b from-transparent via-primary/30 to-transparent blur-sm"
+                          animate={{ y: ['-40%', '120%'] }}
                           transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
                         />
                       </motion.div>
+                      <motion.div
+                        className="absolute inset-3 rounded-full border border-primary/40"
+                        animate={{ scale: [1, 1.06, 1], opacity: [0.6, 1, 0.6] }}
+                        transition={{ duration: 1.2, repeat: Infinity }}
+                      />
                     </>
+                  )}
+                  {holdProgress > 0 && holdProgress < 100 && (
+                    <motion.div
+                      className="absolute inset-x-4 top-1/4 h-12 bg-gradient-to-b from-primary/15 via-primary/35 to-primary/15 blur-sm"
+                      animate={{ y: ['0%', '140%', '0%'], opacity: [0.4, 0.9, 0.4] }}
+                      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                    />
                   )}
                 </div>
                 <motion.div
@@ -147,16 +145,14 @@ export default function RoleReveal() {
                   animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.9, 0.5] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 />
-                {isHolding && (
-                  <motion.div
-                    className="absolute inset-3 rounded-full bg-gradient-to-b from-transparent via-primary/15 to-primary/30"
-                    animate={{ y: ['-20%', '60%', '-20%'] }}
-                    transition={{ duration: 1.4, repeat: Infinity }}
-                  />
-                )}
-                <Fingerprint className="w-16 h-16 text-primary drop-shadow-[0_0_12px_rgba(59,130,246,0.35)]" />
+                <motion.div
+                  className="absolute inset-8 rounded-full border border-primary/30"
+                  animate={{ rotate: [0, -12, 12, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <Fingerprint className="w-16 h-16 text-primary drop-shadow-[0_0_14px_rgba(59,130,246,0.45)]" />
               </div>
-              <p className="text-sm text-muted-foreground">{t('reveal.hold')}</p>
+              <p className="text-sm text-muted-foreground text-center leading-tight px-4">{t('reveal.hold')}</p>
             </motion.div>
           ) : (
             <motion.div
