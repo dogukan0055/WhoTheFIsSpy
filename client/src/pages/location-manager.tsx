@@ -27,7 +27,7 @@ export default function LocationManager() {
   const { state, dispatch } = useGame();
   const [newCatName, setNewCatName] = useState('');
   const [newLocName, setNewLocName] = useState('');
-  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
+  const [selectedCatId, setSelectedCatId] = useState<string | null>('standard');
   const [isAddingCat, setIsAddingCat] = useState(false);
   const [isAddingLoc, setIsAddingLoc] = useState(false);
   const { t, language } = useTranslation();
@@ -129,16 +129,16 @@ export default function LocationManager() {
         <h1 className="text-2xl font-bold font-mono ml-2">{t('locations.title')}</h1>
       </div>
 
-      <div className="space-y-6 pb-24 max-w-4xl mx-auto min-h-[70vh]">
+      <div className="space-y-6 pb-24 max-w-4xl mx-auto min-h-[70vh] w-full">
         {/* Categories List */}
-        <div className="grid gap-3" style={{ scrollbarGutter: 'stable both-edges' }}>
+        <div className="grid grid-cols-1 gap-3 w-full" style={{ scrollbarGutter: 'stable both-edges' }}>
            {state.gameData.categories.map(cat => {
              const isSelected = state.settings.selectedCategories.includes(cat.id);
              const isExpanded = selectedCatId === cat.id;
              const isPredefined = PREDEFINED_IDS.includes(cat.id);
 
              return (
-               <div key={cat.id} className={cn("border rounded-xl overflow-hidden transition-all duration-300", isExpanded ? "bg-card/50 border-primary/50" : "bg-card/20 border-white/5")}>
+              <div key={cat.id} className={cn("border rounded-xl overflow-hidden transition-all duration-300 w-full", isExpanded ? "bg-card/50 border-primary/50" : "bg-card/20 border-white/5")}> 
                  <div
                     className="p-4 flex flex-wrap items-center justify-between gap-3 cursor-pointer hover:bg-white/5"
                     onClick={() => {
