@@ -84,6 +84,8 @@ export default function RoleReveal() {
     stopHold(true);
   }, [state.gameData.currentRevealIndex]);
 
+  const showScan = (isHolding || holdProgress > 0) && !isRevealed;
+
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-8 py-12">
       <div className="text-center space-y-2">
@@ -103,62 +105,61 @@ export default function RoleReveal() {
             >
               <p className="text-lg font-medium leading-tight">{t('reveal.pass')}<br/><span className="text-primary font-bold text-2xl">{currentPlayer.name}</span></p>
               <div
-                className="relative w-32 h-32 mx-auto rounded-full border border-dashed border-primary/40 bg-white/5 flex items-center justify-center overflow-hidden"
+                className="relative w-32 h-32 mx-auto rounded-full bg-gradient-to-b from-primary/10 via-background to-background border border-primary/30 shadow-2xl overflow-hidden"
                 onPointerDown={beginHold}
                 onPointerUp={() => stopHold()}
                 onPointerLeave={() => stopHold()}
                 onTouchStart={beginHold}
                 onTouchEnd={() => stopHold()}
               >
-                <div className="absolute inset-2 rounded-full overflow-hidden">
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-b from-primary/40 via-transparent to-transparent"
-                    style={{ transform: `translateY(${100 - holdProgress}%)` }}
-                  />
-                  {(isHolding || holdProgress > 0) && !isRevealed && (
-                    <>
-                      <motion.div
-                        className="absolute inset-0 bg-[conic-gradient(from_90deg_at_50%_50%,rgba(59,130,246,0.18)_0deg,transparent_70deg,transparent_290deg,rgba(59,130,246,0.18)_360deg)]"
-                        animate={{ rotate: [0, 360] }}
-                        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-                      />
-                      <motion.div
-                        className="absolute inset-1 rounded-full overflow-hidden"
-                        animate={{ opacity: [0.35, 0.85, 0.35] }}
-                        transition={{ duration: 1.4, repeat: Infinity }}
-                      >
-                        <motion.div
-                          className="absolute left-2 right-2 h-14 bg-gradient-to-b from-transparent via-primary/30 to-transparent blur-sm"
-                          animate={{ y: ['-40%', '120%'] }}
-                          transition={{ duration: 1.1, repeat: Infinity, ease: 'easeInOut' }}
-                        />
-                      </motion.div>
-                      <motion.div
-                        className="absolute inset-3 rounded-full border border-primary/40"
-                        animate={{ scale: [1, 1.06, 1], opacity: [0.6, 1, 0.6] }}
-                        transition={{ duration: 1.2, repeat: Infinity }}
-                      />
-                    </>
-                  )}
-                  {holdProgress > 0 && holdProgress < 100 && (
+                <motion.div
+                  className="absolute inset-0 rounded-full opacity-60"
+                  animate={{ rotate: showScan ? [0, 8, -6, 0] : 0 }}
+                  transition={{ duration: 1.2, repeat: showScan ? Infinity : 0, ease: 'easeInOut' }}
+                  style={{
+                    background:
+                      'conic-gradient(from 120deg at 50% 50%, rgba(59,130,246,0.18), rgba(59,130,246,0.05) 30deg, rgba(59,130,246,0.18) 200deg, rgba(59,130,246,0.05) 320deg)'
+                  }}
+                />
+
+                <div className="absolute inset-2 rounded-full overflow-hidden fingerprint-mesh" />
+
+                <motion.div
+                  className="absolute inset-3 rounded-full border border-primary/30"
+                  style={{
+                    background: `conic-gradient(from 90deg, rgba(59,130,246,0.4) ${holdProgress}%, transparent ${holdProgress}% 100%)`
+                  }}
+                  animate={{ rotate: showScan ? 360 : 0 }}
+                  transition={{ duration: 3, repeat: showScan ? Infinity : 0, ease: 'linear' }}
+                />
+
+                {showScan && (
+                  <>
                     <motion.div
-                      className="absolute inset-x-4 top-1/4 h-12 bg-gradient-to-b from-primary/15 via-primary/35 to-primary/15 blur-sm"
-                      animate={{ y: ['0%', '140%', '0%'], opacity: [0.4, 0.9, 0.4] }}
-                      transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                      className="absolute inset-4 rounded-full border border-primary/10"
+                      animate={{ scale: [1, 1.08, 1], opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 1.6, repeat: Infinity }}
                     />
-                  )}
-                </div>
-                <motion.div
-                  className="absolute inset-4 rounded-full border border-primary/20"
-                  animate={{ scale: [1, 1.08, 1], opacity: [0.5, 0.9, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-                <motion.div
-                  className="absolute inset-8 rounded-full border border-primary/30"
-                  animate={{ rotate: [0, -12, 12, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                />
-                <Fingerprint className="w-16 h-16 text-primary drop-shadow-[0_0_14px_rgba(59,130,246,0.45)]" />
+                    <motion.div
+                      className="absolute inset-1.5 rounded-full overflow-hidden"
+                      animate={{ opacity: [0.4, 0.8, 0.4] }}
+                      transition={{ duration: 1.8, repeat: Infinity }}
+                    >
+                      <div className="fingerprint-scanline" />
+                    </motion.div>
+                    <motion.div
+                      className="absolute inset-5 rounded-full"
+                      animate={{ scale: [1, 1.06, 1], opacity: [0.45, 0.95, 0.45] }}
+                      transition={{ duration: 1.2, repeat: Infinity }}
+                      style={{
+                        background:
+                          'radial-gradient(circle at 50% 0%, rgba(59,130,246,0.25), transparent 45%), radial-gradient(circle at 50% 100%, rgba(59,130,246,0.25), transparent 45%)'
+                      }}
+                    />
+                  </>
+                )}
+
+                <Fingerprint className="fingerprint-icon" />
               </div>
               <p className="text-sm text-muted-foreground text-center leading-tight px-4">{t('reveal.hold')}</p>
             </motion.div>
