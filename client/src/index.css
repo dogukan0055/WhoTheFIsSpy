@@ -36,19 +36,24 @@
 
 :root {
   /* Spy / Noir Theme - Dark by default */
-  --background: 0 0% 3%; /* #080808 */
-  --foreground: 0 0% 95%; /* #f2f2f2 */
+  --background: 0 0% 3%;
+  /* #080808 */
+  --foreground: 0 0% 95%;
+  /* #f2f2f2 */
 
-  --card: 0 0% 7%; /* #121212 */
+  --card: 0 0% 7%;
+  /* #121212 */
   --card-foreground: 0 0% 95%;
 
   --popover: 0 0% 7%;
   --popover-foreground: 0 0% 95%;
 
-  --primary: 0 72% 51%; /* #dc2626 - Red for Danger/Spy */
+  --primary: 0 72% 51%;
+  /* #dc2626 - Red for Danger/Spy */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 210 100% 50%; /* #0080ff - Blue for Tech/Civilian */
+  --secondary: 210 100% 50%;
+  /* #0080ff - Blue for Tech/Civilian */
   --secondary-foreground: 0 0% 100%;
 
   --muted: 0 0% 15%;
@@ -64,7 +69,8 @@
   --input: 0 0% 20%;
   --ring: 0 72% 51%;
 
-  --radius: 0.25rem; /* Sharp corners fit the theme better */
+  --radius: 0.25rem;
+  /* Sharp corners fit the theme better */
 }
 
 /* High Contrast Mode */
@@ -73,9 +79,11 @@
   --foreground: 0 0% 100%;
   --card: 0 0% 0%;
   --card-foreground: 0 0% 100%;
-  --primary: 60 100% 50%; /* Yellow */
+  --primary: 60 100% 50%;
+  /* Yellow */
   --primary-foreground: 0 0% 0%;
-  --secondary: 180 100% 50%; /* Cyan */
+  --secondary: 180 100% 50%;
+  /* Cyan */
   --secondary-foreground: 0 0% 0%;
   --destructive: 0 100% 50%;
   --destructive-foreground: 0 0% 100%;
@@ -106,13 +114,16 @@ html {
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: hsl(var(--background));
 }
+
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
   border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
@@ -136,9 +147,9 @@ html {
 }
 
 .fingerprint-mesh {
-  background: radial-gradient(circle at 50% 35%, rgba(59,130,246,0.4), transparent 42%),
-    radial-gradient(circle at 50% 65%, rgba(59,130,246,0.35), transparent 42%),
-    radial-gradient(circle at 50% 50%, rgba(59,130,246,0.08), rgba(59,130,246,0.02) 55%, transparent 70%);
+  background: radial-gradient(circle at 50% 35%, rgba(59, 130, 246, 0.4), transparent 42%),
+    radial-gradient(circle at 50% 65%, rgba(59, 130, 246, 0.35), transparent 42%),
+    radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02) 55%, transparent 70%);
   mask-image: radial-gradient(circle at 50% 50%, black 60%, transparent 100%);
 }
 
@@ -146,8 +157,8 @@ html {
   position: absolute;
   inset: -40% 0 auto 0;
   height: 60%;
-  background: linear-gradient(180deg, transparent, rgba(59,130,246,0.45), transparent);
-  filter: drop-shadow(0 0 12px rgba(59,130,246,0.35));
+  background: linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.45), transparent);
+  filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.35));
   animation: fingerprint-scan 1.25s ease-in-out infinite;
 }
 
@@ -155,14 +166,14 @@ html {
   width: 4rem;
   height: 4rem;
   color: hsl(var(--primary));
-  filter: drop-shadow(0 0 14px rgba(59,130,246,0.5));
+  filter: drop-shadow(0 0 14px rgba(59, 130, 246, 0.5));
   mix-blend-mode: screen;
 }
 
 .fingerprint-gif {
   width: 100%;
   height: 100%;
-  background-image: url('/assets/fingerprint-scan.gif');
+  background-image: url('/client/public/assets/fingerprint-scan.gif');
   background-size: cover;
   background-position: center;
   opacity: 0.7;
@@ -174,9 +185,11 @@ html {
     transform: translateY(-30%);
     opacity: 0.3;
   }
+
   50% {
     opacity: 0.8;
   }
+
   100% {
     transform: translateY(130%);
     opacity: 0.3;

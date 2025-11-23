@@ -148,7 +148,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "setup.locationsHelper": "Brifingde kullanılacak saklanma noktalarını seç.",
     "setup.locationsDeepHelper":
       "Kategorileri aç/kapa, riskli noktaları devre dışı bırak ya da yenilerini ekle.",
-    "setup.rosterDeepHelper": "Kod adlarını düzenle.",
+    "setup.rosterHelper": "Kod adlarını düzenle.",
     "setup.cancelRoster": "İptal",
     "setup.saveRoster": "Kadroyu Kaydet",
     "setup.timerHelper": "Kısa süre, sivilleri doğaçlamaya zorlar.",
