@@ -15,6 +15,9 @@ import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useTranslation } from '@/hooks/use-translation';
 
+const MAX_NAME_LENGTH = 16;
+const NAME_PATTERN = /^[\p{L}\p{M}\s'’.-]*$/u;
+
 export default function OfflineSetup() {
   const { state, dispatch } = useGame();
   const [_, setLocation] = useLocation();
@@ -30,7 +33,7 @@ export default function OfflineSetup() {
         if (Array.isArray(parsed)) {
           const sanitized = parsed
             .filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
-            .map((name, idx) => name.slice(0, 16) || `Player ${idx + 1}`)
+            .map((name, idx) => name.slice(0, MAX_NAME_LENGTH) || `Player ${idx + 1}`)
             .slice(0, state.settings.playerCount);
           while (sanitized.length < state.settings.playerCount) {
             sanitized.push(`Player ${sanitized.length + 1}`);
@@ -87,12 +90,31 @@ export default function OfflineSetup() {
   };
 
   const handleNameChange = (index: number, value: string) => {
-    if (value.length > 16) return;
-    if (!/^[a-zA-Z\s]*$/.test(value)) return; 
-    
+    if (value.length > MAX_NAME_LENGTH) return;
+    if (!NAME_PATTERN.test(value)) return;
+
     const newNames = [...playerNames];
     newNames[index] = value;
     setPlayerNames(newNames);
+  };
+
+  const handleSaveRoster = () => {
+    for (const name of playerNames) {
+      if (!name.trim()) {
+        toast({ title: t('setup.invalidName'), description: t('setup.invalidNameDesc'), variant: "destructive" });
+        playSound('error');
+        return;
+      }
+      if (containsProfanity(name)) {
+        toast({ title: t('setup.nameRejected'), description: t('setup.profanityDesc'), variant: "destructive" });
+        playSound('error');
+        return;
+      }
+    }
+
+    dispatch({ type: 'UPDATE_PLAYERS', payload: playerNames });
+    playSound('success');
+    setIsRenaming(false);
   };
 
   const handleStartGame = () => {
@@ -118,7 +140,9 @@ export default function OfflineSetup() {
       return;
     }
 
-    const players: Player[] = playerNames.map((name, idx) => ({
+    const sanitizedNames = playerNames.map(name => name.trim());
+
+    const players: Player[] = sanitizedNames.map((name, idx) => ({
       id: `p-${idx}`,
       name,
       role: 'civilian',
@@ -154,7 +178,7 @@ export default function OfflineSetup() {
 
     const randomLoc = randomCat.enabledLocations[Math.floor(Math.random() * randomCat.enabledLocations.length)];
 
-    localStorage.setItem('spy-player-names', JSON.stringify(playerNames));
+    localStorage.setItem('spy-player-names', JSON.stringify(sanitizedNames));
 
     dispatch({ type: 'SET_PLAYERS', payload: players });
     dispatch({
@@ -293,18 +317,23 @@ export default function OfflineSetup() {
                         <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-muted-foreground font-mono text-xs border border-white/10">
                           {idx + 1}
                         </div>
-                        <Input
-                          value={name}
-                          onChange={(e) => handleNameChange(idx, e.target.value)}
-                          placeholder={`${t('setup.agents')} ${idx + 1}`}
-                          className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
-                        />
+                        <div className="flex-1 min-w-0">
+                          <Input
+                            value={name}
+                            onChange={(e) => handleNameChange(idx, e.target.value)}
+                            placeholder={`${t('setup.agents')} ${idx + 1}`}
+                            className="font-mono tracking-wide bg-card/50 border-white/10 focus:border-primary/50 h-12"
+                          />
+                          <div className="text-[10px] text-muted-foreground text-right mt-1 tabular-nums">
+                            {name.length}/{MAX_NAME_LENGTH}
+                          </div>
+                        </div>
                       </div>
                    ))}
                  </div>
                  <div className="flex justify-end pt-2 gap-2">
                    <Button variant="ghost" onClick={() => setIsRenaming(false)}>{t('setup.cancelRoster') ?? 'Cancel'}</Button>
-                   <Button onClick={() => { setIsRenaming(false); dispatch({ type: 'UPDATE_PLAYERS', payload: playerNames }); playSound('success'); }}>{t('setup.saveRoster')}</Button>
+                   <Button onClick={handleSaveRoster}>{t('setup.saveRoster')}</Button>
                  </div>
               </DialogContent>
             </Dialog>

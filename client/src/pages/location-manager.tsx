@@ -129,9 +129,9 @@ export default function LocationManager() {
         <h1 className="text-2xl font-bold font-mono ml-2">{t('locations.title')}</h1>
       </div>
 
-      <div className="space-y-6 pb-24 max-w-4xl mx-auto">
+      <div className="space-y-6 pb-24 max-w-4xl mx-auto min-h-[70vh]">
         {/* Categories List */}
-        <div className="grid gap-3">
+        <div className="grid gap-3" style={{ scrollbarGutter: 'stable both-edges' }}>
            {state.gameData.categories.map(cat => {
              const isSelected = state.settings.selectedCategories.includes(cat.id);
              const isExpanded = selectedCatId === cat.id;

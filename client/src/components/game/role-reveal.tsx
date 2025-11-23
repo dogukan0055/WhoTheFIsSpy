@@ -1,12 +1,13 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Fingerprint, User } from 'lucide-react';
+import { Fingerprint, User, Home } from 'lucide-react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { playSound, vibrate } from '@/lib/audio';
 import { useTranslation } from '@/hooks/use-translation';
 import { getLocationName } from '@/lib/location-i18n';
+import { useLocation } from 'wouter';
 
 export default function RoleReveal() {
   const { state, dispatch } = useGame();
@@ -16,6 +17,7 @@ export default function RoleReveal() {
   const holdRafRef = React.useRef<number | null>(null);
   const { t, language } = useTranslation();
   const [isHolding, setIsHolding] = React.useState(false);
+  const [, navigate] = useLocation();
   
   const currentPlayer = state.players[state.gameData.currentRevealIndex];
   const isLastPlayer = state.gameData.currentRevealIndex === state.players.length - 1;
@@ -36,6 +38,12 @@ export default function RoleReveal() {
     // SILENT REVEAL for Offline Mode as requested
     // "Do not allow sounds in offline reveal role section. It's a hint for other players."
     vibrate(50); // Short vibration is discreet enough
+  };
+
+  const handleExit = () => {
+    playSound('click');
+    dispatch({ type: 'RESET_GAME' });
+    navigate('/');
   };
 
   const stopHold = (skipReset = false) => {
@@ -204,6 +212,15 @@ export default function RoleReveal() {
             {isRevealed ? (isLastPlayer ? t('reveal.startMission') : t('reveal.nextAgent')) : t('reveal.tap')}
           </motion.span>
         </AnimatePresence>
+      </Button>
+
+      <Button
+        variant="ghost"
+        className="w-full max-w-xs h-12 text-sm justify-center gap-2 text-muted-foreground hover:text-foreground"
+        onClick={handleExit}
+      >
+        <Home className="w-4 h-4" />
+        {t('discussion.exit')}
       </Button>
     </div>
   );

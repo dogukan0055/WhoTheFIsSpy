@@ -49,6 +49,7 @@ type Action =
   | { type: 'SET_MODE'; payload: 'offline' | 'online' }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<GameState['settings']> }
   | { type: 'UPDATE_APP_SETTINGS'; payload: Partial<AppSettings> }
+  | { type: 'UPDATE_PLAYERS'; payload: string[] }
   | { type: 'SET_PLAYERS'; payload: Player[] }
   | { type: 'START_GAME'; payload: { location: string; players: Player[] } }
   | { type: 'NEXT_REVEAL' }
@@ -118,6 +119,18 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const newAppSettings = { ...state.appSettings, ...action.payload };
       localStorage.setItem('spy-settings', JSON.stringify(newAppSettings));
       return { ...state, appSettings: newAppSettings };
+
+    case 'UPDATE_PLAYERS': {
+      const trimmed = action.payload.map((name, idx) => name.trim() || `Player ${idx + 1}`);
+      const updatedPlayers = trimmed.map((name, idx) => {
+        const existing = state.players[idx];
+        return existing
+          ? { ...existing, name }
+          : { id: `p-${idx}`, name, role: 'civilian', isDead: false, votes: 0 };
+      });
+
+      return { ...state, players: updatedPlayers };
+    }
       
     case 'SET_PLAYERS':
       return { ...state, players: action.payload };

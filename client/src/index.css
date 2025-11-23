@@ -91,6 +91,8 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans);
   overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable both-edges;
   min-height: 100vh;
 }
 

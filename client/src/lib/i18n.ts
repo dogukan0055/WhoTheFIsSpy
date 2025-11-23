@@ -47,6 +47,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'setup.invalidName': 'Invalid Name',
     'setup.invalidNameDesc': 'All players must have a name.',
     'setup.nameRejected': 'Name Rejected',
+    'setup.profanityDesc': 'Choose a different codename without profanity.',
     'setup.locationDisabled': 'No Enabled Locations',
     'setup.locationDisabledDesc': 'Enable at least one location inside the database.',
 
@@ -147,6 +148,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'setup.invalidName': 'Geçersiz İsim',
     'setup.invalidNameDesc': 'Tüm oyuncuların bir adı olmalı.',
     'setup.nameRejected': 'İsim Reddedildi',
+    'setup.profanityDesc': 'Küfürlü kelime içeremez. Başka bir kod adı seç.',
     'setup.locationDisabled': 'Lokasyon Kapalı',
     'setup.locationDisabledDesc': 'Veritabanında en az bir lokasyonu etkinleştir.',
 
