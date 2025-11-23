@@ -188,19 +188,18 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'ELIMINATE_PLAYER':
       const eliminatedPlayer = state.players.find(p => p.id === action.payload);
       const remainingPlayers = state.players.filter(p => p.id !== action.payload && !p.isDead);
-      
+
       const totalSpiesStart = state.players.filter(p => p.role === 'spy').length;
       const spiesLeft = remainingPlayers.filter(p => p.role === 'spy').length;
       const civiliansLeft = remainingPlayers.filter(p => p.role === 'civilian').length;
 
       let nextPhase = state.phase;
       let winner = state.gameData.winner;
-      // Track spies based on active roster rather than previous state to avoid double-subtracting
+      // Count living spies directly from the roster so the UI stays in sync
       let spiesRemaining = spiesLeft;
 
       if (eliminatedPlayer?.role === 'spy') {
-        spiesRemaining = Math.max(0, spiesRemaining - 1);
-        if (spiesLeft === 0) {
+        if (spiesRemaining === 0) {
           // All spies caught -> Civilians Win
           nextPhase = 'result';
           winner = 'civilian';
@@ -222,14 +221,14 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       }
 
       // Default parity check (Spies >= Civilians -> Spies Win)
-      if (!winner && spiesLeft >= civiliansLeft) {
+      if (!winner && spiesRemaining >= civiliansLeft) {
         nextPhase = 'result';
         winner = 'spy';
       }
 
       return {
         ...state,
-        players: state.players.map(p => 
+        players: state.players.map(p =>
           p.id === action.payload ? { ...p, isDead: true } : p
         ),
         phase: nextPhase,

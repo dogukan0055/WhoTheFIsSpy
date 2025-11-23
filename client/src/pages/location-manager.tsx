@@ -27,7 +27,7 @@ export default function LocationManager() {
   const { state, dispatch } = useGame();
   const [newCatName, setNewCatName] = useState('');
   const [newLocName, setNewLocName] = useState('');
-  const [selectedCatId, setSelectedCatId] = useState<string | null>('standard');
+  const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [isAddingCat, setIsAddingCat] = useState(false);
   const [isAddingLoc, setIsAddingLoc] = useState(false);
   const { t, language } = useTranslation();
@@ -129,9 +129,12 @@ export default function LocationManager() {
         <h1 className="text-2xl font-bold font-mono ml-2">{t('locations.title')}</h1>
       </div>
 
-      <div className="space-y-6 pb-24 max-w-4xl mx-auto min-h-[70vh] w-full">
+      <div
+        className="space-y-6 pb-24 max-w-4xl mx-auto min-h-[70vh] w-full overflow-y-scroll"
+        style={{ scrollbarGutter: 'stable both-edges' }}
+      >
         {/* Categories List */}
-        <div className="grid grid-cols-1 gap-3 w-full" style={{ scrollbarGutter: 'stable both-edges' }}>
+        <div className="grid grid-cols-1 gap-3 w-full">
            {state.gameData.categories.map(cat => {
              const isSelected = state.settings.selectedCategories.includes(cat.id);
              const isExpanded = selectedCatId === cat.id;

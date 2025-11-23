@@ -105,7 +105,7 @@ export default function RoleReveal() {
             >
               <p className="text-lg font-medium leading-tight">{t('reveal.pass')}<br/><span className="text-primary font-bold text-2xl">{currentPlayer.name}</span></p>
               <div
-                className="relative w-32 h-32 mx-auto rounded-full bg-gradient-to-b from-primary/10 via-background to-background border border-primary/30 shadow-2xl overflow-hidden"
+                className="relative w-32 h-32 mx-auto rounded-full bg-gradient-to-b from-primary/10 via-background to-background border border-primary/30 shadow-2xl overflow-hidden flex items-center justify-center"
                 onPointerDown={beginHold}
                 onPointerUp={() => stopHold()}
                 onPointerLeave={() => stopHold()}
@@ -123,6 +123,16 @@ export default function RoleReveal() {
                 />
 
                 <div className="absolute inset-2 rounded-full overflow-hidden fingerprint-mesh" />
+
+                {showScan && (
+                  <motion.div
+                    className="absolute inset-4 rounded-full overflow-hidden pointer-events-none"
+                    animate={{ opacity: [0.4, 0.9, 0.4] }}
+                    transition={{ duration: 1.6, repeat: Infinity }}
+                  >
+                    <div className="fingerprint-gif" />
+                  </motion.div>
+                )}
 
                 <motion.div
                   className="absolute inset-3 rounded-full border border-primary/30"
@@ -159,7 +169,7 @@ export default function RoleReveal() {
                   </>
                 )}
 
-                <Fingerprint className="fingerprint-icon" />
+                <Fingerprint className="fingerprint-icon relative z-10" />
               </div>
               <p className="text-sm text-muted-foreground text-center leading-tight px-4">{t('reveal.hold')}</p>
             </motion.div>
