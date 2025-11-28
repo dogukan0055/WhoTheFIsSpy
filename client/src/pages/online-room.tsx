@@ -92,6 +92,16 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       } catch (err: any) {
         if (!active) return;
         setIsLoading(false);
+        if (typeof err?.message === "string" && err.message.startsWith("401")) {
+          setProfile(null);
+          navigate("/online-menu");
+          toast({
+            title: "Re-auth needed",
+            description: "Session expired. Reconnect to continue.",
+            variant: "destructive",
+          });
+          return;
+        }
         toast({
           title: "Connection lost",
           description: err?.message ?? "Unable to load room state.",
@@ -117,6 +127,16 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         setRoom(next);
       }
     } catch (err: any) {
+      if (typeof err?.message === "string" && err.message.startsWith("401")) {
+        setProfile(null);
+        navigate("/online-menu");
+        toast({
+          title: "Re-auth needed",
+          description: "Session expired. Rejoin with your codename.",
+          variant: "destructive",
+        });
+        return;
+      }
       toast({
         title: "Action failed",
         description: err?.message ?? "Please try again.",
