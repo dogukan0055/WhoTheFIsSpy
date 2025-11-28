@@ -161,7 +161,7 @@ export default function OnlineMenu() {
                   </p>
                 </div>
               </div>
-              <Badge variant="secondary">{profile?.name ?? name || "Anon"}</Badge>
+              <Badge variant="secondary">{(profile?.name ?? name) || "Anon"}</Badge>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
