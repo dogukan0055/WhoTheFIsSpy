@@ -1,202 +1,225 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'wouter';
-import Layout from '@/components/layout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import { ArrowLeft, Globe, Lock, Loader2, User, Copy, Check } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "wouter";
+import Layout from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Globe2, Lock, Loader2, Wifi } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { onlineApi } from "@/lib/online-api";
+import { useOnlineProfile } from "@/hooks/use-online-profile";
 
-type OnlineStep = 'name' | 'menu' | 'join' | 'lobby';
+type Step = "identify" | "menu";
 
 export default function OnlineMenu() {
-  const [step, setStep] = useState<OnlineStep>('name');
-  const [name, setName] = useState('');
-  const [roomCode, setRoomCode] = useState('');
-  const [isHosting, setIsHosting] = useState(false);
-  const [players, setPlayers] = useState<string[]>([]);
+  const { profile, setProfile } = useOnlineProfile();
+  const [step, setStep] = useState<Step>(profile ? "menu" : "identify");
+  const [name, setName] = useState(profile?.name ?? "");
+  const [roomCode, setRoomCode] = useState("");
+  const [spyCount, setSpyCount] = useState(1);
+  const [timerMinutes, setTimerMinutes] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
+  const [, navigate] = useLocation();
 
-  // Fake Lobby Logic
   useEffect(() => {
-    if (step === 'lobby') {
-      // Add self
-      setPlayers([name]);
-      
-      // Simulate players joining
-      const interval = setInterval(() => {
-        setPlayers(prev => {
-          if (prev.length >= 4) return prev;
-          const fakeNames = ['Agent 007', 'BlackWidow', 'Cipher', 'Neo', 'Trinity'];
-          const nextName = fakeNames[prev.length];
-          toast({ title: "Player Joined", description: `${nextName} has entered the safehouse.` });
-          return [...prev, nextName];
-        });
-      }, 3000);
-
-      return () => clearInterval(interval);
+    if (profile) {
+      setStep("menu");
+      setName(profile.name);
     }
-  }, [step, name]);
+  }, [profile]);
 
-  const handleConnect = () => {
-    if (!name.trim()) return;
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      setStep('menu');
-    }, 1500);
-  };
-
-  const handleHost = () => {
-    setIsHosting(true);
-    setRoomCode(Math.random().toString(36).substring(7).toUpperCase());
-    setStep('lobby');
-  };
-
-  const handleJoin = () => {
-    setStep('join');
-  };
-
-  const handleJoinSubmit = () => {
-    if (roomCode.length !== 4) {
-       toast({ title: "Error", description: "Invalid Room Code", variant: "destructive" });
-       return;
+  const connect = async () => {
+    if (!name.trim()) {
+      toast({
+        title: "Pick a codename",
+        description: "Name must be at least 2 characters.",
+        variant: "destructive",
+      });
+      return;
     }
-    setIsHosting(false);
-    setIsLoading(true);
-    setTimeout(() => {
+    try {
+      setIsLoading(true);
+      const session = await onlineApi.login(name.trim());
+      setProfile(session);
+      setStep("menu");
+      toast({ title: "Connected", description: "Secure uplink established." });
+    } catch (err: any) {
+      toast({
+        title: "Connection failed",
+        description: err?.message ?? "Try again in a moment.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-      setStep('lobby');
-    }, 1000);
+    }
+  };
+
+  const hostRoom = async () => {
+    if (!name.trim()) {
+      toast({
+        title: "Pick a codename",
+        description: "Name must be at least 2 characters.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const session = profile ?? (await onlineApi.login(name.trim()));
+      setProfile(session);
+      const room = await onlineApi.createRoom(session, {
+        spyCount,
+        timerMinutes,
+      });
+      navigate(`/online/${room.code}`);
+    } catch (err: any) {
+      toast({
+        title: "Couldn't create room",
+        description: err?.message ?? "Please retry.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const joinRoom = async () => {
+    if (!roomCode || roomCode.length < 3) {
+      toast({
+        title: "Invalid code",
+        description: "Room codes look like ABCD.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const session = profile ?? (await onlineApi.login(name.trim() || "Agent"));
+      setProfile(session);
+      const room = await onlineApi.joinRoom(session, roomCode.trim().toUpperCase());
+      navigate(`/online/${room.code}`);
+    } catch (err: any) {
+      toast({
+        title: "Join failed",
+        description: err?.message ?? "Check the code and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Layout>
-      <div className="flex items-center mb-8">
+    <Layout className="space-y-8">
+      <div className="flex items-center gap-2">
         <Link href="/">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="w-6 h-6" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold font-mono ml-2">ONLINE OPS</h1>
+        <div>
+          <div className="text-xs text-muted-foreground uppercase tracking-widest">
+            Online Ops
+          </div>
+          <div className="text-2xl font-black font-mono">Network Lobby</div>
+        </div>
       </div>
 
-      {/* STEP 1: NAME */}
-      {step === 'name' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-          <div className="text-center space-y-2">
-            <Globe className="w-12 h-12 mx-auto text-primary mb-4 animate-pulse" />
-            <h2 className="text-xl font-bold font-mono">IDENTIFY YOURSELF</h2>
-            <p className="text-muted-foreground text-sm">Enter your codename to access the encrypted network.</p>
+      {step === "identify" && (
+        <Card className="p-6 space-y-4 bg-card/50 border-white/10">
+          <div className="text-center space-y-1">
+            <Wifi className="w-10 h-10 mx-auto text-primary animate-pulse" />
+            <div className="text-lg font-semibold font-mono">Identify yourself</div>
+            <p className="text-sm text-muted-foreground">
+              Choose a codename before entering secure rooms.
+            </p>
           </div>
-          <div className="space-y-4">
-             <Input 
-                placeholder="Codename" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)}
-                className="text-center font-mono text-lg h-12"
-                maxLength={12}
-             />
-             <Button className="w-full h-12 font-bold" onClick={handleConnect} disabled={isLoading || !name}>
-               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "ESTABLISH UPLINK"}
-             </Button>
-          </div>
-        </div>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Cipher, Raven, Nova..."
+            className="text-center h-12 text-lg font-mono"
+            maxLength={20}
+          />
+          <Button className="w-full h-12" onClick={connect} disabled={isLoading}>
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Establish uplink"}
+          </Button>
+        </Card>
       )}
 
-      {/* STEP 2: MENU */}
-      {step === 'menu' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-           <div className="flex items-center justify-center gap-2 text-sm font-mono text-green-500 mb-8">
-             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-             CONNECTED AS: {name.toUpperCase()}
-           </div>
-
-           <div className="grid gap-4">
-            <Button className="h-24 flex flex-col gap-2 text-lg border-primary/50 hover:border-primary bg-primary/10 hover:bg-primary/20 text-primary" variant="outline" onClick={handleHost}>
-              <Globe className="w-8 h-8" />
-              CREATE OPERATION
-              <span className="text-xs opacity-60 font-normal">Host a new game lobby</span>
-            </Button>
-            <Button className="h-24 flex flex-col gap-2 text-lg" variant="secondary" onClick={handleJoin}>
-              <Lock className="w-8 h-8" />
-              JOIN OPERATION
-              <span className="text-xs opacity-60 font-normal">Enter an existing room code</span>
-            </Button>
-           </div>
-        </div>
-      )}
-
-      {/* STEP 3: JOIN INPUT */}
-      {step === 'join' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-          <Card className="p-6 space-y-4 bg-card/50 backdrop-blur-sm">
-            <h2 className="text-center font-bold font-mono text-xl">ENTER ACCESS CODE</h2>
-            <Input 
-              placeholder="XXXX" 
-              className="text-center text-3xl tracking-[0.5em] font-mono h-16 uppercase"
-              maxLength={4}
-              value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-            />
-            <Button className="w-full h-12" onClick={handleJoinSubmit} disabled={isLoading}>
-               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "ACCESS MAINFRAME"}
+      {step === "menu" && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card className="p-6 space-y-3 bg-card/40 border-white/5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Globe2 className="w-5 h-5" />
+                <div>
+                  <div className="text-sm font-semibold">Host a room</div>
+                  <p className="text-xs text-muted-foreground">
+                    Share the code with friends. You control settings.
+                  </p>
+                </div>
+              </div>
+              <Badge variant="secondary">{profile?.name ?? name || "Anon"}</Badge>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  Spies
+                </label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={2}
+                  value={spyCount}
+                  onChange={(e) => setSpyCount(Number(e.target.value))}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] text-muted-foreground uppercase tracking-wide">
+                  Timer (min)
+                </label>
+                <Input
+                  type="number"
+                  min={5}
+                  max={25}
+                  value={timerMinutes}
+                  onChange={(e) => setTimerMinutes(Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <Button className="w-full h-12" onClick={hostRoom} disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate room code"}
             </Button>
           </Card>
-        </div>
-      )}
 
-      {/* STEP 4: LOBBY */}
-      {step === 'lobby' && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-           <div className="text-center">
-             <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Operation Code</p>
-             <div className="flex items-center justify-center gap-3">
-                <span className="text-4xl font-black font-mono tracking-wider text-primary">{roomCode || "XJ9T"}</span>
-                <Button size="icon" variant="ghost" onClick={() => {
-                  navigator.clipboard.writeText(roomCode || "XJ9T");
-                  toast({ title: "Copied", description: "Code copied to clipboard" });
-                }}>
-                  <Copy className="w-4 h-4" />
-                </Button>
-             </div>
-           </div>
-
-           <div className="space-y-3">
-             <div className="flex justify-between items-end border-b border-white/10 pb-2">
-               <span className="text-sm font-bold">AGENTS ({players.length}/8)</span>
-               {players.length < 4 && <span className="text-xs text-yellow-500 animate-pulse">Waiting for agents...</span>}
-               {players.length >= 4 && <span className="text-xs text-green-500">Ready to deploy</span>}
-             </div>
-             
-             <div className="grid gap-2">
-               {players.map((p, i) => (
-                 <div key={i} className="flex items-center bg-card/30 p-3 rounded border border-white/5 animate-in fade-in slide-in-from-left-2">
-                   <div className="w-8 h-8 rounded bg-primary/20 flex items-center justify-center mr-3 text-primary">
-                     <User className="w-4 h-4" />
-                   </div>
-                   <span className="font-mono">{p}</span>
-                   {i === 0 && <span className="ml-auto text-xs bg-primary/20 text-primary px-2 py-0.5 rounded">HOST</span>}
-                 </div>
-               ))}
-               {[...Array(Math.max(0, 4 - players.length))].map((_, i) => (
-                  <div key={`empty-${i}`} className="flex items-center p-3 rounded border border-dashed border-white/10 opacity-50">
-                    <div className="w-8 h-8 rounded bg-white/5 mr-3 animate-pulse" />
-                    <span className="font-mono text-muted-foreground text-xs">Searching Signal...</span>
-                  </div>
-               ))}
-             </div>
-           </div>
-
-           {isHosting && (
-             <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-white/5">
-               <div className="max-w-md mx-auto">
-                 <Button size="lg" className="w-full h-14 font-bold" disabled={players.length < 4} onClick={() => toast({ title: "Demo Mode", description: "This is a UI prototype. Game start simulation complete." })}>
-                   START MISSION
-                 </Button>
-               </div>
-             </div>
-           )}
+          <Card className="p-6 space-y-3 bg-card/40 border-white/5">
+            <div className="flex items-center gap-2">
+              <Lock className="w-5 h-5" />
+              <div>
+                <div className="text-sm font-semibold">Join a room</div>
+                <p className="text-xs text-muted-foreground">
+                  Got an invite code? Jump straight in.
+                </p>
+              </div>
+            </div>
+            <Input
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+              placeholder="ABCD"
+              className="text-center text-2xl font-mono tracking-[0.3em] h-14"
+              maxLength={6}
+            />
+            <Button
+              className="w-full h-12"
+              variant="secondary"
+              onClick={joinRoom}
+              disabled={isLoading}
+            >
+              Enter room
+            </Button>
+          </Card>
         </div>
       )}
 

@@ -37,7 +37,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Curate safehouses and hotspots used during the briefing.",
     "setup.locationsDeepHelper":
       "Toggle categories, disable risky spots, or add custom hideouts.",
-    "setup.rosterDeepHelper": "Edit call signs.",
+    "setup.rosterHelper": "Edit call signs.",
     "setup.cancelRoster": "Cancel",
     "setup.saveRoster": "Save Roster",
     "setup.timerHelper": "Shorter rounds pressure the civilians to improvise.",

@@ -39,7 +39,10 @@ class _OfflineSetupPageState extends State<OfflineSetupPage> {
   void _addPlayer() {
     setState(() {
       _configuration = _configuration.copyWith(
-        players: [..._configuration.players, 'Player ${_configuration.players.length + 1}'],
+        players: [
+          ..._configuration.players,
+          'Player ${_configuration.players.length + 1}'
+        ],
       );
     });
   }
@@ -58,9 +61,11 @@ class _OfflineSetupPageState extends State<OfflineSetupPage> {
 
     final roles = <PlayerRole>[];
     final random = Random();
-    final shuffledPlayers = List<String>.from(_configuration.players)..shuffle(random);
+    final shuffledPlayers = List<String>.from(_configuration.players)
+      ..shuffle(random);
     final prompt = const WordBank().draw(random);
-    final spyCount = _configuration.spyCount.clamp(1, (_configuration.players.length / 2).floor());
+    final spyCount = _configuration.spyCount
+        .clamp(1, (_configuration.players.length / 2).floor());
 
     final spies = shuffledPlayers.take(spyCount).toSet();
     for (final player in shuffledPlayers) {
@@ -82,7 +87,7 @@ class _OfflineSetupPageState extends State<OfflineSetupPage> {
 
   @override
   Widget build(BuildContext context) {
-    final minSpyCount = 1;
+    const minSpyCount = 1;
     final maxSpyCount = (_configuration.players.length / 2).floor();
     final sliderMax = maxSpyCount.clamp(minSpyCount, 5).toDouble();
     final sliderDivisions = (maxSpyCount - minSpyCount).clamp(1, 5).toInt();
@@ -105,7 +110,8 @@ class _OfflineSetupPageState extends State<OfflineSetupPage> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 12),
-                  Text('Add at least four players to keep deduction interesting.'),
+                  const Text(
+                      'Add at least four players to keep deduction interesting.'),
                   const SizedBox(height: 24),
                   ..._configuration.players.asMap().entries.map((entry) {
                     return Padding(
@@ -120,7 +126,8 @@ class _OfflineSetupPageState extends State<OfflineSetupPage> {
                                 filled: true,
                                 fillColor: Colors.white,
                               ),
-                              onChanged: (value) => _updatePlayer(entry.key, value),
+                              onChanged: (value) =>
+                                  _updatePlayer(entry.key, value),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Enter a name';
@@ -164,7 +171,8 @@ class _OfflineSetupPageState extends State<OfflineSetupPage> {
                               label: spyCount.toString(),
                               onChanged: (value) {
                                 setState(() {
-                                  _configuration = _configuration.copyWith(spyCount: value.floor());
+                                  _configuration = _configuration.copyWith(
+                                      spyCount: value.floor());
                                 });
                               },
                             ),
@@ -176,16 +184,19 @@ class _OfflineSetupPageState extends State<OfflineSetupPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Round timer: ${_configuration.roundDuration.inMinutes} min'),
+                            Text(
+                                'Round timer: ${_configuration.roundDuration.inMinutes} min'),
                             Slider(
-                              value: _configuration.roundDuration.inMinutes.toDouble(),
+                              value: _configuration.roundDuration.inMinutes
+                                  .toDouble(),
                               min: 5,
                               max: 12,
                               divisions: 7,
                               onChanged: (value) {
                                 setState(() {
                                   _configuration = _configuration.copyWith(
-                                    roundDuration: Duration(minutes: value.round()),
+                                    roundDuration:
+                                        Duration(minutes: value.round()),
                                   );
                                 });
                               },
@@ -197,7 +208,8 @@ class _OfflineSetupPageState extends State<OfflineSetupPage> {
                   ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
-                    onPressed: _configuration.players.length >= 4 ? _startRound : null,
+                    onPressed:
+                        _configuration.players.length >= 4 ? _startRound : null,
                     icon: const Icon(Icons.play_arrow_rounded),
                     label: const Text('Start round'),
                   ),

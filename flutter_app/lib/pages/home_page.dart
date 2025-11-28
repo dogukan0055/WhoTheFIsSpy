@@ -34,11 +34,16 @@ class HomePage extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => OfflineSetupPage(
+                        builder: (context) => const OfflineSetupPage(
                           initialConfiguration: GameConfiguration(
-                            players: const ['Player 1', 'Player 2', 'Player 3', 'Player 4'],
+                            players: [
+                              'Player 1',
+                              'Player 2',
+                              'Player 3',
+                              'Player 4'
+                            ],
                             spyCount: 1,
-                            roundDuration: const Duration(minutes: 8),
+                            roundDuration: Duration(minutes: 8),
                           ),
                         ),
                       ),
@@ -48,18 +53,20 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Online matchmaking is coming soon.')),
-                    );
-                  },
-                  child: const Text('Online mode (coming soon)')
-                ),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text('Online matchmaking is coming soon.')),
+                      );
+                    },
+                    child: const Text('Online mode (coming soon)')),
                 const SizedBox(height: 12),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const RulesPage()),
+                      MaterialPageRoute(
+                          builder: (context) => const RulesPage()),
                     );
                   },
                   child: const Text('View rules'),
