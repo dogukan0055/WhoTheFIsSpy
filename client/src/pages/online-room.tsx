@@ -20,11 +20,15 @@ import {
   Loader2,
   MessageSquare,
   Play,
+  Send,
   ShieldQuestion,
   Sword,
   TimerReset,
   Vote,
 } from "lucide-react";
+import { NumberPicker } from "@/components/ui/number-picker";
+import { Switch } from "@/components/ui/switch";
+import { INITIAL_CATEGORIES } from "@/lib/locations";
 
 type OnlineRoomProps = {
   params: { code: string };
@@ -48,6 +52,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   });
   const [settingsDirty, setSettingsDirty] = useState(false);
   const settingsDirtyRef = React.useRef(settingsDirty);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    INITIAL_CATEGORIES.map((c) => c.id),
+  );
 
   useEffect(() => {
     settingsDirtyRef.current = settingsDirty;
@@ -71,6 +78,11 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         setRoom(next);
         setIsLoading(false);
         if (!settingsDirtyRef.current) {
+          // Derive which categories are active based on server locations, fall back to all
+          const activeCats = INITIAL_CATEGORIES.filter((c) =>
+            c.locations.some((loc) => next.settings.locations.includes(loc)),
+          ).map((c) => c.id);
+          setSelectedCategories(activeCats.length ? activeCats : INITIAL_CATEGORIES.map((c) => c.id));
           setSettingsDraft({
             spyCount: next.settings.spyCount,
             timerMinutes: next.settings.timerMinutes,
@@ -195,63 +207,83 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <label className="text-xs text-muted-foreground font-mono">
             Spy Count (1-2)
           </label>
-          <Input
-            type="number"
+          <NumberPicker
             min={1}
             max={2}
             value={settingsDraft.spyCount}
-            onChange={(e) =>
-              setSettingsDraft((prev) => ({
-                ...prev,
-                spyCount: Number(e.target.value),
-              }))
-            }
-            onFocus={() => setSettingsDirty(true)}
-            disabled={!me?.isHost}
+            onChange={(val) => {
+              if (!me?.isHost) return;
+              setSettingsDirty(true);
+              setSettingsDraft((prev) => ({ ...prev, spyCount: val }));
+            }}
           />
           <label className="text-xs text-muted-foreground font-mono">
             Round Timer (minutes)
           </label>
-          <Input
-            type="number"
+          <NumberPicker
             min={5}
             max={25}
             value={settingsDraft.timerMinutes}
-            onChange={(e) =>
-              setSettingsDraft((prev) => ({
-                ...prev,
-                timerMinutes: Number(e.target.value),
-              }))
-            }
-            onFocus={() => setSettingsDirty(true)}
-            disabled={!me?.isHost}
+            onChange={(val) => {
+              if (!me?.isHost) return;
+              setSettingsDirty(true);
+              setSettingsDraft((prev) => ({ ...prev, timerMinutes: val }));
+            }}
           />
-          <label className="text-xs text-muted-foreground font-mono">
-            Locations (comma separated)
-          </label>
-          <Input
-            value={settingsDraft.locations}
-            onChange={(e) =>
-              setSettingsDraft((prev) => ({
-                ...prev,
-                locations: e.target.value,
-              }))
-            }
-            onFocus={() => setSettingsDirty(true)}
-            disabled={!me?.isHost}
-          />
+          <div className="space-y-2">
+            <label className="text-xs text-muted-foreground font-mono">
+              Location Database
+            </label>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {INITIAL_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  disabled={!me?.isHost}
+                  onClick={() => {
+                    setSettingsDirty(true);
+                    setSelectedCategories((prev) =>
+                      prev.includes(cat.id)
+                        ? prev.filter((id) => id !== cat.id)
+                        : [...prev, cat.id],
+                    );
+                  }}
+                  className={cn(
+                    "flex items-center justify-between rounded border px-3 py-2 text-sm",
+                    selectedCategories.includes(cat.id)
+                      ? "border-primary/60 bg-primary/10 text-primary"
+                      : "border-white/10 bg-background/40 text-muted-foreground",
+                    !me?.isHost && "opacity-60 cursor-not-allowed",
+                  )}
+                >
+                  <span>{cat.name}</span>
+                  <Switch checked={selectedCategories.includes(cat.id)} disabled />
+                </button>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Matches the offline database style. Host toggles which location packs are in play.
+            </p>
+          </div>
           {me?.isHost && (
             <Button
               className="w-full"
               onClick={() =>
                 handle(async () => {
+                  const chosenLocations =
+                    selectedCategories.length > 0
+                      ? INITIAL_CATEGORIES.filter((c) =>
+                          selectedCategories.includes(c.id),
+                        ).flatMap((c) => c.locations)
+                      : settingsDraft.locations
+                          .split(",")
+                          .map((loc) => loc.trim())
+                          .filter(Boolean);
                   const updated = await onlineApi.updateSettings(profile!, code, {
                     spyCount: settingsDraft.spyCount,
                     timerMinutes: settingsDraft.timerMinutes,
-                    locations: settingsDraft.locations
-                      .split(",")
-                      .map((loc) => loc.trim())
-                      .filter(Boolean),
+                    locations: chosenLocations.length
+                      ? chosenLocations
+                      : INITIAL_CATEGORIES.flatMap((c) => c.locations),
                   });
                   setSettingsDirty(false);
                   return updated;
