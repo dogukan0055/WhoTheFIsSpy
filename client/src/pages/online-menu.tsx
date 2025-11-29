@@ -55,6 +55,21 @@ export default function OnlineMenu() {
     }
   };
 
+  const logout = () => {
+    setProfile(null);
+    setStep("identify");
+    setName("");
+    setRoomCode("");
+    toast({ title: "Signed out", description: "Session cleared." });
+  };
+
+  const ensureSession = async () => {
+    const codename = (profile?.name ?? name).trim() || "Agent";
+    const fresh = await onlineApi.login(codename);
+    setProfile(fresh);
+    return fresh;
+  };
+
   const hostRoom = async () => {
     if (!name.trim()) {
       toast({
@@ -66,13 +81,26 @@ export default function OnlineMenu() {
     }
     try {
       setIsLoading(true);
-      const session = profile ?? (await onlineApi.login(name.trim()));
-      setProfile(session);
-      const room = await onlineApi.createRoom(session, {
-        spyCount,
-        timerMinutes,
-      });
-      navigate(`/online/${room.code}`);
+      let session = profile ?? (await ensureSession());
+      try {
+        const room = await onlineApi.createRoom(session, {
+          spyCount,
+          timerMinutes,
+        });
+        navigate(`/online/${room.code}`);
+        return;
+      } catch (err: any) {
+        if (typeof err?.message === "string" && err.message.startsWith("401")) {
+          session = await ensureSession();
+          const room = await onlineApi.createRoom(session, {
+            spyCount,
+            timerMinutes,
+          });
+          navigate(`/online/${room.code}`);
+          return;
+        }
+        throw err;
+      }
     } catch (err: any) {
       toast({
         title: "Couldn't create room",
@@ -95,10 +123,21 @@ export default function OnlineMenu() {
     }
     try {
       setIsLoading(true);
-      const session = profile ?? (await onlineApi.login(name.trim() || "Agent"));
-      setProfile(session);
-      const room = await onlineApi.joinRoom(session, roomCode.trim().toUpperCase());
-      navigate(`/online/${room.code}`);
+      let session = profile ?? (await ensureSession());
+      const code = roomCode.trim().toUpperCase();
+      try {
+        const room = await onlineApi.joinRoom(session, code);
+        navigate(`/online/${room.code}`);
+        return;
+      } catch (err: any) {
+        if (typeof err?.message === "string" && err.message.startsWith("401")) {
+          session = await ensureSession();
+          const room = await onlineApi.joinRoom(session, code);
+          navigate(`/online/${room.code}`);
+          return;
+        }
+        throw err;
+      }
     } catch (err: any) {
       toast({
         title: "Join failed",
@@ -124,6 +163,11 @@ export default function OnlineMenu() {
           </div>
           <div className="text-2xl font-black font-mono">Network Lobby</div>
         </div>
+        {profile && (
+          <Button variant="outline" size="sm" onClick={logout}>
+            Logout
+          </Button>
+        )}
       </div>
 
       {step === "identify" && (
