@@ -226,6 +226,15 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       setTimeout(() => navigate("/online-menu"), 1200);
     }
   }, [room?.closedReason, navigate]);
+  const [finishCountdown, setFinishCountdown] = useState(10);
+  useEffect(() => {
+    if (!room || room.phase !== "finished") return;
+    setFinishCountdown(10);
+    const t = setInterval(() => {
+      setFinishCountdown((c) => Math.max(0, c - 1));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [room?.phase]);
 
   const readyCount = room?.players.filter((p) => p.isReady).length ?? 0;
 
@@ -249,7 +258,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             <div className="flex-1">
               <div className="font-mono text-sm">{p.name}</div>
               <div className="text-[11px] text-muted-foreground flex gap-2">
-                {p.isHost && <span>Host</span>}
+                {p.isHost && <Badge variant="outline" className="text-[10px] border-primary/60 text-primary">HOST</Badge>}
                 {p.isReady && room?.phase === "lobby" && <span>Ready</span>}
                 {p.eliminated && <span>Eliminated</span>}
               </div>
@@ -272,7 +281,13 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     <div className="grid md:grid-cols-2 gap-4">
       <Card className="p-4 space-y-3 bg-card/40 border-white/5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Room Controls</h3>
+          <div>
+            <div className="text-xs uppercase text-muted-foreground font-mono">Manage Locations</div>
+            <h3 className="text-lg font-semibold">Curate safehouses</h3>
+            <p className="text-xs text-muted-foreground">
+              Toggle categories, disable risky spots, or add custom hideouts.
+            </p>
+          </div>
           <Badge variant="secondary">Host only</Badge>
         </div>
         <div className="space-y-3">
@@ -420,6 +435,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                       ? chosenLocations
                       : INITIAL_CATEGORIES.flatMap((c) => c.locations),
                   });
+                  toast({ title: "Settings saved", description: "Lobby updated." });
                   setSettingsDirty(false);
                   return updated;
                 })
@@ -467,20 +483,24 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   );
 
   const renderReveal = () => (
-    <Card className="p-6 bg-card/50 border border-primary/30 text-center space-y-3">
+    <Card className="p-8 bg-gradient-to-br from-primary/10 via-card/70 to-background border border-primary/30 text-center space-y-4">
       <div className="text-xs text-muted-foreground uppercase tracking-widest">
         Reveal Phase
       </div>
-      <div className="text-3xl font-black font-mono">
+      <div className="text-4xl font-black font-mono">
         {room?.yourRole === "spy" ? "YOU ARE A SPY" : "You are a civilian"}
       </div>
       {room?.yourRole === "civilian" && (
-        <p className="text-muted-foreground">
-          Location: <span className="font-semibold">{room.location}</span>
-        </p>
+        <div className="text-muted-foreground">
+          <div className="text-xs uppercase tracking-widest">Location</div>
+          <div className="text-2xl font-semibold">{room.location}</div>
+        </div>
       )}
+      <div className="text-6xl font-black font-mono text-primary drop-shadow">
+        {revealCountdown ?? 0}s
+      </div>
       <p className="text-sm text-muted-foreground">
-        Cards close in {revealCountdown}s
+        Cards will hide automatically when the timer ends.
       </p>
     </Card>
   );
@@ -497,8 +517,6 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     if (!room || !currentTurn) return null;
 
     if (currentTurn.status === "awaiting-question" && me?.id === currentTurn.askerId) {
-      const availableTargets =
-        room.players.filter((p) => !p.eliminated && p.id !== me?.id) ?? [];
       return (
         <Card className="p-4 space-y-3 bg-card/40 border-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -511,23 +529,31 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <div className="text-4xl font-black font-mono text-primary">
             {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s
           </div>
-          <select
-            className="w-full bg-background border border-white/10 rounded px-3 py-2 text-sm"
-            value={targetId ?? ""}
-            onChange={(e) => setTargetId(e.target.value)}
-          >
-            <option value="">Select target</option>
-            {availableTargets.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <Input
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="Is this place...?"
-          />
+          <div className="space-y-2">
+            <div className="text-xs text-muted-foreground uppercase">Choose a target</div>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {room.players
+                .filter((p) => !p.eliminated && p.id !== me?.id)
+                .map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setTargetId(p.id)}
+                    className={cn(
+                      "flex items-center justify-between px-3 py-2 rounded border text-left",
+                      targetId === p.id
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-white/10 bg-background/60 text-foreground",
+                    )}
+                  >
+                    <span>{p.name}</span>
+                    <Badge variant="secondary">Target</Badge>
+                  </button>
+                ))}
+            </div>
+          </div>
+          <div className="text-sm font-mono bg-background/60 border border-white/10 rounded px-3 py-2">
+            Is this place ...?
+          </div>
           <Button
             disabled={!targetId}
             onClick={() =>
@@ -536,7 +562,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                   prof,
                   code,
                   targetId!,
-                  question || "Is this place ...?",
+                  "Is this place ...?",
                 ),
               )
             }
@@ -657,20 +683,25 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       <div className="text-xs text-muted-foreground">
         Use chat for {voteCountdown ?? 0}s then lock your choice.
       </div>
-      <select
-        className="w-full bg-background border border-white/10 rounded px-3 py-2 text-sm"
-        value={voteTarget ?? ""}
-        onChange={(e) => setVoteTarget(e.target.value)}
-      >
-        <option value="">Choose suspect</option>
+      <div className="grid sm:grid-cols-2 gap-2">
         {room?.players
           .filter((p) => !p.eliminated)
           .map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
+            <button
+              key={p.id}
+              onClick={() => setVoteTarget(p.id)}
+              className={cn(
+                "px-3 py-2 rounded border text-left flex items-center justify-between",
+                voteTarget === p.id
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-white/10 bg-background/60 text-foreground",
+              )}
+            >
+              <span>{p.name}</span>
+              {voteTarget === p.id && <Badge variant="secondary">Selected</Badge>}
+            </button>
           ))}
-      </select>
+      </div>
       <Button
         disabled={!voteTarget}
         onClick={() =>
@@ -748,6 +779,11 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <div className="md:col-span-2">{renderChat()}</div>
           <div className="space-y-3">
             {renderPlayers()}
+            <Card className="p-4 bg-card/40 border-white/5">
+              <div className="text-xs uppercase text-muted-foreground">Settings</div>
+              <div className="text-sm">Spies: {room?.settings.spyCount}</div>
+              <div className="text-sm">Timer: {room?.settings.timerMinutes} min</div>
+            </Card>
             {room?.lastVote && (
               <Card className="p-3 text-sm bg-card/30 border-white/5">
                 Last vote: {room.lastVote.message}
@@ -770,6 +806,21 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       {room?.lastVote?.message && (
         <p className="text-sm text-muted-foreground">{room.lastVote.message}</p>
       )}
+      <div className="text-sm text-muted-foreground">
+        Next round in {finishCountdown}s — adjust settings or return home.
+      </div>
+      <div className="flex gap-2 justify-center">
+        <Button
+          variant="secondary"
+          disabled={finishCountdown === 0}
+          onClick={() => setFinishCountdown((c) => Math.max(0, c - 1))}
+        >
+          Skip timer
+        </Button>
+        <Button variant="outline" onClick={() => navigate("/online-menu")}>
+          Main menu
+        </Button>
+      </div>
       <div className="grid gap-2">
         {room?.players.map((p) => (
           <div

@@ -105,7 +105,7 @@ export default function OnlineMenu() {
   };
 
   const joinRoom = async () => {
-    if (!roomCode || roomCode.length < 3) {
+    if (!roomCode || roomCode.length < 4) {
       toast({
         title: "Invalid code",
         description: "Room codes look like ABCD.",
@@ -219,7 +219,7 @@ export default function OnlineMenu() {
               onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               placeholder="ABCD"
               className="text-center text-2xl font-mono tracking-[0.3em] h-14"
-              maxLength={6}
+              maxLength={4}
             />
             <Button
               className="w-full h-12"
