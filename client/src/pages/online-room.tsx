@@ -12,6 +12,7 @@ import {
   onlineApi,
   type OnlineRoomState,
   type OnlinePlayer,
+  type OnlineProfile,
 } from "@/lib/online-api";
 import { cn } from "@/lib/utils";
 import {
@@ -93,13 +94,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         if (!active) return;
         setIsLoading(false);
         if (typeof err?.message === "string" && err.message.startsWith("401")) {
-          setProfile(null);
-          navigate("/online-menu");
-          toast({
-            title: "Re-auth needed",
-            description: "Session expired. Reconnect to continue.",
-            variant: "destructive",
-          });
+          const fresh = await reauthAndRejoin();
+          if (!fresh) return;
           return;
         }
         toast({
@@ -119,23 +115,54 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     };
   }, [profile, code]);
 
-  const handle = async (fn: () => Promise<OnlineRoomState | void>) => {
-    if (!profile) return;
+  const reauthAndRejoin = async () => {
+    if (!profile) return null;
     try {
-      const next = await fn();
+      const fresh = await onlineApi.login(profile.name);
+      setProfile(fresh);
+      const rejoined = await onlineApi.joinRoom(fresh, code);
+      setRoom(rejoined);
+      toast({ title: "Session refreshed", description: "Rejoined the room." });
+      return fresh;
+    } catch (e: any) {
+      setProfile(null);
+      navigate("/online-menu");
+      toast({
+        title: "Re-auth needed",
+        description: e?.message ?? "Session expired. Rejoin with your codename.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const handle = async (
+    fn: (prof: OnlineProfile) => Promise<OnlineRoomState | void>,
+  ) => {
+    if (!profile) return;
+    let currentProfile = profile;
+    try {
+      const next = await fn(currentProfile);
       if (next) {
         setRoom(next);
       }
     } catch (err: any) {
       if (typeof err?.message === "string" && err.message.startsWith("401")) {
-        setProfile(null);
-        navigate("/online-menu");
-        toast({
-          title: "Re-auth needed",
-          description: "Session expired. Rejoin with your codename.",
-          variant: "destructive",
-        });
-        return;
+        const fresh = await reauthAndRejoin();
+        if (!fresh) return;
+        currentProfile = fresh;
+        try {
+          const retryNext = await fn(currentProfile);
+          if (retryNext) setRoom(retryNext);
+          return;
+        } catch (innerErr: any) {
+          toast({
+            title: "Action failed",
+            description: innerErr?.message ?? "Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
       }
       toast({
         title: "Action failed",
@@ -329,8 +356,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               className="flex-1"
               variant={me?.isReady ? "secondary" : "default"}
               onClick={() =>
-                handle(() =>
-                  onlineApi.setReady(profile!, code, !(me?.isReady ?? false)),
+                handle((prof) =>
+                  onlineApi.setReady(prof, code, !(me?.isReady ?? false)),
                 )
               }
             >
@@ -339,7 +366,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             {me?.isHost && (
               <Button
                 disabled={!room || readyCount < 4}
-                onClick={() => handle(() => onlineApi.start(profile!, code))}
+                onClick={() => handle((prof) => onlineApi.start(prof, code))}
               >
                 <Play className="w-4 h-4 mr-1" />
                 Start
@@ -413,9 +440,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <Button
             disabled={!targetId}
             onClick={() =>
-              handle(() =>
+              handle((prof) =>
                 onlineApi.askQuestion(
-                  profile!,
+                  prof,
                   code,
                   targetId!,
                   question || "Is this place ...?",
@@ -447,14 +474,14 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             <Button
               className="flex-1"
               variant="secondary"
-              onClick={() => handle(() => onlineApi.answer(profile!, code, "yes"))}
+              onClick={() => handle((prof) => onlineApi.answer(prof, code, "yes"))}
             >
               Yes
             </Button>
             <Button
               className="flex-1"
               variant="destructive"
-              onClick={() => handle(() => onlineApi.answer(profile!, code, "no"))}
+              onClick={() => handle((prof) => onlineApi.answer(prof, code, "no"))}
             >
               No
             </Button>
@@ -519,7 +546,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <Button
             onClick={() => {
               if (!chatInput.trim()) return;
-              handle(() => onlineApi.chat(profile!, code, chatInput.trim()));
+              handle((prof) => onlineApi.chat(prof, code, chatInput.trim()));
               setChatInput("");
             }}
           >
@@ -556,7 +583,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       <Button
         disabled={!voteTarget}
         onClick={() =>
-          handle(() => onlineApi.vote(profile!, code, voteTarget!))
+          handle((prof) => onlineApi.vote(prof, code, voteTarget!))
         }
       >
         Confirm vote
@@ -603,7 +630,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <Button
             variant="destructive"
             disabled={room?.phase !== "playing" || me?.calledVote}
-            onClick={() => handle(() => onlineApi.callVote(profile!, code))}
+            onClick={() => handle((prof) => onlineApi.callVote(prof, code))}
           >
             <Vote className="w-4 h-4 mr-2" />
             Call vote
