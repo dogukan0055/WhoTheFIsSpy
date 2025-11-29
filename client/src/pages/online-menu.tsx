@@ -17,8 +17,6 @@ export default function OnlineMenu() {
   const [step, setStep] = useState<Step>(profile ? "menu" : "identify");
   const [name, setName] = useState(profile?.name ?? "");
   const [roomCode, setRoomCode] = useState("");
-  const [spyCount, setSpyCount] = useState(1);
-  const [timerMinutes, setTimerMinutes] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [, navigate] = useLocation();
 
@@ -83,19 +81,13 @@ export default function OnlineMenu() {
       setIsLoading(true);
       let session = profile ?? (await ensureSession());
       try {
-        const room = await onlineApi.createRoom(session, {
-          spyCount,
-          timerMinutes,
-        });
+        const room = await onlineApi.createRoom(session, {});
         navigate(`/online/${room.code}`);
         return;
       } catch (err: any) {
         if (typeof err?.message === "string" && err.message.startsWith("401")) {
           session = await ensureSession();
-          const room = await onlineApi.createRoom(session, {
-            spyCount,
-            timerMinutes,
-          });
+          const room = await onlineApi.createRoom(session, {});
           navigate(`/online/${room.code}`);
           return;
         }
@@ -201,37 +193,11 @@ export default function OnlineMenu() {
                 <div>
                   <div className="text-sm font-semibold">Host a room</div>
                   <p className="text-xs text-muted-foreground">
-                    Share the code with friends. You control settings.
+                    Share the code with friends. Configure details inside the lobby.
                   </p>
                 </div>
               </div>
               <Badge variant="secondary">{(profile?.name ?? name) || "Anon"}</Badge>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[11px] text-muted-foreground uppercase tracking-wide">
-                  Spies
-                </label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={2}
-                  value={spyCount}
-                  onChange={(e) => setSpyCount(Number(e.target.value))}
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] text-muted-foreground uppercase tracking-wide">
-                  Timer (min)
-                </label>
-                <Input
-                  type="number"
-                  min={5}
-                  max={25}
-                  value={timerMinutes}
-                  onChange={(e) => setTimerMinutes(Number(e.target.value))}
-                />
-              </div>
             </div>
             <Button className="w-full h-12" onClick={hostRoom} disabled={isLoading}>
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate room code"}

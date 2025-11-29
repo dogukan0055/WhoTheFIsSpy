@@ -64,6 +64,7 @@ type Room = {
     wasSpy?: boolean;
     message: string;
   };
+  closedReason?: string;
 };
 
 const sessions = new Map<string, Session>();
@@ -231,6 +232,13 @@ function pickNextAsker(room: Room): string | undefined {
 function progressRoom(room: Room) {
   const now = Date.now();
 
+  if (room.closedReason) {
+    room.turn = undefined;
+    room.voteEndsAt = undefined;
+    room.phase = "finished";
+    return;
+  }
+
   if (room.phase === "finished") {
     room.turn = undefined;
     room.voteEndsAt = undefined;
@@ -373,6 +381,7 @@ function serializeRoom(room: Room, viewerId: string) {
     voteEndsAt: room.voteEndsAt,
     lastVote: room.lastVote,
     winner: room.winner,
+    closedReason: room.closedReason,
   };
 }
 
@@ -404,6 +413,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     };
     sessions.set(session.id, session);
     res.json(session);
+  });
+
+  app.post("/api/rooms/:code/leave", (req, res) => {
+    const session = requireSession(req, res);
+    if (!session) return;
+    const room = getRoomOr404(req.params.code, res);
+    if (!room) return;
+    const player = room.players.find((p) => p.id === session.id);
+    if (!player) {
+      res.status(200).json({ message: "Left" });
+      return;
+    }
+    if (room.hostId === session.id) {
+      room.closedReason = "Host left the room.";
+      addSystemMessage(room, "Host left the room. Session closed.");
+    } else {
+      room.players = room.players.filter((p) => p.id !== session.id);
+      addSystemMessage(room, `${session.name} left the room.`);
+    }
+    res.json(serializeRoom(room, session.id));
   });
 
   app.post("/api/rooms", (req, res) => {
@@ -481,7 +510,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const room = getRoomOr404(req.params.code, res);
     if (!room) return;
     if (!validatePlayerInRoom(room, session.id, res)) return;
-    res.json(serializeRoom(room, session.id));
+    const payload = serializeRoom(room, session.id);
+    res.json(payload);
   });
 
   app.post("/api/rooms/:code/ready", (req, res) => {

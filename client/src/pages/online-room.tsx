@@ -56,6 +56,12 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     INITIAL_CATEGORIES.map((c) => c.id),
   );
+  const [locationPicks, setLocationPicks] = useState<Record<string, string[]>>(
+    () =>
+      Object.fromEntries(
+        INITIAL_CATEGORIES.map((c) => [c.id, [...c.locations]]),
+      ),
+  );
 
   useEffect(() => {
     settingsDirtyRef.current = settingsDirty;
@@ -89,6 +95,14 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             timerMinutes: next.settings.timerMinutes,
             locations: next.settings.locations.join(", "),
           });
+          setLocationPicks(
+            Object.fromEntries(
+              INITIAL_CATEGORIES.map((c) => [
+                c.id,
+                c.locations.filter((loc) => next.settings.locations.includes(loc)),
+              ]),
+            ),
+          );
         }
       } catch (err: any) {
         if (!active) return;
@@ -202,6 +216,17 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     return Math.max(0, Math.ceil((room.voteEndsAt - now) / 1000));
   }, [room?.voteEndsAt, now]);
 
+  useEffect(() => {
+    if (room?.closedReason) {
+      toast({
+        title: "Room closed",
+        description: room.closedReason,
+        variant: "destructive",
+      });
+      setTimeout(() => navigate("/online-menu"), 1200);
+    }
+  }, [room?.closedReason, navigate]);
+
   const readyCount = room?.players.filter((p) => p.isReady).length ?? 0;
 
   const renderPlayers = () => (
@@ -281,34 +306,81 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             <label className="text-xs text-muted-foreground font-mono">
               Location Database
             </label>
-            <div className="grid sm:grid-cols-2 gap-2">
-              {INITIAL_CATEGORIES.map((cat) => (
-                <button
-                  key={cat.id}
-                  disabled={!me?.isHost}
-                  onClick={() => {
-                    setSettingsDirty(true);
-                    setSelectedCategories((prev) =>
-                      prev.includes(cat.id)
-                        ? prev.filter((id) => id !== cat.id)
-                        : [...prev, cat.id],
-                    );
-                  }}
-                  className={cn(
-                    "flex items-center justify-between rounded border px-3 py-2 text-sm",
-                    selectedCategories.includes(cat.id)
-                      ? "border-primary/60 bg-primary/10 text-primary"
-                      : "border-white/10 bg-background/40 text-muted-foreground",
-                    !me?.isHost && "opacity-60 cursor-not-allowed",
-                  )}
-                >
-                  <span>{cat.name}</span>
-                  <Switch checked={selectedCategories.includes(cat.id)} disabled />
-                </button>
-              ))}
+            <div className="space-y-3">
+              {INITIAL_CATEGORIES.map((cat) => {
+                const enabled = selectedCategories.includes(cat.id);
+                const picks = locationPicks[cat.id] ?? [];
+                return (
+                  <div
+                    key={cat.id}
+                    className={cn(
+                      "rounded border px-3 py-2 space-y-2",
+                      enabled
+                        ? "border-primary/60 bg-primary/10 text-primary"
+                        : "border-white/10 bg-background/40 text-muted-foreground",
+                      !me?.isHost && "opacity-60",
+                    )}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold">{cat.name}</span>
+                      <Switch
+                        checked={enabled}
+                        disabled={!me?.isHost}
+                        onCheckedChange={() => {
+                          if (!me?.isHost) return;
+                          setSettingsDirty(true);
+                          setSelectedCategories((prev) =>
+                            prev.includes(cat.id)
+                              ? prev.filter((id) => id !== cat.id)
+                              : [...prev, cat.id],
+                          );
+                          if (!enabled && picks.length === 0) {
+                            setLocationPicks((prev) => ({
+                              ...prev,
+                              [cat.id]: [...cat.locations],
+                            }));
+                          }
+                        }}
+                      />
+                    </div>
+                    {enabled && (
+                      <div className="flex flex-wrap gap-2">
+                        {cat.locations.map((loc) => {
+                          const on = picks.includes(loc);
+                          return (
+                            <button
+                              key={loc}
+                              disabled={!me?.isHost}
+                              onClick={() => {
+                                if (!me?.isHost) return;
+                                setSettingsDirty(true);
+                                setLocationPicks((prev) => {
+                                  const existing = prev[cat.id] ?? [];
+                                  const next = on
+                                    ? existing.filter((l) => l !== loc)
+                                    : [...existing, loc];
+                                  return { ...prev, [cat.id]: next };
+                                });
+                              }}
+                              className={cn(
+                                "px-3 py-1 rounded-full text-xs border",
+                                on
+                                  ? "border-primary bg-primary/20 text-primary-foreground"
+                                  : "border-white/10 bg-background/60 text-muted-foreground",
+                              )}
+                            >
+                              {loc}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Matches the offline database style. Host toggles which location packs are in play.
+              Matches offline database: toggle categories and individual locations.
             </p>
           </div>
           {me?.isHost && (
@@ -316,11 +388,27 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               className="w-full"
               onClick={() =>
                 handle(async () => {
-                  const chosenLocations =
+                  const selectedLocs =
                     selectedCategories.length > 0
-                      ? INITIAL_CATEGORIES.filter((c) =>
-                          selectedCategories.includes(c.id),
-                        ).flatMap((c) => c.locations)
+                      ? selectedCategories.flatMap((catId) => {
+                          const cat = INITIAL_CATEGORIES.find((c) => c.id === catId);
+                          if (!cat) return [];
+                          const picks = locationPicks[catId]?.filter((l) => cat.locations.includes(l)) ?? [];
+                          return picks.length > 0 ? picks : cat.locations;
+                        })
+                      : INITIAL_CATEGORIES.flatMap((c) => c.locations);
+                  const filteredLocs = Array.from(new Set(selectedLocs));
+                  if (filteredLocs.length === 0) {
+                    toast({
+                      title: "No locations selected",
+                      description: "Enable at least one location to start.",
+                      variant: "destructive",
+                    });
+                    return undefined;
+                  }
+                  const chosenLocations =
+                    filteredLocs.length > 0
+                      ? filteredLocs
                       : settingsDraft.locations
                           .split(",")
                           .map((loc) => loc.trim())
@@ -361,7 +449,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                 )
               }
             >
-              {me?.isReady ? "Unready" : "I'm ready"}
+              {me?.isReady ? "I'm not ready" : "I'm ready"}
             </Button>
             {me?.isHost && (
               <Button
@@ -418,7 +506,10 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             Your turn to ask
           </div>
           <div className="text-xs text-muted-foreground">
-            Choose a target and ask a yes/no question. {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s left.
+            Choose a target and ask a yes/no question.
+          </div>
+          <div className="text-4xl font-black font-mono text-primary">
+            {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s
           </div>
           <select
             className="w-full bg-background border border-white/10 rounded px-3 py-2 text-sm"
@@ -486,8 +577,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               No
             </Button>
           </div>
-          <div className="text-[11px] text-muted-foreground">
-            {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s remaining
+          <div className="text-4xl font-black font-mono text-primary">
+            {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s
           </div>
         </Card>
       );
@@ -501,8 +592,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             ? `${currentAsker?.name ?? "Someone"} is picking a target...`
             : `${currentTarget?.name ?? "Player"} is answering...`}
         </div>
-        <div className="text-xs text-muted-foreground">
-          {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s left
+        <div className="text-4xl font-black font-mono text-primary">
+          {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s
         </div>
       </Card>
     );
@@ -536,7 +627,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           </div>
         ))}
       </div>
-      {room?.phase !== "lobby" && (
+      {room?.phase === "voting" && (
         <div className="flex gap-2 mt-3">
           <Input
             value={chatInput}
@@ -638,6 +729,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <Button
             variant="outline"
             onClick={() => {
+              handle((prof) => onlineApi.leave(prof, code));
               setProfile(null);
               navigate("/online-menu");
             }}

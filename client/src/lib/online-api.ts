@@ -57,6 +57,7 @@ export type OnlineRoomState = {
     message: string;
   };
   winner?: "spy" | "civilian";
+  closedReason?: string;
 };
 
 type SettingsInput = {
@@ -171,5 +172,13 @@ export const onlineApi = {
       withPlayer({ targetId }, profile),
     );
     return (await res.json()) as OnlineRoomState;
+  },
+  async leave(profile: OnlineProfile, code: string) {
+    const res = await apiRequest(
+      "POST",
+      `/api/rooms/${code}/leave`,
+      withPlayer({}, profile),
+    );
+    return res.ok ? ((await res.json()) as OnlineRoomState) : null;
   },
 };
