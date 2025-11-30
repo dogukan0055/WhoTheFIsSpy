@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Globe2, Lock, Loader2, Wifi } from "lucide-react";
+import { ArrowLeft, Globe2, Lock, Loader2, Wifi, User, LogOut } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { onlineApi } from "@/lib/online-api";
 import { useOnlineProfile } from "@/hooks/use-online-profile";
@@ -143,22 +143,28 @@ export default function OnlineMenu() {
 
   return (
     <Layout className="space-y-8">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2">
         <Link href="/">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="w-6 h-6" />
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <div className="text-xs text-muted-foreground uppercase tracking-widest">
             Online Ops
           </div>
           <div className="text-2xl font-black font-mono">Network Lobby</div>
         </div>
         {profile && (
-          <Button variant="outline" size="sm" onClick={logout}>
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <User className="w-3 h-3" />
+              {profile.name}
+            </Badge>
+            <Button variant="ghost" size="icon" onClick={logout}>
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
         )}
       </div>
 
@@ -186,25 +192,22 @@ export default function OnlineMenu() {
 
       {step === "menu" && (
         <div className="grid md:grid-cols-2 gap-4">
-          <Card className="p-6 space-y-3 bg-card/40 border-white/5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Globe2 className="w-5 h-5" />
-                <div>
-                  <div className="text-sm font-semibold">Host a room</div>
-                  <p className="text-xs text-muted-foreground">
-                    Share the code with friends. Configure details inside the lobby.
-                  </p>
-                </div>
+          <Card className="p-6 space-y-3 bg-card/40 border-white/5 flex flex-col justify-between">
+            <div className="flex items-center gap-2">
+              <Globe2 className="w-5 h-5" />
+              <div>
+                <div className="text-sm font-semibold">Host a room</div>
+                <p className="text-xs text-muted-foreground">
+                  Share the code with friends. Configure details inside the lobby.
+                </p>
               </div>
-              <Badge variant="secondary">{(profile?.name ?? name) || "Anon"}</Badge>
             </div>
             <Button className="w-full h-12" onClick={hostRoom} disabled={isLoading}>
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate room code"}
             </Button>
           </Card>
 
-          <Card className="p-6 space-y-3 bg-card/40 border-white/5">
+          <Card className="p-6 space-y-3 bg-card/40 border-white/5 flex flex-col justify-between">
             <div className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
               <div>
@@ -214,21 +217,23 @@ export default function OnlineMenu() {
                 </p>
               </div>
             </div>
-            <Input
-              value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-              placeholder="ABCD"
-              className="text-center text-2xl font-mono tracking-[0.3em] h-14"
-              maxLength={4}
-            />
-            <Button
-              className="w-full h-12"
-              variant="secondary"
-              onClick={joinRoom}
-              disabled={isLoading}
-            >
-              Enter room
-            </Button>
+            <div className="space-y-2">
+              <Input
+                value={roomCode}
+                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                placeholder="ABCD"
+                className="text-center text-2xl font-mono tracking-[0.3em] h-14"
+                maxLength={4}
+              />
+              <Button
+                className="w-full h-12"
+                variant="secondary"
+                onClick={joinRoom}
+                disabled={isLoading}
+              >
+                Enter room
+              </Button>
+            </div>
           </Card>
         </div>
       )}

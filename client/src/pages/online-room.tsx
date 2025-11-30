@@ -23,9 +23,10 @@ import {
   Play,
   Send,
   ShieldQuestion,
-  Sword,
+  User,
   TimerReset,
   Vote,
+  Share2,
 } from "lucide-react";
 import { NumberPicker } from "@/components/ui/number-picker";
 import { Switch } from "@/components/ui/switch";
@@ -43,7 +44,6 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
   const [chatInput, setChatInput] = useState("");
-  const [question, setQuestion] = useState("Is this place ...?");
   const [targetId, setTargetId] = useState<string | undefined>(undefined);
   const [voteTarget, setVoteTarget] = useState<string | undefined>(undefined);
   const [settingsDraft, setSettingsDraft] = useState({
@@ -282,7 +282,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       <Card className="p-4 space-y-3 bg-card/40 border-white/5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase text-muted-foreground font-mono">Manage Locations</div>
+            <div className="text-xs uppercase text-muted-foreground font-mono">Game Settings</div>
             <h3 className="text-lg font-semibold">Curate safehouses</h3>
             <p className="text-xs text-muted-foreground">
               Toggle categories, disable risky spots, or add custom hideouts.
@@ -319,80 +319,100 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           />
           <div className="space-y-2">
             <label className="text-xs text-muted-foreground font-mono">
-              Location Database
+              Game Settings (Host Only)
             </label>
-            <div className="space-y-3">
-              {INITIAL_CATEGORIES.map((cat) => {
-                const enabled = selectedCategories.includes(cat.id);
-                const picks = locationPicks[cat.id] ?? [];
-                return (
-                  <div
-                    key={cat.id}
-                    className={cn(
-                      "rounded border px-3 py-2 space-y-2",
-                      enabled
-                        ? "border-primary/60 bg-primary/10 text-primary"
-                        : "border-white/10 bg-background/40 text-muted-foreground",
-                      !me?.isHost && "opacity-60",
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold">{cat.name}</span>
-                      <Switch
-                        checked={enabled}
-                        disabled={!me?.isHost}
-                        onCheckedChange={() => {
-                          if (!me?.isHost) return;
-                          setSettingsDirty(true);
-                          setSelectedCategories((prev) =>
-                            prev.includes(cat.id)
-                              ? prev.filter((id) => id !== cat.id)
-                              : [...prev, cat.id],
-                          );
-                          if (!enabled && picks.length === 0) {
-                            setLocationPicks((prev) => ({
-                              ...prev,
-                              [cat.id]: [...cat.locations],
-                            }));
-                          }
-                        }}
-                      />
-                    </div>
-                    {enabled && (
-                      <div className="flex flex-wrap gap-2">
-                        {cat.locations.map((loc) => {
-                          const on = picks.includes(loc);
-                          return (
-                            <button
-                              key={loc}
-                              disabled={!me?.isHost}
-                              onClick={() => {
-                                if (!me?.isHost) return;
-                                setSettingsDirty(true);
-                                setLocationPicks((prev) => {
-                                  const existing = prev[cat.id] ?? [];
-                                  const next = on
-                                    ? existing.filter((l) => l !== loc)
-                                    : [...existing, loc];
-                                  return { ...prev, [cat.id]: next };
-                                });
-                              }}
-                              className={cn(
-                                "px-3 py-1 rounded-full text-xs border",
-                                on
-                                  ? "border-primary bg-primary/20 text-primary-foreground"
-                                  : "border-white/10 bg-background/60 text-muted-foreground",
-                              )}
-                            >
-                              {loc}
-                            </button>
-                          );
-                        })}
+            <div className="flex gap-3">
+              <div className="flex-1 space-y-3">
+                {INITIAL_CATEGORIES.map((cat) => {
+                  const enabled = selectedCategories.includes(cat.id);
+                  const picks = locationPicks[cat.id] ?? [];
+                  return (
+                    <div
+                      key={cat.id}
+                      className={cn(
+                        "rounded border px-3 py-2 space-y-2",
+                        enabled
+                          ? "border-primary/60 bg-primary/10 text-primary"
+                          : "border-white/10 bg-background/40 text-muted-foreground",
+                        !me?.isHost && "opacity-60",
+                      )}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">{cat.name}</span>
+                        <Switch
+                          checked={enabled}
+                          disabled={!me?.isHost}
+                          onCheckedChange={() => {
+                            if (!me?.isHost) return;
+                            setSettingsDirty(true);
+                            setSelectedCategories((prev) =>
+                              prev.includes(cat.id)
+                                ? prev.filter((id) => id !== cat.id)
+                                : [...prev, cat.id],
+                            );
+                            if (!enabled && picks.length === 0) {
+                              setLocationPicks((prev) => ({
+                                ...prev,
+                                [cat.id]: [...cat.locations],
+                              }));
+                            }
+                            if (enabled) {
+                              setLocationPicks((prev) => ({
+                                ...prev,
+                                [cat.id]: [],
+                              }));
+                            }
+                          }}
+                        />
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      {enabled && (
+                        <div className="flex flex-wrap gap-2">
+                          {cat.locations.map((loc) => {
+                            const on = picks.includes(loc);
+                            return (
+                              <button
+                                key={loc}
+                                disabled={!me?.isHost}
+                                onClick={() => {
+                                  if (!me?.isHost) return;
+                                  setSettingsDirty(true);
+                                  setLocationPicks((prev) => {
+                                    const existing = prev[cat.id] ?? [];
+                                    const next = on
+                                      ? existing.filter((l) => l !== loc)
+                                      : [...existing, loc];
+                                    return { ...prev, [cat.id]: next };
+                                  });
+                                }}
+                                className={cn(
+                                  "px-3 py-1 rounded-full text-xs border",
+                                  on
+                                    ? "border-primary bg-primary/20 text-primary-foreground"
+                                    : "border-white/10 bg-background/60 text-muted-foreground",
+                                )}
+                              >
+                                {loc}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              <Card className="w-48 p-3 border-white/10 bg-background/50 hidden md:block">
+                <div className="text-xs uppercase text-muted-foreground">Roster (host)</div>
+                <div className="space-y-2 mt-2">
+                  {room?.players.map((p, idx) => (
+                    <div key={p.id} className="flex items-center gap-2 text-sm">
+                      <Badge variant="outline">{idx + 1}</Badge>
+                      <span className="truncate">{p.name}</span>
+                      {p.isHost && <Badge variant="secondary">HOST</Badge>}
+                    </div>
+                  ))}
+                </div>
+              </Card>
             </div>
             <p className="text-[11px] text-muted-foreground">
               Matches offline database: toggle categories and individual locations.
@@ -857,18 +877,22 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           </Button>
           <div>
             <div className="text-xs text-muted-foreground uppercase tracking-widest">
-              Room
+              Lobby
             </div>
-            <div className="text-2xl font-black font-mono flex items-center gap-2">
-              {code}
-              <Button variant="ghost" size="icon" onClick={copyCode}>
-                <Copy className="w-4 h-4" />
-              </Button>
-            </div>
+            <Card className="mt-1 px-3 py-2 flex items-center gap-2 border-dashed border-primary/40 bg-primary/5">
+              <Share2 className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-2 font-mono">
+                <span className="text-xl font-black">{code}</span>
+                <Button variant="ghost" size="icon" onClick={copyCode}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <span className="text-xs text-muted-foreground ml-auto">Share this code to invite</span>
+            </Card>
           </div>
         </div>
         <Badge variant="outline" className="flex items-center gap-1">
-          <Sword className="w-4 h-4" />
+          <User className="w-4 h-4" />
           {profile.name}
         </Badge>
       </div>
