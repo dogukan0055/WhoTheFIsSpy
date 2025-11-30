@@ -18,8 +18,12 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.gameplay.steps":
       "Pass the phone around to reveal roles.|Once everyone knows their role, start the game.|Take turns asking Yes/No questions.|Spies can guess the location at any time to steal a win.|If you suspect someone, call a vote!",
     "home.win": "WIN CONDITIONS",
+    "home.civil": "Civilians: ",
+    "home.spi": "Spy: ",
+    "home.spy": "Spy wins if: ",
     "home.spyWins":
       "A civilian is eliminated, timer runs out, or a spy guesses the location correctly.",
+    "home.civ": "Civilians wins if: ",
     "home.civilianWins":
       "All spies are eliminated or a spy guesses wrong and is caught.",
 
@@ -137,14 +141,17 @@ export const translations: Record<Language, Record<string, string>> = {
   tr: {
     "home.gameplay.steps":
       "Telefonu elden ele dolaştırıp rolleri aç.|Herkes rolünü öğrendikten sonra oyunu başlat.|Sırayla Evet/Hayır soruları sorun.|Casuslar konumu tahmin ederek her an kazanabilir.|Şüphelendiğinizde oylama açın!",
+    "home.civil": "Siviller: ",
+    "home.spi": "Casus: ",
+    "home.spy": "Casus kazanır eğer ki: ",
     "home.spyWins":
-      "Casus kazanır: Bir sivil elenirse, süre biterse ya da konumu doşru tahmin ederse.",
-    "home.civilianWins":
-      "Siviller kazanır: Tüm casuslar elenirse veya casusun tahmini yanlışsa.",
+      "Bir sivil elenirse, süre biterse ya da konumu doğru tahmin ederse.",
+    "home.civ": "Siviller kazanır eğer ki:",
+    "home.civilianWins": "Tüm casuslar elenirse veya casusun tahmini yanlışsa.",
 
     "discussion.spyGuess": "Casus konumu tahmin et",
     "discussion.spyGuessHint":
-      "Sadece casuslar kullanmalı. Doşruysa casuslar, yanlışsa siviller kazanır.",
+      "Sadece casuslar kullanmalı. Doğruysa casuslar, yanlışsa siviller kazanır.",
     "discussion.spyGuessPlaceholder": "Tahminini yaz...",
     "discussion.submitGuess": "Tahmini gönder",
     "discussion.invalidGuess": "Önce bir tahmin gir.",
@@ -159,7 +166,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "result.spiesWere": "Casuslar",
     "result.caught": "YAKALANDI",
     "result.playAgain": "Tekrar Oyna",
-    "result.changeSettings": "Ayarları Deşiştir",
+    "result.changeSettings": "Ayarları Değiştir",
     "result.backMenu": "Menüye Dön",
     "home.title": "KİM BU CASUS A**?",
     "home.tagline":
@@ -171,8 +178,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.briefing.description": "Gizli bilgi. Dikkatlice oku.",
     "home.objective": "HEDEF",
     "home.civilianObjective":
-      "Siviller: Casusu bulun. Konumu bildiğinizi gösteren sorular sorun.",
-    "home.spyObjective": "Casus: Sırıtma. Konumu çöz ve yakalanma.",
+      "Casusu bulun. Konumu bildiğinizi gösteren sorular sorun.",
+    "home.spyObjective": "Sırıtma. Konumu çöz ve yakalanma.",
     "home.gameplay": "OYUN AKIŞI",
     "home.win": "KAZANMA KOŞULLARI",
 
