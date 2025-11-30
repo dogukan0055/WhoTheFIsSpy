@@ -69,9 +69,9 @@ type Action =
   | { type: 'REMOVE_LOCATION'; payload: { categoryId: string, location: string } }
   | { type: 'TOGGLE_LOCATION'; payload: { categoryId: string, location: string } };
 
-// Load settings from local storage
-const savedSettings = localStorage.getItem('spy-settings');
-const parsedSettings = savedSettings ? JSON.parse(savedSettings) : {};
+// Load settings from local storage (app-level)
+const savedSettingsRaw = localStorage.getItem('spy-settings');
+const parsedSettings = savedSettingsRaw ? JSON.parse(savedSettingsRaw) : {};
 const initialAppSettings: AppSettings = {
   sound: true,
   vibrate: true,
@@ -95,24 +95,24 @@ function loadSavedSettings() {
   return null;
 }
 
-const savedSettings = loadSavedSettings();
+const savedOfflineSettings = loadSavedSettings();
 
 const initialState: GameState = {
   mode: null,
   players: [],
   appSettings: initialAppSettings,
   settings: {
-    playerCount: savedSettings?.playerCount ?? 4,
-    spyCount: savedSettings?.spyCount ?? 1,
-    isTimerOn: savedSettings?.isTimerOn ?? true,
-    timerDuration: savedSettings?.timerDuration ?? 5,
-    selectedCategories: savedSettings?.selectedCategories ?? ['standard'],
-    disabledLocations: savedSettings?.disabledLocations ?? {},
+    playerCount: savedOfflineSettings?.playerCount ?? 4,
+    spyCount: savedOfflineSettings?.spyCount ?? 1,
+    isTimerOn: savedOfflineSettings?.isTimerOn ?? true,
+    timerDuration: savedOfflineSettings?.timerDuration ?? 5,
+    selectedCategories: savedOfflineSettings?.selectedCategories ?? ['standard'],
+    disabledLocations: savedOfflineSettings?.disabledLocations ?? {},
   },
   gameData: {
     currentLocation: '',
     currentRevealIndex: 0,
-    timeLeft: (savedSettings?.timerDuration ?? 5) * 60,
+    timeLeft: (savedOfflineSettings?.timerDuration ?? 5) * 60,
     winner: null,
     spiesRemaining: 0,
     categories: INITIAL_CATEGORIES,
