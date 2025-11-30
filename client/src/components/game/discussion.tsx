@@ -1,16 +1,19 @@
 import React from 'react';
 import { useGame } from '@/lib/game-context';
 import { Button } from '@/components/ui/button';
-import { Clock, Vote, MessageCircleQuestion, Home } from 'lucide-react';
+import { Clock, Vote, MessageCircleQuestion, Home, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLocation } from 'wouter';
 import { playSound } from '@/lib/audio';
+import { toast } from '@/hooks/use-toast';
 
 export default function Discussion() {
   const { state, dispatch } = useGame();
   const { t } = useTranslation();
   const [, navigate] = useLocation();
+  const [guess, setGuess] = React.useState('');
+  const [showGuess, setShowGuess] = React.useState(false);
   
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -25,6 +28,18 @@ export default function Discussion() {
     playSound('click');
     dispatch({ type: 'RESET_GAME' });
     navigate('/');
+  };
+
+  const submitGuess = () => {
+    const cleaned = guess.trim();
+    if (!cleaned) {
+      toast({ title: t('discussion.invalidGuess') });
+      return;
+    }
+    dispatch({ type: 'SPY_GUESS', payload: cleaned });
+    toast({ title: t('discussion.guessSubmitted') });
+    setShowGuess(false);
+    setGuess('');
   };
 
   return (
@@ -69,17 +84,39 @@ export default function Discussion() {
         <div className="grid grid-cols-2 gap-4">
            <div className="bg-card/30 p-4 rounded-lg border border-white/5">
              <span className="block text-2xl font-bold font-mono mb-1">{state.players.filter(p => !p.isDead).length}</span>
-             <span className="text-xs uppercase text-muted-foreground">Agents Active</span>
+             <span className="text-xs uppercase text-muted-foreground">{t('discussion.agentsActive')}</span>
            </div>
            <div className="bg-card/30 p-4 rounded-lg border border-white/5">
              <span className="block text-2xl font-bold font-mono mb-1">{state.gameData.spiesRemaining || state.settings.spyCount}</span>
-             <span className="text-xs uppercase text-muted-foreground">Spies Remaining</span>
+             <span className="text-xs uppercase text-muted-foreground">{t('discussion.spiesRemaining')}</span>
            </div>
         </div>
       </div>
 
       {/* Action */}
       <div className="w-full pt-8 space-y-3">
+        <Button
+          variant="outline"
+          className="w-full h-12 text-sm justify-center gap-2"
+          onClick={() => setShowGuess(!showGuess)}
+        >
+          <AlertTriangle className="w-4 h-4" />
+          {t('discussion.spyGuess')}
+        </Button>
+        {showGuess && (
+          <div className="space-y-2 bg-card/40 border border-white/10 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground text-left">{t('discussion.spyGuessHint')}</p>
+            <input
+              value={guess}
+              onChange={(e) => setGuess(e.target.value)}
+              placeholder={t('discussion.spyGuessPlaceholder')}
+              className="w-full bg-background border border-white/10 rounded px-3 py-2 text-sm"
+            />
+            <Button size="sm" className="w-full" onClick={submitGuess}>
+              {t('discussion.submitGuess')}
+            </Button>
+          </div>
+        )}
         <Button
           size="lg"
           variant="destructive"

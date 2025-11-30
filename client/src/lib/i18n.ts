@@ -12,15 +12,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "home.briefing.description": "Classified Information. Read carefully.",
     "home.objective": "OBJECTIVE",
     "home.civilianObjective":
-      "Civilians: Find the Spy. Ask questions to prove you know the location.",
-    "home.spyObjective":
-      "Spy: Blend in. Figure out the location. Don't get caught.",
+      "Find the Spy. Ask questions to prove you know the location.",
+    "home.spyObjective": "Blend in. Figure out the location. Don't get caught.",
     "home.gameplay": "GAMEPLAY",
     "home.gameplay.steps":
-      "Pass the phone around to reveal roles.|Once everyone knows their role, start the game.|Take turns asking Yes/No questions.|If you suspect someone, call a vote!",
+      "Pass the phone around to reveal roles.|Once everyone knows their role, start the game.|Take turns asking Yes/No questions.|Spies can guess the location at any time to steal a win.|If you suspect someone, call a vote!",
     "home.win": "WIN CONDITIONS",
-    "home.spyWins": "Spy Wins if: A civilian is eliminated or timer runs out.",
-    "home.civilianWins": "Civilians Win if: All spies are eliminated.",
+    "home.spyWins":
+      "A civilian is eliminated, timer runs out, or a spy guesses the location correctly.",
+    "home.civilianWins":
+      "All spies are eliminated or a spy guesses wrong and is caught.",
 
     "setup.title": "MISSION SETUP",
     "setup.agents": "AGENTS",
@@ -112,8 +113,54 @@ export const translations: Record<Language, Record<string, string>> = {
     "voting.spyRemain": "Another spy is still at large. Stay sharp.",
     "discussion.exit": "Exit Game",
     "discussion.exitDesc": "Reset the current match and jump back to the menu.",
+    "discussion.spyGuess": "Spy guess location",
+    "discussion.spyGuessHint":
+      "Only spies should use this. If correct, spies win; if wrong, civilians win.",
+    "discussion.spyGuessPlaceholder": "Type your best guess...",
+    "discussion.submitGuess": "Submit guess",
+    "discussion.invalidGuess": "Enter a guess first.",
+    "discussion.guessSubmitted": "Guess submitted",
+    "discussion.agentsActive": "Agents Active",
+    "discussion.spiesRemaining": "Spies Remaining",
+
+    "result.winner": "Winner",
+    "result.spies": "Spies",
+    "result.civilians": "Civilians",
+    "result.secretLocation": "Secret Location",
+    "result.spiesWere": "The spies were",
+    "result.caught": "CAUGHT",
+    "result.playAgain": "Play Again",
+    "result.changeSettings": "Change Settings",
+    "result.backMenu": "Back to Menu",
+    "result.nextRound": "Auto-start in",
   },
   tr: {
+    "home.gameplay.steps":
+      "Telefonu elden ele dolaştırıp rolleri aç.|Herkes rolünü öğrendikten sonra oyunu başlat.|Sırayla Evet/Hayır soruları sorun.|Casuslar konumu tahmin ederek her an kazanabilir.|Şüphelendiğinizde oylama açın!",
+    "home.spyWins":
+      "Casus kazanır: Bir sivil elenirse, süre biterse ya da konumu doşru tahmin ederse.",
+    "home.civilianWins":
+      "Siviller kazanır: Tüm casuslar elenirse veya casusun tahmini yanlışsa.",
+
+    "discussion.spyGuess": "Casus konumu tahmin et",
+    "discussion.spyGuessHint":
+      "Sadece casuslar kullanmalı. Doşruysa casuslar, yanlışsa siviller kazanır.",
+    "discussion.spyGuessPlaceholder": "Tahminini yaz...",
+    "discussion.submitGuess": "Tahmini gönder",
+    "discussion.invalidGuess": "Önce bir tahmin gir.",
+    "discussion.guessSubmitted": "Tahmin gönderildi",
+    "discussion.agentsActive": "Aktif ajanlar",
+    "discussion.spiesRemaining": "Kalan casuslar",
+
+    "result.winner": "Kazanan",
+    "result.spies": "Casuslar",
+    "result.civilians": "Siviller",
+    "result.secretLocation": "Gizli Konum",
+    "result.spiesWere": "Casuslar",
+    "result.caught": "YAKALANDI",
+    "result.playAgain": "Tekrar Oyna",
+    "result.changeSettings": "Ayarları Deşiştir",
+    "result.backMenu": "Menüye Dön",
     "home.title": "KİM BU CASUS A**?",
     "home.tagline":
       "Aldatma, çıkarım ve ihanet. Ekibi topla, soruları sırala ve casusu açığa çıkar.",
@@ -127,11 +174,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Siviller: Casusu bulun. Konumu bildiğinizi gösteren sorular sorun.",
     "home.spyObjective": "Casus: Sırıtma. Konumu çöz ve yakalanma.",
     "home.gameplay": "OYUN AKIŞI",
-    "home.gameplay.steps":
-      "Telefonu elden ele dolaştırıp rolleri aç.|Herkes rolünü öğrendikten sonra oyunu başlat.|Sırayla Evet/Hayır soruları sorun.|Şüphelendiğinizde oylama açın!",
     "home.win": "KAZANMA KOŞULLARI",
-    "home.spyWins": "Casus kazanır: Bir sivil elenirse veya süre biterse.",
-    "home.civilianWins": "Siviller kazanır: Tüm casuslar elenirse.",
 
     "setup.title": "GÖREV AYARI",
     "setup.agents": "AJANLAR",

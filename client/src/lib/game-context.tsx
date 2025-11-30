@@ -52,12 +52,14 @@ type Action =
   | { type: 'UPDATE_PLAYERS'; payload: string[] }
   | { type: 'SET_PLAYERS'; payload: Player[] }
   | { type: 'START_GAME'; payload: { location: string; players: Player[] } }
+  | { type: 'START_NEW_ROUND' }
   | { type: 'NEXT_REVEAL' }
   | { type: 'START_PLAYING' }
   | { type: 'TICK_TIMER' }
   | { type: 'START_VOTING' }
   | { type: 'CAST_VOTE'; payload: string } // player id
   | { type: 'ELIMINATE_PLAYER'; payload: string } // player id
+  | { type: 'SPY_GUESS'; payload: string } // guessed location
   | { type: 'GAME_OVER'; payload: 'spy' | 'civilian' }
   | { type: 'RESET_GAME' }
   | { type: 'ADD_CATEGORY'; payload: Category }
@@ -79,22 +81,38 @@ const initialAppSettings: AppSettings = {
   ...parsedSettings,
 };
 
+const SETTINGS_STORAGE_KEY = 'spy-offline-settings';
+
+function loadSavedSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+const savedSettings = loadSavedSettings();
+
 const initialState: GameState = {
   mode: null,
   players: [],
   appSettings: initialAppSettings,
   settings: {
-    playerCount: 4,
-    spyCount: 1,
-    isTimerOn: true,
-    timerDuration: 5,
-    selectedCategories: ['standard'],
-    disabledLocations: {},
+    playerCount: savedSettings?.playerCount ?? 4,
+    spyCount: savedSettings?.spyCount ?? 1,
+    isTimerOn: savedSettings?.isTimerOn ?? true,
+    timerDuration: savedSettings?.timerDuration ?? 5,
+    selectedCategories: savedSettings?.selectedCategories ?? ['standard'],
+    disabledLocations: savedSettings?.disabledLocations ?? {},
   },
   gameData: {
     currentLocation: '',
     currentRevealIndex: 0,
-    timeLeft: 300,
+    timeLeft: (savedSettings?.timerDuration ?? 5) * 60,
     winner: null,
     spiesRemaining: 0,
     categories: INITIAL_CATEGORIES,
@@ -107,13 +125,80 @@ const GameContext = createContext<{
   dispatch: React.Dispatch<Action>;
 } | undefined>(undefined);
 
+function persistSettings(settings: GameState['settings']) {
+  try {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({
+        playerCount: settings.playerCount,
+        spyCount: settings.spyCount,
+        isTimerOn: settings.isTimerOn,
+        timerDuration: settings.timerDuration,
+        selectedCategories: settings.selectedCategories,
+        disabledLocations: settings.disabledLocations,
+      }),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+function buildPlayersForRound(state: GameState): Player[] {
+  const names = state.players.map((p) => p.name);
+  while (names.length < state.settings.playerCount) {
+    names.push(`Player ${names.length + 1}`);
+  }
+  const trimmed = names.slice(0, state.settings.playerCount);
+  return trimmed.map((name, idx) => {
+    const existing = state.players[idx];
+    return {
+      id: existing?.id ?? `p-${idx}`,
+      name,
+      role: 'civilian' as Role,
+      isDead: false,
+      votes: 0,
+    };
+  });
+}
+
+function pickLocation(state: GameState): string | null {
+  const validCategories = state.gameData.categories
+    .filter((c) => state.settings.selectedCategories.includes(c.id))
+    .map((c) => ({
+      ...c,
+      enabledLocations: c.locations.filter(
+        (loc) => !(state.settings.disabledLocations[c.id] || []).includes(loc),
+      ),
+    }))
+    .filter((c) => c.enabledLocations.length > 0);
+  if (validCategories.length === 0) return null;
+  const randomCat = validCategories[Math.floor(Math.random() * validCategories.length)];
+  return randomCat.enabledLocations[Math.floor(Math.random() * randomCat.enabledLocations.length)];
+}
+
+function assignSpies(players: Player[], spyCount: number): Player[] {
+  const pool = [...players];
+  let assigned = 0;
+  while (assigned < Math.min(spyCount, players.length - 1)) {
+    const idx = Math.floor(Math.random() * pool.length);
+    const candidate = pool[idx];
+    if (candidate.role !== 'spy') {
+      candidate.role = 'spy';
+      assigned++;
+    }
+  }
+  return players.map((p) => ({ ...p }));
+}
+
 const gameReducer = (state: GameState, action: Action): GameState => {
   switch (action.type) {
     case 'SET_MODE':
       return { ...state, mode: action.payload };
       
     case 'UPDATE_SETTINGS':
-      return { ...state, settings: { ...state.settings, ...action.payload } };
+      const updatedSettings = { ...state.settings, ...action.payload };
+      persistSettings(updatedSettings);
+      return { ...state, settings: updatedSettings };
       
     case 'UPDATE_APP_SETTINGS':
       const newAppSettings = { ...state.appSettings, ...action.payload };
@@ -150,6 +235,26 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           spiesRemaining: spiesAssigned,
         },
       };
+    case 'START_NEW_ROUND': {
+      const basePlayers = buildPlayersForRound(state);
+      const withSpies = assignSpies(basePlayers, state.settings.spyCount);
+      const location = pickLocation(state);
+      if (!location) return state;
+      const spiesRemaining = withSpies.filter(p => p.role === 'spy').length;
+      return {
+        ...state,
+        players: withSpies,
+        phase: 'reveal',
+        gameData: {
+          ...state.gameData,
+          currentLocation: location,
+          currentRevealIndex: 0,
+          timeLeft: state.settings.timerDuration * 60,
+          winner: null,
+          spiesRemaining,
+        },
+      };
+    }
       
     case 'NEXT_REVEAL':
       return {
@@ -241,6 +346,16 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         phase: 'result',
         gameData: { ...state.gameData, winner: action.payload },
       };
+    case 'SPY_GUESS': {
+      const guess = action.payload.trim().toLowerCase();
+      const actual = state.gameData.currentLocation.trim().toLowerCase();
+      const winner = guess === actual ? 'spy' : 'civilian';
+      return {
+        ...state,
+        phase: 'result',
+        gameData: { ...state.gameData, winner },
+      };
+    }
       
     case 'RESET_GAME':
       return {
@@ -248,6 +363,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         mode: state.mode,
         appSettings: state.appSettings, // Preserve app settings
         gameData: { ...initialState.gameData, categories: state.gameData.categories },
+        settings: state.settings,
       };
 
     case 'TOGGLE_CATEGORY': {
@@ -262,7 +378,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
 
       if (newSelected.length === 0) return state;
 
-      return {
+      const toggled = {
         ...state,
         settings: {
           ...state.settings,
@@ -273,6 +389,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           },
         }
       };
+      persistSettings(toggled.settings);
+      return toggled;
     }
 
     case 'ADD_CATEGORY':
@@ -353,7 +471,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         ? currentDisabled.filter(l => l !== action.payload.location)
         : [...currentDisabled, action.payload.location];
 
-      return {
+      const toggledLoc = {
         ...state,
         settings: {
           ...state.settings,
@@ -363,6 +481,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           }
         }
       };
+      persistSettings(toggledLoc.settings);
+      return toggledLoc;
     }
       
     default:

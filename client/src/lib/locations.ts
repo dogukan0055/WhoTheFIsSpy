@@ -91,23 +91,6 @@ export const INITIAL_CATEGORIES: Category[] = [
       "Bus Depot",
     ],
   },
-  {
-    id: "legends",
-    name: "Legends",
-    icon: "Sparkles",
-    locations: [
-      "Ancient Temple",
-      "Dragon Cave",
-      "Floating Bazaar",
-      "Wizard Tower",
-      "Pirate Cove",
-      "Cyberpunk Market",
-      "Steampunk Airship",
-      "Crystal Cavern",
-      "Royal Throne Room",
-      "Time Traveler Hub",
-    ],
-  },
 ];
 
 // Simple bad word filter
@@ -166,7 +149,6 @@ export const CATEGORY_LABELS: Record<string, { en: string; tr: string }> = {
   work: { en: "Workplace", tr: "İş Yeri" },
   nightlife: { en: "Nightlife", tr: "Gece Hayatı" },
   transit: { en: "Transit", tr: "Ulaşım" },
-  legends: { en: "Legends", tr: "Efsaneler" },
 };
 
 export const LOCATION_LABELS: Record<string, { en: string; tr: string }> = {
@@ -271,37 +253,4 @@ export const LOCATION_LABELS: Record<string, { en: string; tr: string }> = {
     tr: "Uzay Limanı Kapısı",
   },
   [toLocationKey("Bus Depot")]: { en: "Bus Depot", tr: "Otobüs Garajı" },
-
-  // Legends
-  [toLocationKey("Ancient Temple")]: {
-    en: "Ancient Temple",
-    tr: "Kadim Tapınak",
-  },
-  [toLocationKey("Dragon Cave")]: { en: "Dragon Cave", tr: "Ejderha Mağarası" },
-  [toLocationKey("Floating Bazaar")]: {
-    en: "Floating Bazaar",
-    tr: "Yüzen Pazar",
-  },
-  [toLocationKey("Wizard Tower")]: { en: "Wizard Tower", tr: "Büyücü Kulesi" },
-  [toLocationKey("Pirate Cove")]: { en: "Pirate Cove", tr: "Korsan Koyu" },
-  [toLocationKey("Cyberpunk Market")]: {
-    en: "Cyberpunk Market",
-    tr: "Siber Pazar",
-  },
-  [toLocationKey("Steampunk Airship")]: {
-    en: "Steampunk Airship",
-    tr: "Buhar Gemisi",
-  },
-  [toLocationKey("Crystal Cavern")]: {
-    en: "Crystal Cavern",
-    tr: "Kristal Mağara",
-  },
-  [toLocationKey("Royal Throne Room")]: {
-    en: "Royal Throne Room",
-    tr: "Kraliyet Taht Salonu",
-  },
-  [toLocationKey("Time Traveler Hub")]: {
-    en: "Time Traveler Hub",
-    tr: "Zaman Yolcusu Üssü",
-  },
 };
