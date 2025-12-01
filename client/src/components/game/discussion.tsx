@@ -69,14 +69,14 @@ export default function Discussion() {
         <div className="bg-card/50 border border-border p-6 rounded-xl backdrop-blur-sm">
           <h3 className="text-xl font-bold mb-4 flex items-center justify-center gap-2 text-foreground">
             <MessageCircleQuestion className="w-6 h-6 text-blue-400" />
-            Interrogation Phase
+            {t('discussion.phaseTitle')}
           </h3>
           <div className="text-sm leading-relaxed space-y-2">
             <p>
-              <span className="text-blue-400 font-bold">CIVILIANS:</span> Ask questions to verify others. Don't give away the location!
+              <span className="text-blue-400 font-bold">{t('discussion.civiliansLabel')}:</span> {t('discussion.civiliansHint')}
             </p>
             <p>
-              <span className="text-red-400 font-bold">SPIES:</span> Listen carefully. Infer the location. Blend in with vague answers.
+              <span className="text-red-400 font-bold">{t('discussion.spiesLabel')}:</span> {t('discussion.spiesHint')}
             </p>
           </div>
         </div>

@@ -95,7 +95,7 @@ export default function RoleReveal() {
         <h1 className="text-4xl font-bold font-mono tracking-tighter">{currentPlayer.name}</h1>
       </div>
 
-      <Card className="w-full aspect-[3/4] max-w-xs relative overflow-hidden border-2 border-border bg-card/50 backdrop-blur-sm shadow-xl">
+      <Card className="w-full aspect-[3/4] max-w-xs relative overflow-hidden border-2 border-border bg-card/50 backdrop-blur-sm shadow-xl select-none">
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center gap-6">
           {!isRevealed ? (
             <motion.div

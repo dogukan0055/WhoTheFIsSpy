@@ -44,6 +44,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
   const [chatInput, setChatInput] = useState("");
+  const [question, setQuestion] = useState("Is this place ...?");
   const [targetId, setTargetId] = useState<string | undefined>(undefined);
   const [voteTarget, setVoteTarget] = useState<string | undefined>(undefined);
   const [settingsDraft, setSettingsDraft] = useState({
@@ -82,6 +83,14 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       try {
         const next = await onlineApi.getState(profile, code);
         if (!active) return;
+        const settingsSig = JSON.stringify(next.settings);
+        if (lastSettingsRef.current && lastSettingsRef.current !== settingsSig) {
+          const mePlayer = next.players.find((p) => p.id === profile.playerId);
+          if (!mePlayer?.isHost) {
+            toast({ title: "Lobby updated", description: "Host changed game settings." });
+          }
+        }
+        lastSettingsRef.current = settingsSig;
         setRoom(next);
         setIsLoading(false);
         if (!settingsDirtyRef.current) {
@@ -226,6 +235,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       setTimeout(() => navigate("/online-menu"), 1200);
     }
   }, [room?.closedReason, navigate]);
+  const lastSettingsRef = React.useRef<string>("");
   const [finishCountdown, setFinishCountdown] = useState(10);
   useEffect(() => {
     if (!room || room.phase !== "finished") return;
@@ -401,18 +411,6 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                   );
                 })}
               </div>
-              <Card className="w-48 p-3 border-white/10 bg-background/50 hidden md:block">
-                <div className="text-xs uppercase text-muted-foreground">Roster (host)</div>
-                <div className="space-y-2 mt-2">
-                  {room?.players.map((p, idx) => (
-                    <div key={p.id} className="flex items-center gap-2 text-sm">
-                      <Badge variant="outline">{idx + 1}</Badge>
-                      <span className="truncate">{p.name}</span>
-                      {p.isHost && <Badge variant="secondary">HOST</Badge>}
-                    </div>
-                  ))}
-                </div>
-              </Card>
             </div>
             <p className="text-[11px] text-muted-foreground">
               Matches offline database: toggle categories and individual locations.
@@ -572,7 +570,11 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             </div>
           </div>
           <div className="text-sm font-mono bg-background/60 border border-white/10 rounded px-3 py-2">
-            Is this place ...?
+            <Input
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Is this place...?"
+            />
           </div>
           <Button
             disabled={!targetId}
@@ -737,64 +739,79 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   );
 
   const renderInGame = () => (
-    <div className="space-y-4">
-      <div className="grid md:grid-cols-3 gap-3">
-        <Card className="p-4 space-y-2 bg-card/40 border-white/5">
-          <div className="text-xs text-muted-foreground uppercase tracking-widest">
-            Your Brief
-          </div>
-          <div className="text-xl font-black font-mono">
-            {room?.yourRole === "spy" ? "SPY" : "CIVILIAN"}
-          </div>
-          {room?.yourRole === "civilian" && (
-            <p className="text-sm text-muted-foreground">Location: {room?.location}</p>
-          )}
-          <div className="flex gap-2">
-            <Badge>{room?.spiesRemaining ?? 0} spies active</Badge>
-            {me?.lockedOutOfAsking && (
-              <Badge variant="destructive">Cannot ask</Badge>
-            )}
-          </div>
+    room?.phase === "voting" ? (
+      <div className="space-y-4">
+        <Card className="p-6 text-center bg-card/50 border-white/10">
+          <div className="text-xs uppercase text-muted-foreground tracking-widest">Voting Timer</div>
+          <div className="text-5xl font-black font-mono">{voteCountdown ?? 0}s</div>
+          <p className="text-sm text-muted-foreground">Discuss and vote before it expires.</p>
         </Card>
-        <Card className="p-4 space-y-2 bg-card/40 border-white/5 flex flex-col justify-between">
-          <div className="text-xs text-muted-foreground uppercase tracking-widest">
-            Mission Timer
+        <div className="grid md:grid-cols-3 gap-3">
+          <div className="space-y-3 md:col-span-2">
+            {renderVoting()}
+            {renderChat()}
           </div>
-          <div className="text-3xl font-black font-mono">{timeLeft ?? "--:--"}</div>
-          <div className="text-xs text-muted-foreground">
-            Runs out? Spies win.
+          <div className="space-y-3">
+            {renderPlayers()}
           </div>
-        </Card>
-        <Card className="p-4 space-y-2 bg-card/40 border-white/5 flex flex-col justify-between">
-          <div className="text-xs text-muted-foreground uppercase tracking-widest">
-            Actions
-          </div>
-          <Button
-            variant="destructive"
-            disabled={room?.phase !== "playing" || me?.calledVote}
-            onClick={() => handle((prof) => onlineApi.callVote(prof, code))}
-          >
-            <Vote className="w-4 h-4 mr-2" />
-            Call vote
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              handle((prof) => onlineApi.leave(prof, code));
-              setProfile(null);
-              navigate("/online-menu");
-            }}
-          >
-            Leave room
-          </Button>
-        </Card>
+        </div>
       </div>
+    ) : (
+      <div className="space-y-4">
+        <div className="grid md:grid-cols-3 gap-3">
+          <Card className="p-4 space-y-2 bg-card/40 border-white/5">
+            <div className="text-xs text-muted-foreground uppercase tracking-widest">
+              Your Brief
+            </div>
+            <div className="text-xl font-black font-mono">
+              {room?.yourRole === "spy" ? "SPY" : "CIVILIAN"}
+            </div>
+            {room?.yourRole === "civilian" && (
+              <p className="text-sm text-muted-foreground">Location: {room?.location}</p>
+            )}
+            <div className="flex gap-2">
+              <Badge>{room?.spiesRemaining ?? 0} spies active</Badge>
+              {me?.lockedOutOfAsking && (
+                <Badge variant="destructive">Cannot ask</Badge>
+              )}
+            </div>
+          </Card>
+          <Card className="p-4 space-y-2 bg-card/40 border-white/5 flex flex-col justify-between">
+            <div className="text-xs text-muted-foreground uppercase tracking-widest">
+              Mission Timer
+            </div>
+            <div className="text-3xl font-black font-mono">{timeLeft ?? "--:--"}</div>
+            <div className="text-xs text-muted-foreground">
+              Runs out? Spies win.
+            </div>
+          </Card>
+          <Card className="p-4 space-y-2 bg-card/40 border-white/5 flex flex-col justify-between">
+            <div className="text-xs text-muted-foreground uppercase tracking-widest">
+              Actions
+            </div>
+            <Button
+              variant="destructive"
+              disabled={room?.phase !== "playing" || me?.calledVote}
+              onClick={() => handle((prof) => onlineApi.callVote(prof, code))}
+            >
+              <Vote className="w-4 h-4 mr-2" />
+              Call vote
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                handle((prof) => onlineApi.leave(prof, code));
+                setProfile(null);
+                navigate("/online-menu");
+              }}
+            >
+              Leave room
+            </Button>
+          </Card>
+        </div>
 
-      {currentTurn && renderTurnControls()}
+        {currentTurn && renderTurnControls()}
 
-      {room?.phase === "voting" ? (
-        renderVoting()
-      ) : (
         <div className="grid md:grid-cols-3 gap-3 items-start">
           <div className="md:col-span-2">{renderChat()}</div>
           <div className="space-y-3">
@@ -811,8 +828,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             )}
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    )
   );
 
   const renderFinished = () => (

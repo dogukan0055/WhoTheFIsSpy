@@ -161,8 +161,9 @@ export default function OnlineMenu() {
               <User className="w-3 h-3" />
               {profile.name}
             </Badge>
-            <Button variant="ghost" size="icon" onClick={logout}>
+            <Button variant="ghost" onClick={logout} className="flex items-center gap-2">
               <LogOut className="w-4 h-4" />
+              <span className="text-sm">Logout</span>
             </Button>
           </div>
         )}

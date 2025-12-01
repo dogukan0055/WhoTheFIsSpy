@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Category, INITIAL_CATEGORIES } from './locations';
+import { getLocationName } from './location-i18n';
 
 // Types
 export type Role = 'spy' | 'civilian';
@@ -33,6 +34,7 @@ export type GameState = {
     timerDuration: number; // in minutes
     selectedCategories: string[];
     disabledLocations: Record<string, string[]>;
+    noRepeatLocations: boolean;
   };
   gameData: {
     currentLocation: string;
@@ -41,6 +43,7 @@ export type GameState = {
     winner: 'spy' | 'civilian' | null;
     spiesRemaining: number;
     categories: Category[];
+    usedLocations: string[];
   };
   phase: GamePhase;
 };
@@ -108,6 +111,7 @@ const initialState: GameState = {
     timerDuration: savedOfflineSettings?.timerDuration ?? 5,
     selectedCategories: savedOfflineSettings?.selectedCategories ?? ['standard'],
     disabledLocations: savedOfflineSettings?.disabledLocations ?? {},
+    noRepeatLocations: savedOfflineSettings?.noRepeatLocations ?? false,
   },
   gameData: {
     currentLocation: '',
@@ -116,6 +120,7 @@ const initialState: GameState = {
     winner: null,
     spiesRemaining: 0,
     categories: INITIAL_CATEGORIES,
+    usedLocations: [],
   },
   phase: 'setup',
 };
@@ -136,6 +141,7 @@ function persistSettings(settings: GameState['settings']) {
         timerDuration: settings.timerDuration,
         selectedCategories: settings.selectedCategories,
         disabledLocations: settings.disabledLocations,
+        noRepeatLocations: settings.noRepeatLocations,
       }),
     );
   } catch {
@@ -172,8 +178,12 @@ function pickLocation(state: GameState): string | null {
     }))
     .filter((c) => c.enabledLocations.length > 0);
   if (validCategories.length === 0) return null;
-  const randomCat = validCategories[Math.floor(Math.random() * validCategories.length)];
-  return randomCat.enabledLocations[Math.floor(Math.random() * randomCat.enabledLocations.length)];
+  let pool = validCategories.flatMap((c) => c.enabledLocations);
+  if (state.settings.noRepeatLocations) {
+    pool = pool.filter((loc) => !state.gameData.usedLocations.includes(loc));
+  }
+  if (pool.length === 0) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 function assignSpies(players: Player[], spyCount: number): Player[] {
@@ -198,7 +208,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'UPDATE_SETTINGS':
       const updatedSettings = { ...state.settings, ...action.payload };
       persistSettings(updatedSettings);
-      return { ...state, settings: updatedSettings };
+      return { ...state, settings: updatedSettings, gameData: { ...state.gameData, usedLocations: [] } };
       
     case 'UPDATE_APP_SETTINGS':
       const newAppSettings = { ...state.appSettings, ...action.payload };
@@ -222,6 +232,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       
     case 'START_GAME':
       const spiesAssigned = action.payload.players.filter(p => p.role === 'spy').length;
+      const usedLocations = state.settings.noRepeatLocations
+        ? Array.from(new Set([...state.gameData.usedLocations, action.payload.location]))
+        : state.gameData.usedLocations;
       return {
         ...state,
         phase: 'reveal',
@@ -233,6 +246,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           timeLeft: state.settings.timerDuration * 60,
           winner: null,
           spiesRemaining: spiesAssigned,
+          usedLocations,
         },
       };
     case 'START_NEW_ROUND': {
@@ -241,6 +255,9 @@ const gameReducer = (state: GameState, action: Action): GameState => {
       const location = pickLocation(state);
       if (!location) return state;
       const spiesRemaining = withSpies.filter(p => p.role === 'spy').length;
+      const usedLocations = state.settings.noRepeatLocations
+        ? Array.from(new Set([...state.gameData.usedLocations, location]))
+        : state.gameData.usedLocations;
       return {
         ...state,
         players: withSpies,
@@ -252,6 +269,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
           timeLeft: state.settings.timerDuration * 60,
           winner: null,
           spiesRemaining,
+          usedLocations,
         },
       };
     }
@@ -349,7 +367,8 @@ const gameReducer = (state: GameState, action: Action): GameState => {
     case 'SPY_GUESS': {
       const guess = action.payload.trim().toLowerCase();
       const actual = state.gameData.currentLocation.trim().toLowerCase();
-      const winner = guess === actual ? 'spy' : 'civilian';
+      const localized = getLocationName(state.appSettings.language, state.gameData.currentLocation).trim().toLowerCase();
+      const winner = guess === actual || guess === localized ? 'spy' : 'civilian';
       return {
         ...state,
         phase: 'result',

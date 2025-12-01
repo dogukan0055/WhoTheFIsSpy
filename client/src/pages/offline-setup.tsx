@@ -217,23 +217,21 @@ export default function OfflineSetup() {
       }))
       .filter((c) => c.enabledLocations.length > 0);
 
-    const randomCat =
-      validCategories[Math.floor(Math.random() * validCategories.length)];
-
-    if (!randomCat) {
+    let locationPool = validCategories.flatMap((c) => c.enabledLocations);
+    if (state.settings.noRepeatLocations) {
+      locationPool = locationPool.filter((loc) => !state.gameData.usedLocations.includes(loc));
+    }
+    if (locationPool.length === 0) {
       toast({
-        title: t("setup.locationDisabled"),
-        description: t("setup.locationDisabledDesc"),
+        title: t("setup.noLocations"),
+        description: t("setup.noLocationsLeft"),
         variant: "destructive",
       });
       playSound("error");
       return;
     }
 
-    const randomLoc =
-      randomCat.enabledLocations[
-        Math.floor(Math.random() * randomCat.enabledLocations.length)
-      ];
+    const randomLoc = locationPool[Math.floor(Math.random() * locationPool.length)];
 
     localStorage.setItem("spy-player-names", JSON.stringify(sanitizedNames));
 
@@ -389,6 +387,19 @@ export default function OfflineSetup() {
             <p className="text-xs text-muted-foreground text-balance">
               {t("setup.locationsDeepHelper") ?? t("setup.locationsHelper")}
             </p>
+            <div className="flex items-center justify-between border border-white/5 rounded-lg p-3">
+              <div>
+                <div className="text-sm font-semibold">{t("setup.noRepeatLabel")}</div>
+                <p className="text-xs text-muted-foreground">{t("setup.noRepeatHelper")}</p>
+              </div>
+              <Switch
+                checked={state.settings.noRepeatLocations}
+                onCheckedChange={(checked) => {
+                  playSound("click");
+                  dispatch({ type: "UPDATE_SETTINGS", payload: { noRepeatLocations: checked } });
+                }}
+              />
+            </div>
           </div>
 
           {/* Player Management Button */}
