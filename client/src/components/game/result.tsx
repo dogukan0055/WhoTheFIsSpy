@@ -113,6 +113,7 @@ export default function Result() {
           variant="secondary"
           onClick={() => {
             playSound('click');
+            dispatch({ type: 'RESET_GAME' });
             navigate('/locations');
           }}
         >

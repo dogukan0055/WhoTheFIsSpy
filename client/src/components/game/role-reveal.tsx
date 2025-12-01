@@ -122,17 +122,15 @@ export default function RoleReveal() {
                   <>
                     <motion.div
                       className="absolute inset-1 rounded-full overflow-hidden pointer-events-none bg-primary/10"
-                      animate={{ opacity: [0.4, 0.9, 0.4], scale: [1, 1.06, 1] }}
+                      animate={{ opacity: [0.5, 0.9, 0.5], scale: [1, 1.04, 1] }}
                       transition={{ duration: 1.2, repeat: Infinity }}
                     />
                     <motion.div
-                      className="absolute inset-1 rounded-full pointer-events-none"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 2.4, repeat: Infinity, ease: "linear" }}
-                      style={{
-                        background:
-                          "conic-gradient(from 0deg, rgba(59,130,246,0.45), transparent 40%, rgba(59,130,246,0.25), transparent 80%)",
-                      }}
+                      className="absolute inset-2 w-2 bg-primary/60 blur-sm"
+                      initial={{ y: "-100%" }}
+                      animate={{ y: ["-100%", "100%"] }}
+                      transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
+                      style={{ left: "50%", transform: "translateX(-50%)" }}
                     />
                   </>
                 )}
@@ -142,12 +140,7 @@ export default function RoleReveal() {
                   style={{
                     background: `conic-gradient(from 90deg, rgba(59,130,246,0.4) ${holdProgress}%, transparent ${holdProgress}% 100%)`,
                   }}
-                  animate={{ rotate: showScan ? 360 : 0 }}
-                  transition={{
-                    duration: 2.4,
-                    repeat: showScan ? Infinity : 0,
-                    ease: "linear",
-                  }}
+                  animate={{ rotate: 0 }}
                 />
 
                 {showScan && (
@@ -155,9 +148,9 @@ export default function RoleReveal() {
                     className="absolute inset-3 rounded-full pointer-events-none"
                     style={{
                       background:
-                        "radial-gradient(circle at 50% 50%, rgba(59,130,246,0.4), transparent 50%)",
+                        "radial-gradient(circle at 50% 50%, rgba(59,130,246,0.35), transparent 55%)",
                     }}
-                    animate={{ opacity: [0.5, 0.9, 0.5] }}
+                    animate={{ opacity: [0.6, 1, 0.6] }}
                     transition={{ duration: 1.1, repeat: Infinity }}
                   />
                 )}
