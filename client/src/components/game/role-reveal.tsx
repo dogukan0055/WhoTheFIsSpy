@@ -111,50 +111,49 @@ export default function RoleReveal() {
                 </span>
               </p>
               <div
-                className="relative w-32 h-32 mx-auto rounded-full bg-background border border-primary/30 shadow-2xl overflow-hidden flex items-center justify-center select-none"
+                className="relative w-32 h-32 mx-auto rounded-full bg-background border border-primary/40 shadow-[0_0_25px_rgba(59,130,246,0.25)] overflow-hidden flex items-center justify-center select-none"
                 onPointerDown={beginHold}
                 onPointerUp={() => stopHold()}
                 onPointerLeave={() => stopHold()}
                 onTouchStart={beginHold}
                 onTouchEnd={() => stopHold()}
               >
+                {/* static grid */}
+                <div className="absolute inset-2 rounded-full opacity-40 bg-[radial-gradient(circle,rgba(59,130,246,0.35),transparent_60%)] pointer-events-none" />
+                {/* sweeping scan lines */}
                 {showScan && (
                   <>
                     <motion.div
-                      className="absolute inset-1 rounded-full overflow-hidden pointer-events-none bg-primary/10"
-                      animate={{ opacity: [0.5, 0.9, 0.5], scale: [1, 1.04, 1] }}
-                      transition={{ duration: 1.2, repeat: Infinity }}
-                    />
+                      className="absolute inset-2 rounded-full overflow-hidden pointer-events-none"
+                      animate={{ opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    >
+                      <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(59,130,246,0.08)_0,rgba(59,130,246,0.08)_6px,transparent_6px,transparent_12px)]" />
+                      <motion.div
+                        className="absolute inset-0"
+                        initial={{ y: "-120%" }}
+                        animate={{ y: "120%" }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <div className="h-full w-full bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
+                      </motion.div>
+                    </motion.div>
                     <motion.div
-                      className="absolute inset-2 w-2 bg-primary/60 blur-sm"
-                      initial={{ y: "-100%" }}
-                      animate={{ y: ["-100%", "100%"] }}
-                      transition={{ duration: 1.3, repeat: Infinity, ease: "easeInOut" }}
-                      style={{ left: "50%", transform: "translateX(-50%)" }}
+                      className="absolute inset-2 rounded-full border border-primary/30 pointer-events-none"
+                      animate={{ scale: [1, 1.02, 1], opacity: [0.5, 0.9, 0.5] }}
+                      transition={{ duration: 1.2, repeat: Infinity }}
                     />
                   </>
                 )}
-
+                {/* progress ring */}
                 <motion.div
-                  className="absolute inset-2 rounded-full border border-primary/40"
+                  className="absolute inset-1.5 rounded-full border border-primary/40"
                   style={{
-                    background: `conic-gradient(from 90deg, rgba(59,130,246,0.4) ${holdProgress}%, transparent ${holdProgress}% 100%)`,
+                    background: `conic-gradient(from 90deg, rgba(59,130,246,0.6) ${holdProgress}%, transparent ${holdProgress}% 100%)`,
                   }}
                   animate={{ rotate: 0 }}
                 />
-
-                {showScan && (
-                  <motion.div
-                    className="absolute inset-3 rounded-full pointer-events-none"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 50% 50%, rgba(59,130,246,0.35), transparent 55%)",
-                    }}
-                    animate={{ opacity: [0.6, 1, 0.6] }}
-                    transition={{ duration: 1.1, repeat: Infinity }}
-                  />
-                )}
-
+                {/* center fingerprint */}
                 <Fingerprint className="fingerprint-icon relative z-10" />
               </div>
               <p className="text-sm text-muted-foreground text-center leading-tight px-4">
