@@ -35,7 +35,7 @@ export default function RoleReveal() {
 
   const handleReveal = () => {
     setIsRevealed(true);
-    vibrate(50);
+    vibrate(80);
   };
 
   const handleExit = () => {

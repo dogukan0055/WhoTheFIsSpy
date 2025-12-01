@@ -77,6 +77,39 @@ export const playSound = (
   }
 };
 
+let bgAudio: HTMLAudioElement | null = null;
+
+export const startMusic = () => {
+  const settings = JSON.parse(
+    localStorage.getItem("spy-settings") || '{"music": true}'
+  );
+  if (!settings.music) return;
+
+  try {
+    if (!bgAudio) {
+      bgAudio = new Audio("/assets/ambient-loop.mp3");
+      bgAudio.loop = true;
+      bgAudio.volume = 0.15;
+    }
+    void bgAudio.play().catch(() => {
+      /* autoplay blocked */
+    });
+  } catch (e) {
+    console.error("Music play failed", e);
+  }
+};
+
+export const stopMusic = () => {
+  try {
+    if (bgAudio) {
+      bgAudio.pause();
+      bgAudio.currentTime = 0;
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
 export const vibrate = (duration: number = 50) => {
   const settings = JSON.parse(
     localStorage.getItem("spy-settings") || '{"vibrate": true}'

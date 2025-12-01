@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { Category, INITIAL_CATEGORIES } from './locations';
 import { getLocationName } from './location-i18n';
+import { startMusic, stopMusic } from './audio';
 
 // Types
 export type Role = 'spy' | 'civilian';
@@ -523,6 +524,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     return () => clearInterval(interval);
   }, [state.phase, state.settings.isTimerOn, state.gameData.timeLeft]);
+
+  useEffect(() => {
+    if (state.appSettings.music) {
+      startMusic();
+    } else {
+      stopMusic();
+    }
+  }, [state.appSettings.music]);
 
   return (
     <GameContext.Provider value={{ state, dispatch }}>
