@@ -6,6 +6,7 @@ import { Trophy, MapPin, RotateCcw, Home, Fingerprint, Settings } from 'lucide-r
 import { Link, useLocation } from 'wouter';
 import { playSound } from '@/lib/audio';
 import { useTranslation } from '@/hooks/use-translation';
+import { getLocationName } from '@/lib/location-i18n';
 
 export default function Result() {
   const { state, dispatch } = useGame();
@@ -14,19 +15,40 @@ export default function Result() {
   const winner = state.gameData.winner;
   const [countdown, setCountdown] = React.useState(10);
 
+  const availableLocations = React.useMemo(() => {
+    const cats = state.gameData.categories
+      .filter(c => state.settings.selectedCategories.includes(c.id))
+      .map(c => ({
+        ...c,
+        enabled: c.locations.filter(loc => !(state.settings.disabledLocations[c.id] || []).includes(loc))
+      }))
+      .filter(c => c.enabled.length > 0);
+    let pool = cats.flatMap(c => c.enabled);
+    if (state.settings.noRepeatLocations) {
+      pool = pool.filter(loc => !state.gameData.usedLocations.includes(loc));
+    }
+    return pool;
+  }, [state.gameData.categories, state.settings.selectedCategories, state.settings.disabledLocations, state.settings.noRepeatLocations, state.gameData.usedLocations]);
+
+  const hasLocationsLeft = !state.settings.noRepeatLocations || availableLocations.length > 0;
+
   React.useEffect(() => {
     playSound('success');
+  }, []);
+
+  React.useEffect(() => {
+    if (!hasLocationsLeft) return;
     const timer = setInterval(() => {
       setCountdown((c) => Math.max(0, c - 1));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [hasLocationsLeft]);
 
   React.useEffect(() => {
-    if (countdown === 0) {
+    if (hasLocationsLeft && countdown === 0) {
       dispatch({ type: 'START_NEW_ROUND' });
     }
-  }, [countdown, dispatch]);
+  }, [countdown, dispatch, hasLocationsLeft]);
 
   return (
     <div className="flex flex-col items-center justify-center h-full py-8 space-y-8 text-center">
@@ -53,7 +75,7 @@ export default function Result() {
           <span className="text-muted-foreground text-sm">{t('result.secretLocation')}</span>
           <div className="flex items-center text-foreground font-bold">
             <MapPin className="w-4 h-4 mr-2 text-primary" />
-            {state.gameData.currentLocation}
+            {getLocationName(state.appSettings.language, state.gameData.currentLocation)}
           </div>
         </div>
 
@@ -70,13 +92,22 @@ export default function Result() {
       </div>
 
       <div className="flex flex-col w-full gap-3 max-w-xs">
-        <Button size="lg" onClick={() => { playSound('click'); dispatch({ type: 'START_NEW_ROUND' }); }}>
+        <Button
+          size="lg"
+          disabled={!hasLocationsLeft}
+          onClick={() => { playSound('click'); if (!hasLocationsLeft) return; dispatch({ type: 'START_NEW_ROUND' }); }}>
           <RotateCcw className="mr-2 w-4 h-4" />
-          {t('result.playAgain')}
+          {hasLocationsLeft ? t('result.playAgain') : t('result.changeSettings')}
         </Button>
-        <div className="text-xs text-muted-foreground text-center">
-          {t('result.nextRound')} {countdown}s
-        </div>
+        {hasLocationsLeft ? (
+          <div className="text-xs text-muted-foreground text-center">
+            {t('result.nextRound')} {countdown}s
+          </div>
+        ) : (
+          <div className="text-xs text-destructive text-center">
+            {t('setup.noLocationsLeft')}
+          </div>
+        )}
         <Button
           size="lg"
           variant="secondary"

@@ -7,12 +7,14 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useLocation } from 'wouter';
 import { playSound } from '@/lib/audio';
 import { toast } from '@/hooks/use-toast';
+import { getLocationName } from '@/lib/location-i18n';
 
 export default function Discussion() {
   const { state, dispatch } = useGame();
   const { t } = useTranslation();
   const [, navigate] = useLocation();
-  const [guess, setGuess] = React.useState('');
+  const [selectedGuess, setSelectedGuess] = React.useState<string | null>(null);
+  const [expandedCats, setExpandedCats] = React.useState<Record<string, boolean>>({});
   const [showGuess, setShowGuess] = React.useState(false);
   
   const formatTime = (seconds: number) => {
@@ -31,15 +33,14 @@ export default function Discussion() {
   };
 
   const submitGuess = () => {
-    const cleaned = guess.trim();
-    if (!cleaned) {
+    if (!selectedGuess) {
       toast({ title: t('discussion.invalidGuess') });
       return;
     }
-    dispatch({ type: 'SPY_GUESS', payload: cleaned });
+    dispatch({ type: 'SPY_GUESS', payload: selectedGuess });
     toast({ title: t('discussion.guessSubmitted') });
     setShowGuess(false);
-    setGuess('');
+    setSelectedGuess(null);
   };
 
   return (
@@ -95,27 +96,72 @@ export default function Discussion() {
 
       {/* Action */}
       <div className="w-full pt-8 space-y-3">
-        <Button
-          variant="outline"
-          className="w-full h-12 text-sm justify-center gap-2"
-          onClick={() => setShowGuess(!showGuess)}
-        >
-          <AlertTriangle className="w-4 h-4" />
-          {t('discussion.spyGuess')}
-        </Button>
-        {showGuess && (
-          <div className="space-y-2 bg-card/40 border border-white/10 rounded-lg p-3">
-            <p className="text-xs text-muted-foreground text-left">{t('discussion.spyGuessHint')}</p>
-            <input
-              value={guess}
-              onChange={(e) => setGuess(e.target.value)}
-              placeholder={t('discussion.spyGuessPlaceholder')}
-              className="w-full bg-background border border-white/10 rounded px-3 py-2 text-sm"
-            />
-            <Button size="sm" className="w-full" onClick={submitGuess}>
-              {t('discussion.submitGuess')}
+        {state.players.some(p => p.role === 'spy' && !p.isDead) && (
+          <>
+            <Button
+              variant="outline"
+              className="w-full h-12 text-sm justify-center gap-2"
+              onClick={() => setShowGuess(!showGuess)}
+            >
+              <AlertTriangle className="w-4 h-4" />
+              {t('discussion.spyGuess')}
             </Button>
-          </div>
+            {showGuess && (
+              <div className="space-y-3 bg-card/40 border border-white/10 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground text-left">{t('discussion.spyGuessHint')}</p>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {state.gameData.categories
+                    .filter(c => state.settings.selectedCategories.includes(c.id))
+                    .map(cat => {
+                      const disabledList = state.settings.disabledLocations[cat.id] || [];
+                      const enabledLocations = cat.locations.filter(loc => !disabledList.includes(loc));
+                      if (enabledLocations.length === 0) return null;
+                      const expanded = expandedCats[cat.id] ?? true;
+                      return (
+                        <div key={cat.id} className="border border-white/10 rounded-md p-2">
+                          <button
+                            className="w-full flex justify-between items-center text-sm font-semibold"
+                            onClick={() =>
+                              setExpandedCats(prev => ({ ...prev, [cat.id]: !expanded }))
+                            }
+                          >
+                            <span>{cat.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {expanded ? '−' : '+'}
+                            </span>
+                          </button>
+                          {expanded && (
+                            <div className="mt-2 grid grid-cols-1 gap-2">
+                              {enabledLocations.map(loc => {
+                                const label = getLocationName(state.appSettings.language, loc);
+                                const isSelected = selectedGuess === loc;
+                                return (
+                                  <button
+                                    key={loc}
+                                    onClick={() => setSelectedGuess(loc)}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2 rounded border text-sm",
+                                      isSelected
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-white/10 bg-background/60"
+                                    )}
+                                  >
+                                    {label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+                <Button size="sm" className="w-full" onClick={submitGuess} disabled={!selectedGuess}>
+                  {t('discussion.spyGuessConfirm')}
+                </Button>
+              </div>
+            )}
+          </>
         )}
         <Button
           size="lg"

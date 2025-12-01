@@ -904,7 +904,26 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                   <Copy className="w-4 h-4" />
                 </Button>
               </div>
-              <span className="text-xs text-muted-foreground ml-auto">Share this code to invite</span>
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-xs text-muted-foreground">Share this code to invite</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={async () => {
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({ title: "Join my lobby", text: `Room code: ${code}` });
+                      } catch {
+                        /* ignore */
+                      }
+                    } else {
+                      copyCode();
+                    }
+                  }}
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </div>
             </Card>
           </div>
         </div>

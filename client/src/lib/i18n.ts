@@ -134,6 +134,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "discussion.civiliansHint": "Ask sharp questions without giving away the location.",
     "discussion.spiesLabel": "SPIES",
     "discussion.spiesHint": "Blend in, listen, and infer the location.",
+    "discussion.spyGuessChoose": "Choose the location you think is real.",
+    "discussion.spyGuessConfirm": "Confirm guess",
 
     "result.winner": "Winner",
     "result.spies": "Spies",
@@ -147,6 +149,17 @@ export const translations: Record<Language, Record<string, string>> = {
     "result.nextRound": "Auto-start in",
   },
   tr: {
+    "setup.noRepeatLabel": "Ayni lokasyonu gosterme",
+    "setup.noRepeatHelper": "Ayarlar degisene kadar lokasyonlar tekrar etmez.",
+    "setup.noLocationsLeft": "Filtrelere gore lokasyon kalmadi.",
+    "discussion.phaseTitle": "Sorgu Asamasi",
+    "discussion.civiliansLabel": "SIVILLER",
+    "discussion.civiliansHint": "Konumu acik etmeden net sorular sor.",
+    "discussion.spiesLabel": "CASUSLAR",
+    "discussion.spiesHint": "Uyum sagla, dinle ve konumu cikar.",
+    "discussion.spyGuessChoose": "Gercek konumu sec ve onayla.",
+    "discussion.spyGuessConfirm": "Tahmini onayla",
+    "result.nextRound": "Otomatik baslayacak",
     "home.gameplay.steps":
       "Telefonu elden ele dolaştırıp rolleri aç.|Herkes rolünü öğrendikten sonra oyunu başlat.|Sırayla Evet/Hayır soruları sorun.|Casuslar konumu tahmin ederek her an kazanabilir.|Şüphelendiğinizde oylama açın!",
     "home.civil": "Siviller: ",

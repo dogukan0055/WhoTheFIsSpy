@@ -64,7 +64,7 @@ export default function RoleReveal() {
     const step = (now: number) => {
       if (holdStartRef.current === null) return;
       const elapsed = now - holdStartRef.current;
-      const progress = Math.min((elapsed / 900) * 100, 100);
+      const progress = Math.min((elapsed / 600) * 100, 100);
       setHoldProgress(progress);
 
       if (progress >= 100) {
@@ -105,7 +105,7 @@ export default function RoleReveal() {
             >
               <p className="text-lg font-medium leading-tight">{t('reveal.pass')}<br/><span className="text-primary font-bold text-2xl">{currentPlayer.name}</span></p>
               <div
-                className="relative w-32 h-32 mx-auto rounded-full bg-gradient-to-b from-primary/10 via-background to-background border border-primary/30 shadow-2xl overflow-hidden flex items-center justify-center"
+                className="relative w-32 h-32 mx-auto rounded-full bg-gradient-to-b from-primary/10 via-background to-background border border-primary/30 shadow-2xl overflow-hidden flex items-center justify-center select-none"
                 onPointerDown={beginHold}
                 onPointerUp={() => stopHold()}
                 onPointerLeave={() => stopHold()}
@@ -169,7 +169,6 @@ export default function RoleReveal() {
                   </>
                 )}
 
-                <Fingerprint className="fingerprint-icon relative z-10" />
               </div>
               <p className="text-sm text-muted-foreground text-center leading-tight px-4">{t('reveal.hold')}</p>
             </motion.div>
