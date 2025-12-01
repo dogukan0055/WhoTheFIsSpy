@@ -97,7 +97,7 @@ export default function Result() {
           disabled={!hasLocationsLeft}
           onClick={() => { playSound('click'); if (!hasLocationsLeft) return; dispatch({ type: 'START_NEW_ROUND' }); }}>
           <RotateCcw className="mr-2 w-4 h-4" />
-          {hasLocationsLeft ? t('result.playAgain') : t('result.changeSettings')}
+          {t('result.playAgain')}
         </Button>
         {hasLocationsLeft ? (
           <div className="text-xs text-muted-foreground text-center">
@@ -113,7 +113,7 @@ export default function Result() {
           variant="secondary"
           onClick={() => {
             playSound('click');
-            navigate('/setup');
+            navigate('/locations');
           }}
         >
           <Settings className="mr-2 w-4 h-4" />

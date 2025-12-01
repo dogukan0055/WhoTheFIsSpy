@@ -110,51 +110,46 @@ export default function Discussion() {
               <div className="space-y-3 bg-card/40 border border-white/10 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground text-left">{t('discussion.spyGuessHint')}</p>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {state.gameData.categories
-                    .filter(c => state.settings.selectedCategories.includes(c.id))
-                    .map(cat => {
-                      const disabledList = state.settings.disabledLocations[cat.id] || [];
-                      const enabledLocations = cat.locations.filter(loc => !disabledList.includes(loc));
-                      if (enabledLocations.length === 0) return null;
-                      const expanded = expandedCats[cat.id] ?? true;
-                      return (
-                        <div key={cat.id} className="border border-white/10 rounded-md p-2">
-                          <button
-                            className="w-full flex justify-between items-center text-sm font-semibold"
-                            onClick={() =>
-                              setExpandedCats(prev => ({ ...prev, [cat.id]: !expanded }))
-                            }
-                          >
-                            <span>{cat.name}</span>
-                            <span className="text-xs text-muted-foreground">
-                              {expanded ? '−' : '+'}
-                            </span>
-                          </button>
-                          {expanded && (
-                            <div className="mt-2 grid grid-cols-1 gap-2">
-                              {enabledLocations.map(loc => {
-                                const label = getLocationName(state.appSettings.language, loc);
-                                const isSelected = selectedGuess === loc;
-                                return (
-                                  <button
-                                    key={loc}
-                                    onClick={() => setSelectedGuess(loc)}
-                                    className={cn(
-                                      "w-full text-left px-3 py-2 rounded border text-sm",
-                                      isSelected
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-white/10 bg-background/60"
-                                    )}
-                                  >
-                                    {label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                  {state.gameData.categories.map(cat => {
+                    const expanded = expandedCats[cat.id] ?? true;
+                    return (
+                      <div key={cat.id} className="border border-white/10 rounded-md p-2">
+                        <button
+                          className="w-full flex justify-between items-center text-sm font-semibold"
+                          onClick={() =>
+                            setExpandedCats(prev => ({ ...prev, [cat.id]: !expanded }))
+                          }
+                        >
+                          <span>{cat.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {expanded ? '−' : '+'}
+                          </span>
+                        </button>
+                        {expanded && (
+                          <div className="mt-2 grid grid-cols-1 gap-2">
+                            {cat.locations.map(loc => {
+                              const label = getLocationName(state.appSettings.language, loc);
+                              const isSelected = selectedGuess === loc;
+                              return (
+                                <button
+                                  key={loc}
+                                  onClick={() => setSelectedGuess(loc)}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded border text-sm",
+                                    isSelected
+                                      ? "border-primary bg-primary/10 text-primary"
+                                      : "border-white/10 bg-background/60"
+                                  )}
+                                >
+                                  {label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 <Button size="sm" className="w-full" onClick={submitGuess} disabled={!selectedGuess}>
                   {t('discussion.spyGuessConfirm')}

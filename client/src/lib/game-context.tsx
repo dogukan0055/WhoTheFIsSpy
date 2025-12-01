@@ -382,7 +382,7 @@ const gameReducer = (state: GameState, action: Action): GameState => {
         mode: state.mode,
         appSettings: state.appSettings, // Preserve app settings
         gameData: { ...initialState.gameData, categories: state.gameData.categories },
-        settings: state.settings,
+        settings: { ...state.settings, noRepeatLocations: false },
       };
 
     case 'TOGGLE_CATEGORY': {
