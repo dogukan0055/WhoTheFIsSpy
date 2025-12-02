@@ -23,6 +23,12 @@ export default function RoleReveal() {
   const isLastPlayer =
     state.gameData.currentRevealIndex === state.players.length - 1;
 
+  const status: "idle" | "scanning" | "success" = isRevealed
+    ? "success"
+    : showScan
+      ? "scanning"
+      : "idle";
+
   const handleNext = () => {
     playSound("click");
     if (isLastPlayer) {
@@ -111,7 +117,7 @@ export default function RoleReveal() {
                 </span>
               </p>
               <div
-                className="relative w-32 h-32 mx-auto rounded-full bg-background border border-primary/40 shadow-[0_0_25px_rgba(59,130,246,0.25)] overflow-hidden flex items-center justify-center select-none"
+                className="relative w-40 h-40 mx-auto rounded-full bg-background border-4 overflow-hidden flex items-center justify-center select-none transition-all duration-300"
                 onPointerDown={beginHold}
                 onPointerUp={() => stopHold()}
                 onPointerLeave={() => stopHold()}
@@ -119,42 +125,54 @@ export default function RoleReveal() {
                 onTouchEnd={() => stopHold()}
               >
                 {/* static grid */}
-                <div className="absolute inset-2 rounded-full opacity-40 bg-[radial-gradient(circle,rgba(59,130,246,0.35),transparent_60%)] pointer-events-none" />
-                {/* sweeping scan lines */}
-                {showScan && (
-                  <>
-                    <motion.div
-                      className="absolute inset-2 rounded-full overflow-hidden pointer-events-none"
-                      animate={{ opacity: [0.6, 1, 0.6] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                    >
-                      <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,rgba(59,130,246,0.08)_0,rgba(59,130,246,0.08)_6px,transparent_6px,transparent_12px)]" />
-                      <motion.div
-                        className="absolute inset-0"
-                        initial={{ y: "-120%" }}
-                        animate={{ y: "120%" }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        <div className="h-full w-full bg-gradient-to-b from-transparent via-primary/40 to-transparent" />
-                      </motion.div>
-                    </motion.div>
-                    <motion.div
-                      className="absolute inset-2 rounded-full border border-primary/30 pointer-events-none"
-                      animate={{ scale: [1, 1.02, 1], opacity: [0.5, 0.9, 0.5] }}
-                      transition={{ duration: 1.2, repeat: Infinity }}
+                <div className="absolute inset-2 rounded-full opacity-30 bg-[radial-gradient(circle,rgba(59,130,246,0.35),transparent_60%)] pointer-events-none" />
+
+                {/* scan fill with clip */}
+                <div
+                  className="absolute inset-4"
+                  style={{ clipPath: `inset(${100 - holdProgress}% 0 0 0)` }}
+                >
+                  <Fingerprint
+                    size={120}
+                    strokeWidth={1}
+                    className={`mx-auto ${
+                      status === "success"
+                        ? "text-emerald-500 drop-shadow-[0_0_12px_rgba(16,185,129,0.6)]"
+                        : "text-cyan-400 drop-shadow-[0_0_12px_rgba(34,211,238,0.6)]"
+                    }`}
+                  />
+                  {status === "scanning" && (
+                    <div
+                      className="absolute left-0 right-0 h-[3px] bg-cyan-200/80 blur-sm scan-line"
+                      style={{ top: `${100 - holdProgress}%` }}
                     />
-                  </>
+                  )}
+                </div>
+
+                {/* base fingerprint outline */}
+                <Fingerprint
+                  size={120}
+                  strokeWidth={1}
+                  className="absolute inset-4 text-muted-foreground/40"
+                />
+
+                {/* pulsing ring */}
+                {status === "scanning" && (
+                  <motion.div
+                    className="absolute inset-2 rounded-full border border-primary/40 pointer-events-none"
+                    animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0.9, 0.5] }}
+                    transition={{ duration: 1.2, repeat: Infinity }}
+                  />
                 )}
                 {/* progress ring */}
-                <motion.div
-                  className="absolute inset-1.5 rounded-full border border-primary/40"
+                <div
+                  className="absolute inset-1.5 rounded-full border border-primary/30 pointer-events-none"
                   style={{
-                    background: `conic-gradient(from 90deg, rgba(59,130,246,0.6) ${holdProgress}%, transparent ${holdProgress}% 100%)`,
+                    background: `conic-gradient(from 90deg, ${
+                      status === "success" ? "rgba(16,185,129,0.6)" : "rgba(59,130,246,0.6)"
+                    } ${holdProgress}%, transparent ${holdProgress}% 100%)`,
                   }}
-                  animate={{ rotate: 0 }}
                 />
-                {/* center fingerprint */}
-                <Fingerprint className="fingerprint-icon relative z-10" />
               </div>
               <p className="text-sm text-muted-foreground text-center leading-tight px-4">
                 {t("reveal.hold")}
