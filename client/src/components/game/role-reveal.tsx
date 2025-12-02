@@ -28,8 +28,8 @@ export default function RoleReveal() {
   const status: "idle" | "scanning" | "success" = isRevealed
     ? "success"
     : showScan
-      ? "scanning"
-      : "idle";
+    ? "scanning"
+    : "idle";
 
   const handleNext = () => {
     playSound("click");
@@ -94,7 +94,8 @@ export default function RoleReveal() {
     <div className="flex flex-col items-center justify-center h-full space-y-8 py-12">
       <div className="text-center space-y-2">
         <h2 className="text-sm uppercase tracking-widest text-muted-foreground font-mono">
-          Agent {state.gameData.currentRevealIndex + 1} / {state.players.length}
+          {t("reveal.lang")} {state.gameData.currentRevealIndex + 1} /{" "}
+          {state.players.length}
         </h2>
         <h1 className="text-4xl font-bold font-mono tracking-tighter">
           {currentPlayer.name}
@@ -155,7 +156,6 @@ export default function RoleReveal() {
                   strokeWidth={1}
                   className="absolute inset-4 text-muted-foreground/40"
                 />
-
               </div>
               <p className="text-sm text-muted-foreground text-center leading-tight px-4">
                 {t("reveal.hold")}
@@ -192,7 +192,10 @@ export default function RoleReveal() {
                       {t("reveal.location")}
                     </p>
                     <p className="text-2xl font-bold text-blue-100">
-                      {getLocationName(language, state.gameData.currentLocation)}
+                      {getLocationName(
+                        language,
+                        state.gameData.currentLocation
+                      )}
                     </p>
                   </div>
                 </div>
