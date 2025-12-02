@@ -31,6 +31,7 @@ import {
 import { NumberPicker } from "@/components/ui/number-picker";
 import { Switch } from "@/components/ui/switch";
 import { INITIAL_CATEGORIES } from "@/lib/locations";
+import { useTranslation } from "@/hooks/use-translation";
 
 type OnlineRoomProps = {
   params: { code: string };
@@ -40,6 +41,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   const code = params.code.toUpperCase();
   const { profile, setProfile } = useOnlineProfile();
   const [, navigate] = useLocation();
+  const { t } = useTranslation();
   const [room, setRoom] = useState<OnlineRoomState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());

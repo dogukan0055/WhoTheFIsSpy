@@ -105,7 +105,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "locations.create": "Create",
     "locations.allOff": "Category disabled. All locations under it are off.",
     "locations.allOn": "Category enabled. Every location is playable.",
-
+    "reveal.eliminate": "Eliminate!",
     "reveal.lang": "Agent",
     "reveal.pass": "Pass the phone to",
     "reveal.tap": "Place your thumb and hold to scan",
@@ -316,6 +316,7 @@ export const translations: Record<Language, Record<string, string>> = {
       "Kategori kapalı. Kategorinin tüm lokasyonları devre dışı.",
     "locations.allOn": "Kategori açık. Bütün lokasyonlar devrede.",
 
+    "reveal.eliminate": "Yakala!",
     "reveal.lang": "Ajan",
     "reveal.pass": "Telefonu ilet:",
     "reveal.tap": "Başparmağını basılı tut ve parmak izini tarat",
