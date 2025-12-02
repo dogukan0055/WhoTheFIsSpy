@@ -46,7 +46,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [now, setNow] = useState(() => Date.now());
   const [chatInput, setChatInput] = useState("");
-  const [question, setQuestion] = useState("Is this place ...?");
+  const [questionTail, setQuestionTail] = useState("");
   const [targetId, setTargetId] = useState<string | undefined>(undefined);
   const [voteTarget, setVoteTarget] = useState<string | undefined>(undefined);
   const [settingsDraft, setSettingsDraft] = useState({
@@ -249,15 +249,6 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     }
   }, [room?.closedReason, navigate]);
   const lastSettingsRef = React.useRef<string>("");
-  const [finishCountdown, setFinishCountdown] = useState(10);
-  useEffect(() => {
-    if (!room || room.phase !== "finished") return;
-    setFinishCountdown(10);
-    const t = setInterval(() => {
-      setFinishCountdown((c) => Math.max(0, c - 1));
-    }, 1000);
-    return () => clearInterval(t);
-  }, [room?.phase]);
 
   const readyCount = room?.players.filter((p) => p.isReady).length ?? 0;
 
@@ -542,8 +533,22 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       <div className="text-xs text-muted-foreground uppercase tracking-widest">
         Reveal Phase
       </div>
-      <div className="text-4xl font-black font-mono">
-        {room?.yourRole === "spy" ? "YOU ARE A SPY" : "You are a civilian"}
+      <div className="text-4xl font-black font-mono flex items-center justify-center gap-3">
+        {room?.yourRole === "spy" ? (
+          <>
+            <Badge variant="destructive" className="text-base px-3 py-1">
+              SPY
+            </Badge>
+            <span>YOU ARE A SPY</span>
+          </>
+        ) : (
+          <>
+            <Badge variant="secondary" className="text-base px-3 py-1">
+              CIVILIAN
+            </Badge>
+            <span>You are a civilian</span>
+          </>
+        )}
       </div>
       {room?.yourRole === "civilian" && (
         <div className="text-muted-foreground">
@@ -609,27 +614,32 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                 ))}
             </div>
           </div>
-          <div className="text-sm font-mono bg-background/60 border border-white/10 rounded px-3 py-2">
+          <div className="text-sm font-mono bg-background/60 border border-white/10 rounded px-3 py-2 flex items-center gap-2">
+            <span className="whitespace-nowrap text-muted-foreground text-xs sm:text-sm">
+              {t("online.questionPrefix")}
+            </span>
             <Input
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Is this place...?"
+              value={questionTail}
+              onChange={(e) => setQuestionTail(e.target.value)}
+              placeholder={t("online.questionPlaceholder")}
+              className="flex-1"
             />
+            <span className="text-muted-foreground">?</span>
           </div>
           <Button
-            disabled={!targetId}
+            disabled={!targetId || !questionTail.trim()}
             onClick={() =>
               handle((prof) =>
                 onlineApi.askQuestion(
                   prof,
                   code,
                   targetId!,
-                  "Is this place ...?"
+                  `${t("online.questionPrefix")} ${questionTail.trim()}?`
                 )
               )
             }
           >
-            Send question
+            {t("online.sendQuestion")}
           </Button>
         </Card>
       );
@@ -822,7 +832,15 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               Your Brief
             </div>
             <div className="text-xl font-black font-mono">
-              {room?.yourRole === "spy" ? "SPY" : "CIVILIAN"}
+              {room?.yourRole === "spy" ? (
+                <Badge variant="destructive" className="text-lg py-1 px-2">
+                  SPY
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-lg py-1 px-2">
+                  CIVILIAN
+                </Badge>
+              )}
             </div>
             {room?.yourRole === "civilian" && (
               <p className="text-sm text-muted-foreground">
@@ -908,37 +926,56 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       {room?.lastVote?.message && (
         <p className="text-sm text-muted-foreground">{room.lastVote.message}</p>
       )}
-      <div className="text-sm text-muted-foreground">
-        Next round in {finishCountdown}s — adjust settings or return home.
-      </div>
-      <div className="flex gap-2 justify-center">
-        <Button
-          variant="secondary"
-          disabled={finishCountdown === 0}
-          onClick={() => setFinishCountdown((c) => Math.max(0, c - 1))}
-        >
-          Skip timer
-        </Button>
-        <Button variant="outline" onClick={() => navigate("/online-menu")}>
-          Main menu
-        </Button>
-      </div>
-      <div className="grid gap-2">
+      <div className="grid gap-2 text-left">
         {room?.players.map((p) => (
           <div
             key={p.id}
             className="flex items-center justify-between px-3 py-2 rounded border border-white/5"
           >
             <span>{p.name}</span>
-            <Badge
-              variant={room?.settings.spyCount > 1 ? "secondary" : "outline"}
-            >
+            <Badge variant={p.role === "spy" ? "destructive" : "secondary"}>
               {p.role === "spy" ? "Spy" : "Civilian"}
             </Badge>
           </div>
         ))}
       </div>
+      <div className="space-y-2 pt-2">
+        <div className="text-sm text-muted-foreground">{t("online.votePrompt")}</div>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            className="flex-1"
+            onClick={() => handle((prof) => onlineApi.start(prof, code))}
+          >
+            {t("online.rematchSame")}
+          </Button>
+          <Button
+            className="flex-1"
+            variant="secondary"
+            onClick={() =>
+              handle((prof) =>
+                onlineApi.chat(prof, code, t("online.voteNewSettings"))
+              )
+            }
+          >
+            {t("online.rematchNew")}
+          </Button>
+          <Button
+            className="flex-1"
+            variant="outline"
+            onClick={() =>
+              handle(async (prof) => {
+                await onlineApi.leave(prof, code)
+                navigate("/online-menu")
+                return undefined
+              })
+            }
+          >
+            {t("online.quitToMenu")}
+          </Button>
+        </div>
+      </div>
     </Card>
+  );
   );
 
   if (isLoading || !profile || !room) {
