@@ -23,6 +23,8 @@ export default function RoleReveal() {
   const isLastPlayer =
     state.gameData.currentRevealIndex === state.players.length - 1;
 
+  const showScan = (isHolding || holdProgress > 0) && !isRevealed;
+
   const status: "idle" | "scanning" | "success" = isRevealed
     ? "success"
     : showScan
@@ -87,8 +89,6 @@ export default function RoleReveal() {
     setHoldProgress(0);
     stopHold(true);
   }, [state.gameData.currentRevealIndex]);
-
-  const showScan = (isHolding || holdProgress > 0) && !isRevealed;
 
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-8 py-12">
