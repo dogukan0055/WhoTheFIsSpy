@@ -9,6 +9,7 @@ import { ArrowLeft, Globe2, Lock, Loader2, Wifi, User, LogOut } from "lucide-rea
 import { toast } from "@/hooks/use-toast";
 import { onlineApi } from "@/lib/online-api";
 import { useOnlineProfile } from "@/hooks/use-online-profile";
+import { useTranslation } from "@/hooks/use-translation";
 
 type Step = "identify" | "menu";
 
@@ -19,6 +20,7 @@ export default function OnlineMenu() {
   const [roomCode, setRoomCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [, navigate] = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (profile) {
@@ -30,8 +32,8 @@ export default function OnlineMenu() {
   const connect = async () => {
     if (!name.trim()) {
       toast({
-        title: "Pick a codename",
-        description: "Name must be at least 2 characters.",
+        title: t("online.pickCodename"),
+        description: t("online.pickCodenameDesc"),
         variant: "destructive",
       });
       return;
@@ -41,11 +43,11 @@ export default function OnlineMenu() {
       const session = await onlineApi.login(name.trim());
       setProfile(session);
       setStep("menu");
-      toast({ title: "Connected", description: "Secure uplink established." });
+      toast({ title: t("online.connected"), description: t("online.connectedDesc") });
     } catch (err: any) {
       toast({
-        title: "Connection failed",
-        description: err?.message ?? "Try again in a moment.",
+        title: t("online.connectionFailed"),
+        description: err?.message ?? t("online.connectionFailedDesc"),
         variant: "destructive",
       });
     } finally {
@@ -58,7 +60,7 @@ export default function OnlineMenu() {
     setStep("identify");
     setName("");
     setRoomCode("");
-    toast({ title: "Signed out", description: "Session cleared." });
+    toast({ title: t("online.signedOut"), description: t("online.signedOutDesc") });
   };
 
   const ensureSession = async () => {
@@ -71,8 +73,8 @@ export default function OnlineMenu() {
   const hostRoom = async () => {
     if (!name.trim()) {
       toast({
-        title: "Pick a codename",
-        description: "Name must be at least 2 characters.",
+        title: t("online.pickCodename"),
+        description: t("online.pickCodenameDesc"),
         variant: "destructive",
       });
       return;
@@ -95,8 +97,8 @@ export default function OnlineMenu() {
       }
     } catch (err: any) {
       toast({
-        title: "Couldn't create room",
-        description: err?.message ?? "Please retry.",
+        title: t("online.cantCreateRoom"),
+        description: err?.message ?? t("online.cantCreateRoomDesc"),
         variant: "destructive",
       });
     } finally {
@@ -107,8 +109,8 @@ export default function OnlineMenu() {
   const joinRoom = async () => {
     if (!roomCode || roomCode.length < 4) {
       toast({
-        title: "Invalid code",
-        description: "Room codes look like ABCD.",
+        title: t("online.invalidCode"),
+        description: t("online.invalidCodeDesc"),
         variant: "destructive",
       });
       return;
@@ -132,8 +134,8 @@ export default function OnlineMenu() {
       }
     } catch (err: any) {
       toast({
-        title: "Join failed",
-        description: err?.message ?? "Check the code and try again.",
+        title: t("online.joinFailed"),
+        description: err?.message ?? t("online.joinFailedDesc"),
         variant: "destructive",
       });
     } finally {
@@ -151,9 +153,9 @@ export default function OnlineMenu() {
         </Link>
         <div className="flex-1">
           <div className="text-xs text-muted-foreground uppercase tracking-widest">
-            Online Ops
+            {t("online.opsTag")}
           </div>
-          <div className="text-2xl font-black font-mono">Network Lobby</div>
+          <div className="text-2xl font-black font-mono">{t("online.lobbyTitle")}</div>
         </div>
         {profile && (
           <div className="flex items-center gap-2">
@@ -163,7 +165,7 @@ export default function OnlineMenu() {
             </Badge>
             <Button variant="ghost" onClick={logout} className="flex items-center gap-2">
               <LogOut className="w-4 h-4" />
-              <span className="text-sm">Logout</span>
+              <span className="text-sm">{t("online.logout")}</span>
             </Button>
           </div>
         )}
@@ -173,20 +175,20 @@ export default function OnlineMenu() {
         <Card className="p-6 space-y-4 bg-card/50 border-white/10">
           <div className="text-center space-y-1">
             <Wifi className="w-10 h-10 mx-auto text-primary animate-pulse" />
-            <div className="text-lg font-semibold font-mono">Identify yourself</div>
+            <div className="text-lg font-semibold font-mono">{t("online.identifyTitle")}</div>
             <p className="text-sm text-muted-foreground">
-              Choose a codename before entering secure rooms.
+              {t("online.identifySubtitle")}
             </p>
           </div>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Cipher, Raven, Nova..."
+            placeholder={t("online.codenamePlaceholder")}
             className="text-center h-12 text-lg font-mono"
             maxLength={20}
           />
           <Button className="w-full h-12" onClick={connect} disabled={isLoading}>
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Establish uplink"}
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("online.establishLink")}
           </Button>
         </Card>
       )}
@@ -197,14 +199,12 @@ export default function OnlineMenu() {
             <div className="flex items-center gap-2">
               <Globe2 className="w-5 h-5" />
               <div>
-                <div className="text-sm font-semibold">Host a room</div>
-                <p className="text-xs text-muted-foreground">
-                  Share the code with friends. Configure details inside the lobby.
-                </p>
+                <div className="text-sm font-semibold">{t("online.hostRoomTitle")}</div>
+                <p className="text-xs text-muted-foreground">{t("online.hostRoomDesc")}</p>
               </div>
             </div>
             <Button className="w-full h-12" onClick={hostRoom} disabled={isLoading}>
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Generate room code"}
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : t("online.generateCode")}
             </Button>
           </Card>
 
@@ -212,10 +212,8 @@ export default function OnlineMenu() {
             <div className="flex items-center gap-2">
               <Lock className="w-5 h-5" />
               <div>
-                <div className="text-sm font-semibold">Join a room</div>
-                <p className="text-xs text-muted-foreground">
-                  Got an invite code? Jump straight in.
-                </p>
+                <div className="text-sm font-semibold">{t("online.joinRoomTitle")}</div>
+                <p className="text-xs text-muted-foreground">{t("online.joinRoomDesc")}</p>
               </div>
             </div>
             <div className="space-y-2">
@@ -232,7 +230,7 @@ export default function OnlineMenu() {
                 onClick={joinRoom}
                 disabled={isLoading}
               >
-                Enter room
+                {t("online.enterRoom")}
               </Button>
             </div>
           </Card>

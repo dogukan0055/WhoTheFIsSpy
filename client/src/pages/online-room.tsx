@@ -55,13 +55,13 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   const [settingsDirty, setSettingsDirty] = useState(false);
   const settingsDirtyRef = React.useRef(settingsDirty);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    INITIAL_CATEGORIES.map((c) => c.id),
+    INITIAL_CATEGORIES.map((c) => c.id)
   );
   const [locationPicks, setLocationPicks] = useState<Record<string, string[]>>(
     () =>
       Object.fromEntries(
-        INITIAL_CATEGORIES.map((c) => [c.id, [...c.locations]]),
-      ),
+        INITIAL_CATEGORIES.map((c) => [c.id, [...c.locations]])
+      )
   );
 
   useEffect(() => {
@@ -84,10 +84,16 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         const next = await onlineApi.getState(profile, code);
         if (!active) return;
         const settingsSig = JSON.stringify(next.settings);
-        if (lastSettingsRef.current && lastSettingsRef.current !== settingsSig) {
+        if (
+          lastSettingsRef.current &&
+          lastSettingsRef.current !== settingsSig
+        ) {
           const mePlayer = next.players.find((p) => p.id === profile.playerId);
           if (!mePlayer?.isHost) {
-            toast({ title: "Lobby updated", description: "Host changed game settings." });
+            toast({
+              title: "Lobby updated",
+              description: "Host changed game settings.",
+            });
           }
         }
         lastSettingsRef.current = settingsSig;
@@ -96,9 +102,11 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         if (!settingsDirtyRef.current) {
           // Derive which categories are active based on server locations, fall back to all
           const activeCats = INITIAL_CATEGORIES.filter((c) =>
-            c.locations.some((loc) => next.settings.locations.includes(loc)),
+            c.locations.some((loc) => next.settings.locations.includes(loc))
           ).map((c) => c.id);
-          setSelectedCategories(activeCats.length ? activeCats : INITIAL_CATEGORIES.map((c) => c.id));
+          setSelectedCategories(
+            activeCats.length ? activeCats : INITIAL_CATEGORIES.map((c) => c.id)
+          );
           setSettingsDraft({
             spyCount: next.settings.spyCount,
             timerMinutes: next.settings.timerMinutes,
@@ -108,9 +116,11 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             Object.fromEntries(
               INITIAL_CATEGORIES.map((c) => [
                 c.id,
-                c.locations.filter((loc) => next.settings.locations.includes(loc)),
-              ]),
-            ),
+                c.locations.filter((loc) =>
+                  next.settings.locations.includes(loc)
+                ),
+              ])
+            )
           );
         }
       } catch (err: any) {
@@ -152,7 +162,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       navigate("/online-menu");
       toast({
         title: "Re-auth needed",
-        description: e?.message ?? "Session expired. Rejoin with your codename.",
+        description:
+          e?.message ?? "Session expired. Rejoin with your codename.",
         variant: "destructive",
       });
       return null;
@@ -160,7 +171,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   };
 
   const handle = async (
-    fn: (prof: OnlineProfile) => Promise<OnlineRoomState | void>,
+    fn: (prof: OnlineProfile) => Promise<OnlineRoomState | void>
   ) => {
     if (!profile) return;
     let currentProfile = profile;
@@ -268,7 +279,14 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             <div className="flex-1">
               <div className="font-mono text-sm">{p.name}</div>
               <div className="text-[11px] text-muted-foreground flex gap-2">
-                {p.isHost && <Badge variant="outline" className="text-[10px] border-primary/60 text-primary">HOST</Badge>}
+                {p.isHost && (
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] border-primary/60 text-primary"
+                  >
+                    HOST
+                  </Badge>
+                )}
                 {p.isReady && room?.phase === "lobby" && <span>Ready</span>}
                 {p.eliminated && <span>Eliminated</span>}
               </div>
@@ -292,7 +310,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       <Card className="p-4 space-y-3 bg-card/40 border-white/5">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase text-muted-foreground font-mono">Game Settings</div>
+            <div className="text-xs uppercase text-muted-foreground font-mono">
+              Game Settings
+            </div>
             <h3 className="text-lg font-semibold">Curate safehouses</h3>
             <p className="text-xs text-muted-foreground">
               Toggle categories, disable risky spots, or add custom hideouts.
@@ -344,11 +364,13 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                         enabled
                           ? "border-primary/60 bg-primary/10 text-primary"
                           : "border-white/10 bg-background/40 text-muted-foreground",
-                        !me?.isHost && "opacity-60",
+                        !me?.isHost && "opacity-60"
                       )}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold">{cat.name}</span>
+                        <span className="text-sm font-semibold">
+                          {cat.name}
+                        </span>
                         <Switch
                           checked={enabled}
                           disabled={!me?.isHost}
@@ -358,7 +380,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                             setSelectedCategories((prev) =>
                               prev.includes(cat.id)
                                 ? prev.filter((id) => id !== cat.id)
-                                : [...prev, cat.id],
+                                : [...prev, cat.id]
                             );
                             if (!enabled && picks.length === 0) {
                               setLocationPicks((prev) => ({
@@ -398,7 +420,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                                   "px-3 py-1 rounded-full text-xs border",
                                   on
                                     ? "border-primary bg-primary/20 text-primary-foreground"
-                                    : "border-white/10 bg-background/60 text-muted-foreground",
+                                    : "border-white/10 bg-background/60 text-muted-foreground"
                                 )}
                               >
                                 {loc}
@@ -413,7 +435,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Matches offline database: toggle categories and individual locations.
+              Matches offline database: toggle categories and individual
+              locations.
             </p>
           </div>
           {me?.isHost && (
@@ -424,9 +447,14 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                   const selectedLocs =
                     selectedCategories.length > 0
                       ? selectedCategories.flatMap((catId) => {
-                          const cat = INITIAL_CATEGORIES.find((c) => c.id === catId);
+                          const cat = INITIAL_CATEGORIES.find(
+                            (c) => c.id === catId
+                          );
                           if (!cat) return [];
-                          const picks = locationPicks[catId]?.filter((l) => cat.locations.includes(l)) ?? [];
+                          const picks =
+                            locationPicks[catId]?.filter((l) =>
+                              cat.locations.includes(l)
+                            ) ?? [];
                           return picks.length > 0 ? picks : cat.locations;
                         })
                       : INITIAL_CATEGORIES.flatMap((c) => c.locations);
@@ -446,14 +474,21 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                           .split(",")
                           .map((loc) => loc.trim())
                           .filter(Boolean);
-                  const updated = await onlineApi.updateSettings(profile!, code, {
-                    spyCount: settingsDraft.spyCount,
-                    timerMinutes: settingsDraft.timerMinutes,
-                    locations: chosenLocations.length
-                      ? chosenLocations
-                      : INITIAL_CATEGORIES.flatMap((c) => c.locations),
+                  const updated = await onlineApi.updateSettings(
+                    profile!,
+                    code,
+                    {
+                      spyCount: settingsDraft.spyCount,
+                      timerMinutes: settingsDraft.timerMinutes,
+                      locations: chosenLocations.length
+                        ? chosenLocations
+                        : INITIAL_CATEGORIES.flatMap((c) => c.locations),
+                    }
+                  );
+                  toast({
+                    title: "Settings saved",
+                    description: "Lobby updated.",
                   });
-                  toast({ title: "Settings saved", description: "Lobby updated." });
                   setSettingsDirty(false);
                   return updated;
                 })
@@ -479,7 +514,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               variant={me?.isReady ? "secondary" : "default"}
               onClick={() =>
                 handle((prof) =>
-                  onlineApi.setReady(prof, code, !(me?.isReady ?? false)),
+                  onlineApi.setReady(prof, code, !(me?.isReady ?? false))
                 )
               }
             >
@@ -524,17 +559,18 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   );
 
   const currentTurn = room?.turn;
-  const currentAsker = room?.players.find(
-    (p) => p.id === currentTurn?.askerId,
-  );
+  const currentAsker = room?.players.find((p) => p.id === currentTurn?.askerId);
   const currentTarget = room?.players.find(
-    (p) => p.id === currentTurn?.targetId,
+    (p) => p.id === currentTurn?.targetId
   );
 
   const renderTurnControls = () => {
     if (!room || !currentTurn) return null;
 
-    if (currentTurn.status === "awaiting-question" && me?.id === currentTurn.askerId) {
+    if (
+      currentTurn.status === "awaiting-question" &&
+      me?.id === currentTurn.askerId
+    ) {
       return (
         <Card className="p-4 space-y-3 bg-card/40 border-white/5">
           <div className="flex items-center gap-2 text-sm font-semibold">
@@ -548,7 +584,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s
           </div>
           <div className="space-y-2">
-            <div className="text-xs text-muted-foreground uppercase">Choose a target</div>
+            <div className="text-xs text-muted-foreground uppercase">
+              Choose a target
+            </div>
             <div className="grid sm:grid-cols-2 gap-2">
               {room.players
                 .filter((p) => !p.eliminated && p.id !== me?.id)
@@ -560,7 +598,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                       "flex items-center justify-between px-3 py-2 rounded border text-left",
                       targetId === p.id
                         ? "border-primary bg-primary/10 text-primary"
-                        : "border-white/10 bg-background/60 text-foreground",
+                        : "border-white/10 bg-background/60 text-foreground"
                     )}
                   >
                     <span>{p.name}</span>
@@ -584,8 +622,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                   prof,
                   code,
                   targetId!,
-                  "Is this place ...?",
-                ),
+                  "Is this place ...?"
+                )
               )
             }
           >
@@ -613,14 +651,18 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             <Button
               className="flex-1"
               variant="secondary"
-              onClick={() => handle((prof) => onlineApi.answer(prof, code, "yes"))}
+              onClick={() =>
+                handle((prof) => onlineApi.answer(prof, code, "yes"))
+              }
             >
               Yes
             </Button>
             <Button
               className="flex-1"
               variant="destructive"
-              onClick={() => handle((prof) => onlineApi.answer(prof, code, "no"))}
+              onClick={() =>
+                handle((prof) => onlineApi.answer(prof, code, "no"))
+              }
             >
               No
             </Button>
@@ -654,7 +696,11 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <MessageSquare className="w-4 h-4" />
           Squad feed
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setChatInput("Thanks for the intel.")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setChatInput("Thanks for the intel.")}
+        >
           <TimerReset className="w-4 h-4" />
         </Button>
       </div>
@@ -664,7 +710,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             key={msg.id}
             className={cn(
               "text-sm p-2 rounded border border-white/5",
-              msg.system ? "text-muted-foreground bg-white/5" : "bg-background/40",
+              msg.system
+                ? "text-muted-foreground bg-white/5"
+                : "bg-background/40"
             )}
           >
             <div className="text-[11px] text-muted-foreground mb-1">
@@ -716,11 +764,13 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                 "px-3 py-2 rounded border text-left flex items-center justify-between",
                 voteTarget === p.id
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-white/10 bg-background/60 text-foreground",
+                  : "border-white/10 bg-background/60 text-foreground"
               )}
             >
               <span>{p.name}</span>
-              {voteTarget === p.id && <Badge variant="secondary">Selected</Badge>}
+              {voteTarget === p.id && (
+                <Badge variant="secondary">Selected</Badge>
+              )}
             </button>
           ))}
       </div>
@@ -733,27 +783,33 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         Confirm vote
       </Button>
       {room?.lastVote?.message && (
-        <div className="text-xs text-muted-foreground">{room.lastVote.message}</div>
+        <div className="text-xs text-muted-foreground">
+          {room.lastVote.message}
+        </div>
       )}
     </Card>
   );
 
-  const renderInGame = () => (
+  const renderInGame = () =>
     room?.phase === "voting" ? (
       <div className="space-y-4">
         <Card className="p-6 text-center bg-card/50 border-white/10">
-          <div className="text-xs uppercase text-muted-foreground tracking-widest">Voting Timer</div>
-          <div className="text-5xl font-black font-mono">{voteCountdown ?? 0}s</div>
-          <p className="text-sm text-muted-foreground">Discuss and vote before it expires.</p>
+          <div className="text-xs uppercase text-muted-foreground tracking-widest">
+            Voting Timer
+          </div>
+          <div className="text-5xl font-black font-mono">
+            {voteCountdown ?? 0}s
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Discuss and vote before it expires.
+          </p>
         </Card>
         <div className="grid md:grid-cols-3 gap-3">
           <div className="space-y-3 md:col-span-2">
             {renderVoting()}
             {renderChat()}
           </div>
-          <div className="space-y-3">
-            {renderPlayers()}
-          </div>
+          <div className="space-y-3">{renderPlayers()}</div>
         </div>
       </div>
     ) : (
@@ -767,7 +823,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               {room?.yourRole === "spy" ? "SPY" : "CIVILIAN"}
             </div>
             {room?.yourRole === "civilian" && (
-              <p className="text-sm text-muted-foreground">Location: {room?.location}</p>
+              <p className="text-sm text-muted-foreground">
+                Location: {room?.location}
+              </p>
             )}
             <div className="flex gap-2">
               <Badge>{room?.spiesRemaining ?? 0} spies active</Badge>
@@ -780,7 +838,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             <div className="text-xs text-muted-foreground uppercase tracking-widest">
               Mission Timer
             </div>
-            <div className="text-3xl font-black font-mono">{timeLeft ?? "--:--"}</div>
+            <div className="text-3xl font-black font-mono">
+              {timeLeft ?? "--:--"}
+            </div>
             <div className="text-xs text-muted-foreground">
               Runs out? Spies win.
             </div>
@@ -795,7 +855,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               onClick={() => handle((prof) => onlineApi.callVote(prof, code))}
             >
               <Vote className="w-4 h-4 mr-2" />
-              Call vote
+              {t("discussion.voting")}
             </Button>
             <Button
               variant="outline"
@@ -817,9 +877,13 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           <div className="space-y-3">
             {renderPlayers()}
             <Card className="p-4 bg-card/40 border-white/5">
-              <div className="text-xs uppercase text-muted-foreground">Settings</div>
+              <div className="text-xs uppercase text-muted-foreground">
+                Settings
+              </div>
               <div className="text-sm">Spies: {room?.settings.spyCount}</div>
-              <div className="text-sm">Timer: {room?.settings.timerMinutes} min</div>
+              <div className="text-sm">
+                Timer: {room?.settings.timerMinutes} min
+              </div>
             </Card>
             {room?.lastVote && (
               <Card className="p-3 text-sm bg-card/30 border-white/5">
@@ -829,8 +893,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           </div>
         </div>
       </div>
-    )
-  );
+    );
 
   const renderFinished = () => (
     <Card className="p-6 text-center space-y-3 bg-card/50 border-white/10">
@@ -865,7 +928,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             className="flex items-center justify-between px-3 py-2 rounded border border-white/5"
           >
             <span>{p.name}</span>
-            <Badge variant={room?.settings.spyCount > 1 ? "secondary" : "outline"}>
+            <Badge
+              variant={room?.settings.spyCount > 1 ? "secondary" : "outline"}
+            >
               {p.role === "spy" ? "Spy" : "Civilian"}
             </Badge>
           </div>
@@ -889,7 +954,11 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     <Layout className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/online-menu")}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/online-menu")}
+          >
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
@@ -905,14 +974,19 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                 </Button>
               </div>
               <div className="flex items-center gap-2 ml-auto">
-                <span className="text-xs text-muted-foreground">Share this code to invite</span>
+                <span className="text-xs text-muted-foreground">
+                  Share this code to invite
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={async () => {
                     if (navigator.share) {
                       try {
-                        await navigator.share({ title: "Join my lobby", text: `Room code: ${code}` });
+                        await navigator.share({
+                          title: "Join my lobby",
+                          text: `Room code: ${code}`,
+                        });
                       } catch {
                         /* ignore */
                       }

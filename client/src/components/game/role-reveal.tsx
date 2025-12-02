@@ -156,23 +156,6 @@ export default function RoleReveal() {
                   className="absolute inset-4 text-muted-foreground/40"
                 />
 
-                {/* pulsing ring */}
-                {status === "scanning" && (
-                  <motion.div
-                    className="absolute inset-2 rounded-full border border-primary/40 pointer-events-none"
-                    animate={{ scale: [1, 1.05, 1], opacity: [0.5, 0.9, 0.5] }}
-                    transition={{ duration: 1.2, repeat: Infinity }}
-                  />
-                )}
-                {/* progress ring */}
-                <div
-                  className="absolute inset-1.5 rounded-full border border-primary/30 pointer-events-none"
-                  style={{
-                    background: `conic-gradient(from 90deg, ${
-                      status === "success" ? "rgba(16,185,129,0.6)" : "rgba(59,130,246,0.6)"
-                    } ${holdProgress}%, transparent ${holdProgress}% 100%)`,
-                  }}
-                />
               </div>
               <p className="text-sm text-muted-foreground text-center leading-tight px-4">
                 {t("reveal.hold")}
