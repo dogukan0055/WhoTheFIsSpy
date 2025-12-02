@@ -52,6 +52,11 @@ export default function LocationManager() {
 
   const handleAddLocation = () => {
     if (!newLocName.trim() || !selectedCatId) return;
+    const category = state.gameData.categories.find((c) => c.id === selectedCatId);
+    const categoryLabel = category
+      ? getCategoryName(language, category)
+      : selectedCatId;
+    const locationLabel = getLocationName(language, newLocName);
     dispatch({
       type: 'ADD_LOCATION',
       payload: {
@@ -62,7 +67,10 @@ export default function LocationManager() {
     setNewLocName('');
     setIsAddingLoc(false);
     playSound('success');
-    toast({ title: t('locations.locationAdded'), description: `${newLocName} ${t('locations.locationAddedDesc')}` });
+    toast({
+      title: t('locations.locationAdded'),
+      description: `${locationLabel} ${t('locations.locationAddedDesc')} ${categoryLabel}`,
+    });
   };
 
   const handleDeleteCategory = (id: string, e: React.MouseEvent) => {

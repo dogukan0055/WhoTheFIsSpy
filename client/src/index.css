@@ -195,3 +195,18 @@ html {
     opacity: 0.3;
   }
 }
+
+.animate-toast-progress {
+  animation-name: toast-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
