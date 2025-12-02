@@ -940,7 +940,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         ))}
       </div>
       <div className="space-y-2 pt-2">
-        <div className="text-sm text-muted-foreground">{t("online.votePrompt")}</div>
+        <div className="text-sm text-muted-foreground">
+          {t("online.votePrompt")}
+        </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
             className="flex-1"
@@ -964,9 +966,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             variant="outline"
             onClick={() =>
               handle(async (prof) => {
-                await onlineApi.leave(prof, code)
-                navigate("/online-menu")
-                return undefined
+                await onlineApi.leave(prof, code);
+                navigate("/online-menu");
+                return undefined;
               })
             }
           >
@@ -975,7 +977,6 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         </div>
       </div>
     </Card>
-  );
   );
 
   if (isLoading || !profile || !room) {
