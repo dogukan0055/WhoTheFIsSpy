@@ -950,6 +950,18 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     );
   }
 
+  let phaseView: React.ReactNode;
+  if (room.phase === "lobby") {
+    phaseView = renderLobby();
+  } else if (room.phase === "reveal") {
+    phaseView = renderReveal();
+  } else if (room.phase === "finished") {
+    phaseView = renderFinished();
+  } else {
+    // Default to in-game layout for playing, voting, or any unexpected phase to avoid blank screens
+    phaseView = renderInGame();
+  }
+
   return (
     <Layout className="space-y-4">
       <div className="flex items-center justify-between">
@@ -1009,11 +1021,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
 
       <Separator className="bg-white/10" />
 
-      {room.phase === "lobby" && renderLobby()}
-      {room.phase === "reveal" && renderReveal()}
-      {room.phase === "playing" && renderInGame()}
-      {room.phase === "voting" && renderInGame()}
-      {room.phase === "finished" && renderFinished()}
+      {phaseView}
     </Layout>
   );
 }

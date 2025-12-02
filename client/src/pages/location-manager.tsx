@@ -57,6 +57,10 @@ export default function LocationManager() {
       ? getCategoryName(language, category)
       : selectedCatId;
     const locationLabel = getLocationName(language, newLocName);
+    const description =
+      language === "tr"
+        ? `${locationLabel} lokasyonu ${categoryLabel} kategorisine eklendi.`
+        : `Location ${locationLabel} is added to category ${categoryLabel}.`;
     dispatch({
       type: 'ADD_LOCATION',
       payload: {
@@ -69,7 +73,7 @@ export default function LocationManager() {
     playSound('success');
     toast({
       title: t('locations.locationAdded'),
-      description: `${locationLabel} ${t('locations.locationAddedDesc')} ${categoryLabel}`,
+      description,
     });
   };
 

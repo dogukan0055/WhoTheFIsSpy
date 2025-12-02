@@ -219,7 +219,9 @@ export default function OfflineSetup() {
 
     let locationPool = validCategories.flatMap((c) => c.enabledLocations);
     if (state.settings.noRepeatLocations) {
-      locationPool = locationPool.filter((loc) => !state.gameData.usedLocations.includes(loc));
+      locationPool = locationPool.filter(
+        (loc) => !state.gameData.usedLocations.includes(loc)
+      );
     }
     if (locationPool.length === 0) {
       toast({
@@ -231,7 +233,8 @@ export default function OfflineSetup() {
       return;
     }
 
-    const randomLoc = locationPool[Math.floor(Math.random() * locationPool.length)];
+    const randomLoc =
+      locationPool[Math.floor(Math.random() * locationPool.length)];
 
     localStorage.setItem("spy-player-names", JSON.stringify(sanitizedNames));
 
@@ -389,14 +392,21 @@ export default function OfflineSetup() {
             </p>
             <div className="flex items-center justify-between border border-white/5 rounded-lg p-3">
               <div>
-                <div className="text-sm font-semibold">{t("setup.noRepeatLabel")}</div>
-                <p className="text-xs text-muted-foreground">{t("setup.noRepeatHelper")}</p>
+                <div className="text-sm font-semibold">
+                  {t("setup.noRepeatLabel")}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t("setup.noRepeatHelper")}
+                </p>
               </div>
               <Switch
                 checked={state.settings.noRepeatLocations}
                 onCheckedChange={(checked) => {
                   playSound("click");
-                  dispatch({ type: "UPDATE_SETTINGS", payload: { noRepeatLocations: checked } });
+                  dispatch({
+                    type: "UPDATE_SETTINGS",
+                    payload: { noRepeatLocations: checked },
+                  });
                 }}
               />
             </div>
@@ -456,7 +466,7 @@ export default function OfflineSetup() {
                 </div>
                 <div className="flex justify-end pt-2 gap-2">
                   <Button variant="ghost" onClick={() => setIsRenaming(false)}>
-                    {t("setup.cancelRoster") ?? "Cancel"}
+                    {t("setup.cancelRoster")}
                   </Button>
                   <Button onClick={handleSaveRoster}>
                     {t("setup.saveRoster")}
