@@ -57,6 +57,7 @@ type Room = {
   turnCursor?: number;
   voteEndsAt?: number;
   votes: Record<string, string | undefined>;
+  endVotes?: Record<string, "same" | "new">;
   winner?: Role;
   chat: ChatMessage[];
   caughtSpies: number;
@@ -245,6 +246,7 @@ function progressRoom(room: Room) {
   if (room.closedReason) {
     room.turn = undefined;
     room.voteEndsAt = undefined;
+    room.endVotes = {};
     room.phase = "finished";
     return;
   }
@@ -252,6 +254,7 @@ function progressRoom(room: Room) {
   if (room.phase === "finished") {
     room.turn = undefined;
     room.voteEndsAt = undefined;
+    room.endVotes = room.endVotes || {};
     return;
   }
 
@@ -390,6 +393,7 @@ function serializeRoom(room: Room, viewerId: string) {
     chat: room.chat.slice(-40),
     voteEndsAt: room.voteEndsAt,
     lastVote: room.lastVote,
+    endVotes: room.endVotes ?? {},
     winner: room.winner,
     closedReason: room.closedReason,
   };
@@ -467,6 +471,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     room.turnCursor = room.turnCursor ? room.turnCursor % Math.max(room.players.length, 1) : 0;
+    res.json(serializeRoom(room, session.id));
+  });
+
+  app.post("/api/rooms/:code/end-vote", (req, res) => {
+    const session = requireSession(req, res);
+    if (!session) return;
+    const room = getRoomOr404(req.params.code, res);
+    if (!room) return;
+    if (!validatePlayerInRoom(room, session.id, res)) return;
+    if (room.phase !== "finished") {
+      res.status(400).json({ message: "End voting only available after game ends." });
+      return;
+    }
+    const choice = req.body?.choice === "same" ? "same" : req.body?.choice === "new" ? "new" : null;
+    if (!choice) {
+      res.status(400).json({ message: "Invalid choice." });
+      return;
+    }
+    room.endVotes = room.endVotes || {};
+    room.endVotes[session.id] = choice;
+    addSystemMessage(
+      room,
+      `${session.name} ${choice === "same" ? "votes to replay same settings" : "votes to replay with new settings"}.`,
+    );
+
+    const tally = Object.values(room.endVotes).reduce(
+      (acc, val) => {
+        acc[val] += 1;
+        return acc;
+      },
+      { same: 0, new: 0 } as { same: number; new: number },
+    );
+
+    const canRestart = room.settings.locations.length >= 2 && room.players.length >= 4;
+
+    if (tally.same > tally.new && tally.same >= 1 && canRestart) {
+      // auto restart with same settings
+      const readyPlayers = room.players.filter((p) => !p.eliminated);
+      if (readyPlayers.length >= 4) {
+        room.players = readyPlayers;
+        room.players.forEach((p) => {
+          p.isReady = true;
+          p.eliminated = false;
+          p.lockedOutOfAsking = false;
+          p.calledVote = false;
+          p.role = "civilian";
+        });
+        room.spyIds = [];
+        let spiesAssigned = 0;
+        while (
+          spiesAssigned < Math.min(room.settings.spyCount, room.players.length - 1)
+        ) {
+          const pick =
+            readyPlayers[Math.floor(Math.random() * readyPlayers.length)]?.id ?? null;
+          const player = room.players.find((p) => p.id === pick);
+          if (player && !room.spyIds.includes(player.id)) {
+            room.spyIds.push(player.id);
+            player.role = "spy";
+            spiesAssigned++;
+          }
+        }
+        const allLocations = room.settings.locations;
+        room.location =
+          allLocations[Math.floor(Math.random() * allLocations.length)] ??
+          "Unknown Site";
+        room.phase = "reveal";
+        room.revealEndsAt = Date.now() + 5_000;
+        room.timerEndsAt = undefined;
+        room.turn = undefined;
+        room.turnCursor = 0;
+        room.voteEndsAt = undefined;
+        room.votes = {};
+        room.winner = undefined;
+        room.caughtSpies = 0;
+        room.endVotes = {};
+        addSystemMessage(room, "Rematch starting with same settings.");
+      }
+    } else if (tally.new > tally.same && tally.new >= 1) {
+      // return to lobby to adjust settings
+      room.phase = "lobby";
+      room.spyIds = [];
+      room.winner = undefined;
+      room.location = null;
+      room.revealEndsAt = undefined;
+      room.timerEndsAt = undefined;
+      room.turn = undefined;
+      room.turnCursor = 0;
+      room.voteEndsAt = undefined;
+      room.votes = {};
+      room.caughtSpies = 0;
+      room.endVotes = {};
+      room.players.forEach((p) => {
+        p.isReady = false;
+        p.eliminated = false;
+        p.lockedOutOfAsking = false;
+        p.calledVote = false;
+        p.role = undefined;
+      });
+      addSystemMessage(room, "Returning to lobby to adjust settings.");
+    }
+
     res.json(serializeRoom(room, session.id));
   });
 
@@ -581,12 +686,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const locations =
       Array.isArray(req.body?.locations) &&
       req.body.locations.every((l: unknown) => typeof l === "string") &&
-      req.body.locations.length > 0
+      req.body.locations.length >= 2
         ? (req.body.locations as string[])
         : room.settings.locations;
 
     room.settings = { spyCount, timerMinutes, locations };
     addSystemMessage(room, "Host updated room settings.");
+    room.endVotes = {};
     res.json(serializeRoom(room, session.id));
   });
 
@@ -599,9 +705,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(403).json({ message: "Only the host can start the game." });
       return;
     }
-    if (room.phase !== "lobby") {
+    if (room.settings.locations.length < 2) {
+      res.status(400).json({ message: "At least 2 locations required." });
+      return;
+    }
+    if (room.phase !== "lobby" && room.phase !== "finished") {
       res.status(400).json({ message: "Game already started." });
       return;
+    }
+    if (room.phase === "finished") {
+      // Reset to lobby state while keeping players/settings
+      room.players.forEach((p) => {
+        p.isReady = true;
+        p.eliminated = false;
+        p.lockedOutOfAsking = false;
+        p.calledVote = false;
+      });
+      room.spyIds = [];
+      room.winner = undefined;
+      room.closedReason = undefined;
+      room.turn = undefined;
+      room.turnCursor = 0;
+      room.voteEndsAt = undefined;
+      room.timerEndsAt = undefined;
+      room.revealEndsAt = undefined;
+      room.phase = "lobby";
+      room.endVotes = {};
     }
     const readyPlayers = room.players.filter((p) => p.isReady && !p.eliminated);
     if (readyPlayers.length < 4) {
@@ -713,7 +842,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       id: randomUUID(),
       senderId: player.id,
       senderName: player.name,
-      message: `asks ${target.name}: ${question}`,
+      message: `Agent ${player.name} asks ${target.name}: ${question}`,
       createdAt: Date.now(),
     });
     res.json(serializeRoom(room, session.id));
@@ -746,9 +875,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       id: randomUUID(),
       senderId: player.id,
       senderName: player.name,
-      message: `${answer.toUpperCase()}`,
+      message: `Agent ${player.name} responds: ${answer.toUpperCase()}`,
       createdAt: Date.now(),
     });
+    room.turn = undefined;
+    room.turnCursor = (room.turnCursor ?? 0) % Math.max(room.players.length, 1);
     room.turn = undefined;
     res.json(serializeRoom(room, session.id));
   });

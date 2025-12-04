@@ -56,6 +56,7 @@ export type OnlineRoomState = {
     wasSpy?: boolean;
     message: string;
   };
+  endVotes?: Record<string, "same" | "new">;
   winner?: "spy" | "civilian";
   closedReason?: string;
 };
@@ -170,6 +171,14 @@ export const onlineApi = {
       "POST",
       `/api/rooms/${code}/vote`,
       withPlayer({ targetId }, profile),
+    );
+    return (await res.json()) as OnlineRoomState;
+  },
+  async endVote(profile: OnlineProfile, code: string, choice: "same" | "new") {
+    const res = await apiRequest(
+      "POST",
+      `/api/rooms/${code}/end-vote`,
+      withPlayer({ choice }, profile),
     );
     return (await res.json()) as OnlineRoomState;
   },

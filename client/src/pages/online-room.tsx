@@ -49,6 +49,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   const [questionTail, setQuestionTail] = useState("");
   const [targetId, setTargetId] = useState<string | undefined>(undefined);
   const [voteTarget, setVoteTarget] = useState<string | undefined>(undefined);
+  const [voteSubmitted, setVoteSubmitted] = useState(false);
   const [settingsDraft, setSettingsDraft] = useState({
     spyCount: 1,
     timerMinutes: 10,
@@ -190,11 +191,12 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         try {
           const retryNext = await fn(currentProfile);
           if (retryNext) setRoom(retryNext);
+          setVoteSubmitted(false);
           return;
         } catch (innerErr: any) {
-      toast({
-        title: t("online.actionFailed"),
-        description: innerErr?.message ?? t("online.actionFailed"),
+          toast({
+            title: t("online.actionFailed"),
+            description: innerErr?.message ?? t("online.actionFailed"),
         variant: "destructive",
       });
           return;
@@ -247,6 +249,13 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     if (!room?.voteEndsAt) return null;
     return Math.max(0, Math.ceil((room.voteEndsAt - now) / 1000));
   }, [room?.voteEndsAt, now]);
+
+  useEffect(() => {
+    if (room?.phase !== "voting") {
+      setVoteSubmitted(false);
+      setVoteTarget(undefined);
+    }
+  }, [room?.phase]);
 
   useEffect(() => {
     if (room?.closedReason) {
@@ -460,11 +469,11 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                           return picks.length > 0 ? picks : cat.locations;
                         })
                       : INITIAL_CATEGORIES.flatMap((c) => c.locations);
-                  const filteredLocs = Array.from(new Set(selectedLocs));
-                  if (filteredLocs.length === 0) {
+              const filteredLocs = Array.from(new Set(selectedLocs));
+                  if (filteredLocs.length < 2) {
                     toast({
                       title: t("online.noLocationsSelected"),
-                      description: t("online.enableLocation"),
+                      description: t("online.enableTwoLocations"),
                       variant: "destructive",
                     });
                     return undefined;
@@ -546,14 +555,14 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         {room?.yourRole === "spy" ? (
           <>
             <Badge variant="destructive" className="text-base px-3 py-1">
-              SPY
+              {t("online.spyBadge")}
             </Badge>
             <span>{t("online.youAreSpy")}</span>
           </>
         ) : (
           <>
             <Badge variant="secondary" className="text-base px-3 py-1">
-              CIVILIAN
+              {t("online.civilianBadge")}
             </Badge>
             <span>{t("online.youAreCivilian")}</span>
           </>
@@ -568,7 +577,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         </div>
       )}
       <div className="text-6xl font-black font-mono text-primary drop-shadow">
-        {revealCountdown ?? 0}s
+        {Math.max(0, (revealCountdown ?? 0) - (me?.isHost ? 1 : 0))}s
       </div>
       <p className="text-sm text-muted-foreground">
         {t("online.revealHelper")}
@@ -798,12 +807,14 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           ))}
       </div>
       <Button
-        disabled={!voteTarget}
-        onClick={() =>
-          handle((prof) => onlineApi.vote(prof, code, voteTarget!))
-        }
+        disabled={!voteTarget || voteSubmitted}
+        onClick={async () => {
+          if (!voteTarget) return;
+          await handle((prof) => onlineApi.vote(prof, code, voteTarget));
+          setVoteSubmitted(true);
+        }}
       >
-        {t("online.confirmVote")}
+        {voteSubmitted ? t("online.voteLocked") : t("online.confirmVote")}
       </Button>
       {room?.lastVote?.message && (
         <div className="text-xs text-muted-foreground">
@@ -843,15 +854,15 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               {t("online.brief")}
             </div>
             <div className="text-xl font-black font-mono">
-              {room?.yourRole === "spy" ? (
-                <Badge variant="destructive" className="text-lg py-1 px-2">
-                  SPY
-                </Badge>
-              ) : (
-                <Badge variant="secondary" className="text-lg py-1 px-2">
-                  CIVILIAN
-                </Badge>
-              )}
+            {room?.yourRole === "spy" ? (
+              <Badge variant="destructive" className="text-lg py-1 px-2">
+                  {t("online.spyBadge")}
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-lg py-1 px-2">
+                  {t("online.civilianBadge")}
+              </Badge>
+            )}
             </div>
             {room?.yourRole === "civilian" && (
               <p className="text-sm text-muted-foreground">
@@ -927,7 +938,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         {t("online.missionComplete")}
       </div>
       <div className="text-3xl font-black font-mono">
-        {room?.winner === "civilian" ? t("online.civiliansWin") : t("online.spiesWin")}
+          {room?.winner === "civilian" ? t("online.civiliansWin") : t("online.spiesWin")}
       </div>
       {room?.lastVote?.message && (
         <p className="text-sm text-muted-foreground">{room.lastVote.message}</p>
@@ -940,7 +951,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           >
             <span>{p.name}</span>
             <Badge variant={p.role === "spy" ? "destructive" : "secondary"}>
-              {p.role === "spy" ? "Spy" : "Civilian"}
+              {p.role === "spy" ? t("online.spyBadge") : t("online.civilianBadge")}
             </Badge>
           </div>
         ))}
@@ -949,10 +960,18 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         <div className="text-sm text-muted-foreground">
           {t("online.votePrompt")}
         </div>
+        <div className="text-xs text-muted-foreground flex justify-center gap-3">
+          <span>
+            {t("online.voteSame")}: {Object.values(room.endVotes ?? {}).filter((v) => v === "same").length}
+          </span>
+          <span>
+            {t("online.voteNew")}: {Object.values(room.endVotes ?? {}).filter((v) => v === "new").length}
+          </span>
+        </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
             className="flex-1"
-            onClick={() => handle((prof) => onlineApi.start(prof, code))}
+            onClick={() => handle((prof) => onlineApi.endVote(prof, code, "same"))}
           >
             {t("online.rematchSame")}
           </Button>
@@ -960,9 +979,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             className="flex-1"
             variant="secondary"
             onClick={() =>
-              handle((prof) =>
-                onlineApi.chat(prof, code, t("online.voteNewSettings"))
-              )
+              handle((prof) => onlineApi.endVote(prof, code, "new"))
             }
           >
             {t("online.rematchNew")}
