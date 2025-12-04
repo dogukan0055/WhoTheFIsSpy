@@ -54,6 +54,7 @@ type Room = {
   revealEndsAt?: number;
   timerEndsAt?: number;
   turn?: TurnState;
+  turnCursor?: number;
   voteEndsAt?: number;
   votes: Record<string, string | undefined>;
   winner?: Role;
@@ -223,10 +224,19 @@ function resolveVote(room: Room) {
 
 function pickNextAsker(room: Room): string | undefined {
   const alive = room.players.filter((p) => !p.eliminated);
-  const eligible = alive.filter((p) => !p.lockedOutOfAsking);
-  const pool = eligible.length > 0 ? eligible : alive;
-  if (pool.length === 0) return undefined;
-  return pool[Math.floor(Math.random() * pool.length)].id;
+  if (alive.length === 0) return undefined;
+  const start = room.turnCursor ?? 0;
+  for (let i = 0; i < alive.length; i++) {
+    const idx = (start + i) % alive.length;
+    const candidate = alive[idx];
+    if (!candidate.lockedOutOfAsking) {
+      room.turnCursor = (idx + 1) % alive.length;
+      return candidate.id;
+    }
+  }
+  // everyone locked out, pick next in order anyway
+  room.turnCursor = (start + 1) % alive.length;
+  return alive[start].id;
 }
 
 function progressRoom(room: Room) {
@@ -425,13 +435,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json({ message: "Left" });
       return;
     }
-    if (room.hostId === session.id) {
-      room.closedReason = "Host left the room.";
-      addSystemMessage(room, "Host left the room. Session closed.");
+    const wasSpy = room.spyIds.includes(session.id);
+    room.players = room.players.filter((p) => p.id !== session.id);
+    room.spyIds = room.spyIds.filter((id) => id !== session.id);
+    room.turn = room.turn &&
+      (room.turn.askerId === session.id || room.turn.targetId === session.id)
+      ? undefined
+      : room.turn;
+    if (room.players.length > 0 && room.hostId === session.id) {
+      room.hostId = room.players[0].id;
+      addSystemMessage(room, `${session.name} left. ${room.players[0].name} is now host.`);
     } else {
-      room.players = room.players.filter((p) => p.id !== session.id);
       addSystemMessage(room, `${session.name} left the room.`);
     }
+
+    if (room.phase !== "lobby" && !room.winner) {
+      if (wasSpy) {
+        room.winner = "civilian";
+        room.phase = "finished";
+        room.closedReason = "Spy disconnected. Civilians win.";
+        addSystemMessage(room, "Spy disconnected. Civilians win.");
+      } else {
+        const activePlayers = room.players.filter((p) => !p.eliminated).length;
+        if (activePlayers < 4) {
+          room.winner = "spy";
+          room.phase = "finished";
+          room.closedReason = "Player count dropped below 4. Spies win.";
+          addSystemMessage(room, "Too few players remaining. Spies win.");
+        }
+      }
+    }
+
+    room.turnCursor = room.turnCursor ? room.turnCursor % Math.max(room.players.length, 1) : 0;
     res.json(serializeRoom(room, session.id));
   });
 
@@ -607,6 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     room.revealEndsAt = Date.now() + 5_000;
     room.timerEndsAt = undefined;
     room.turn = undefined;
+    room.turnCursor = 0;
     room.voteEndsAt = undefined;
     room.votes = {};
     room.winner = undefined;
