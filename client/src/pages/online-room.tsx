@@ -27,6 +27,7 @@ import {
   TimerReset,
   Vote,
   Share2,
+  Code,
 } from "lucide-react";
 import { NumberPicker } from "@/components/ui/number-picker";
 import { Switch } from "@/components/ui/switch";
@@ -57,13 +58,21 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   });
   const [settingsDirty, setSettingsDirty] = useState(false);
   const settingsDirtyRef = React.useRef(settingsDirty);
+  const defaultCategorySelection = INITIAL_CATEGORIES.some(
+    (c) => c.id === "standard"
+  )
+    ? ["standard"]
+    : INITIAL_CATEGORIES.map((c) => c.id);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
-    INITIAL_CATEGORIES.map((c) => c.id)
+    defaultCategorySelection
   );
   const [locationPicks, setLocationPicks] = useState<Record<string, string[]>>(
     () =>
       Object.fromEntries(
-        INITIAL_CATEGORIES.map((c) => [c.id, [...c.locations]])
+        INITIAL_CATEGORIES.map((c) => [
+          c.id,
+          defaultCategorySelection.includes(c.id) ? [...c.locations] : [],
+        ])
       )
   );
 
@@ -108,7 +117,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             c.locations.some((loc) => next.settings.locations.includes(loc))
           ).map((c) => c.id);
           setSelectedCategories(
-            activeCats.length ? activeCats : INITIAL_CATEGORIES.map((c) => c.id)
+            activeCats.length ? activeCats : defaultCategorySelection
           );
           setSettingsDraft({
             spyCount: next.settings.spyCount,
@@ -318,16 +327,18 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
   const renderLobby = () => (
     <div className="grid md:grid-cols-2 gap-4">
       <Card className="p-4 space-y-3 bg-card/40 border-white/5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between">
           <div>
-            <div className="text-xs uppercase text-muted-foreground font-mono">
-              {t("online.gameSettings")}
+            <div className="flex items-center gap-2 text-xs uppercase text-muted-foreground font-mono">
+              <span>{t("online.gameSettings")}</span>
+              <Badge variant="secondary" className="text-[10px] px-2 py-0.5">
+                {t("online.hostOnly")}
+              </Badge>
             </div>
             <h3 className="text-lg font-semibold">
               {t("online.curationTitle")}
             </h3>
           </div>
-          <Badge variant="secondary">{t("online.hostOnly")}</Badge>
         </div>
         <div className="space-y-3">
           <label className="text-xs text-muted-foreground font-mono">
@@ -1048,7 +1059,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               {t("online.lobbyTitle")}
             </div>
             <Card className="mt-1 px-3 py-2 flex items-center gap-2 border-dashed border-primary/40 bg-primary/5">
-              <Share2 className="w-4 h-4 text-primary" />
+              <Code className="w-4 h-4 text-primary" />
               <div className="flex items-center gap-2 font-mono">
                 <span className="text-xl font-black">{code}</span>
                 <Button variant="ghost" size="icon" onClick={copyCode}>
@@ -1077,7 +1088,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                     }
                   }}
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Share2 className="w-4 h-4 text-destructive" />
                 </Button>
               </div>
             </Card>

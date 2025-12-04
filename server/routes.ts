@@ -73,15 +73,16 @@ const sessions = new Map<string, Session>();
 const rooms = new Map<string, Room>();
 
 const DEFAULT_LOCATIONS = [
-  "Airport lounge",
-  "Beach resort",
-  "Busy hospital",
-  "Mountain cabin",
-  "Space station",
-  "Submarine",
-  "Underground bunker",
-  "Art museum",
-  "Concert venue",
+  "Hospital",
+  "School",
+  "Police Station",
+  "Supermarket",
+  "Cinema",
+  "Restaurant",
+  "Hotel",
+  "Bank",
+  "Airplane",
+  "Library",
 ];
 
 const ROOM_CODE_LENGTH = 4;
