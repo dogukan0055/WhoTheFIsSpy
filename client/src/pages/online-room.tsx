@@ -65,15 +65,6 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         INITIAL_CATEGORIES.map((c) => [c.id, [...c.locations]])
       )
   );
-  const leaveRoom = React.useCallback(async () => {
-    if (!profile) {
-      navigate("/online-menu");
-      return;
-    }
-    await handle((prof) => onlineApi.leave(prof, code));
-    setProfile(null);
-    navigate("/online-menu");
-  }, [profile, handle, code, navigate, setProfile]);
 
   useEffect(() => {
     settingsDirtyRef.current = settingsDirty;
@@ -216,6 +207,16 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       });
     }
   };
+
+  const leaveRoom = React.useCallback(async () => {
+    if (!profile) {
+      navigate("/online-menu");
+      return;
+    }
+    await handle((prof) => onlineApi.leave(prof, code));
+    setProfile(null);
+    navigate("/online-menu");
+  }, [profile, handle, code, navigate, setProfile]);
 
   const copyCode = () => {
     navigator.clipboard.writeText(code);
