@@ -165,8 +165,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       navigate("/online-menu");
       toast({
         title: t("online.reauthNeeded"),
-        description:
-          e?.message ?? t("online.reauthNeeded"),
+        description: e?.message ?? t("online.reauthNeeded"),
         variant: "destructive",
       });
       return null;
@@ -197,8 +196,8 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           toast({
             title: t("online.actionFailed"),
             description: innerErr?.message ?? t("online.actionFailed"),
-        variant: "destructive",
-      });
+            variant: "destructive",
+          });
           return;
         }
       }
@@ -299,13 +298,12 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                     {t("online.host")}
                   </Badge>
                 )}
-                {p.isReady && room?.phase === "lobby" && <span>{t("online.ready")}</span>}
                 {p.eliminated && <span>{t("online.eliminated")}</span>}
               </div>
             </div>
             {room?.phase === "lobby" && p.isReady && (
               <Badge className="bg-emerald-500/20 text-emerald-200">
-                {t("online.ready")}
+                {t("online.lobbyReadyState")}
               </Badge>
             )}
             {room?.phase === "lobby" && !p.isReady && (
@@ -325,10 +323,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             <div className="text-xs uppercase text-muted-foreground font-mono">
               {t("online.gameSettings")}
             </div>
-            <h3 className="text-lg font-semibold">{t("online.curationTitle")}</h3>
-            <p className="text-xs text-muted-foreground">
-              {t("online.curationDesc")}
-            </p>
+            <h3 className="text-lg font-semibold">
+              {t("online.curationTitle")}
+            </h3>
           </div>
           <Badge variant="secondary">{t("online.hostOnly")}</Badge>
         </div>
@@ -446,9 +443,6 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                 })}
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              {t("online.curationDesc")}
-            </p>
           </div>
           {me?.isHost && (
             <Button
@@ -469,7 +463,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                           return picks.length > 0 ? picks : cat.locations;
                         })
                       : INITIAL_CATEGORIES.flatMap((c) => c.locations);
-              const filteredLocs = Array.from(new Set(selectedLocs));
+                  const filteredLocs = Array.from(new Set(selectedLocs));
                   if (filteredLocs.length < 2) {
                     toast({
                       title: t("online.noLocationsSelected"),
@@ -513,34 +507,34 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
       <div className="space-y-3">
         {renderPlayers()}
         <Card className="p-4 flex flex-col gap-2 bg-card/40 border-white/5">
-            <div className="flex items-center justify-between">
-              <div className="text-sm font-semibold">
-                {t("online.readyUp")} ({readyCount}/{room?.players.length ?? 0})
-              </div>
-              <Badge variant="secondary">{t("online.minToStart")}</Badge>
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-semibold">
+              {t("online.readyUp")} ({readyCount}/{room?.players.length ?? 0})
             </div>
-            <div className="flex gap-2">
+            <Badge variant="secondary">{t("online.minToStart")}</Badge>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              className="flex-1"
+              variant={me?.isReady ? "secondary" : "default"}
+              onClick={() =>
+                handle((prof) =>
+                  onlineApi.setReady(prof, code, !(me?.isReady ?? false))
+                )
+              }
+            >
+              {me?.isReady ? t("online.notReady") : t("online.ready")}
+            </Button>
+            {me?.isHost && (
               <Button
-                className="flex-1"
-                variant={me?.isReady ? "secondary" : "default"}
-                onClick={() =>
-                  handle((prof) =>
-                    onlineApi.setReady(prof, code, !(me?.isReady ?? false))
-                  )
-                }
+                disabled={!room || readyCount < 4}
+                onClick={() => handle((prof) => onlineApi.start(prof, code))}
               >
-                {me?.isReady ? t("online.notReady") : t("online.ready")}
+                <Play className="w-4 h-4 mr-1" />
+                {t("online.start")}
               </Button>
-              {me?.isHost && (
-                <Button
-                  disabled={!room || readyCount < 4}
-                  onClick={() => handle((prof) => onlineApi.start(prof, code))}
-                >
-                  <Play className="w-4 h-4 mr-1" />
-                  {t("online.start")}
-                </Button>
-              )}
-            </div>
+            )}
+          </div>
         </Card>
       </div>
     </div>
@@ -711,8 +705,12 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         <div className="text-sm font-semibold flex items-center gap-2">
           <ShieldQuestion className="w-4 h-4" />
           {currentTurn.status === "awaiting-question"
-            ? `${currentAsker?.name ?? t("online.someone")} ${t("online.isPicking")}`
-            : `${currentTarget?.name ?? t("online.player")} ${t("online.isAnswering")}`}
+            ? `${currentAsker?.name ?? t("online.someone")} ${t(
+                "online.isPicking"
+              )}`
+            : `${currentTarget?.name ?? t("online.player")} ${t(
+                "online.isAnswering"
+              )}`}
         </div>
         <div className="text-4xl font-black font-mono text-primary">
           {Math.ceil((currentTurn.remainingMs ?? 0) / 1000)}s
@@ -748,8 +746,10 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
             )}
           >
             <div className="text-[11px] text-muted-foreground mb-1">
-              {msg.system ? t("online.system") : msg.senderName ?? t("online.player")} ·{" "}
-              {new Date(msg.createdAt).toLocaleTimeString()}
+              {msg.system
+                ? t("online.system")
+                : msg.senderName ?? t("online.player")}{" "}
+              · {new Date(msg.createdAt).toLocaleTimeString()}
             </div>
             <div className="font-mono break-words">{msg.message}</div>
           </div>
@@ -798,7 +798,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-white/10 bg-background/60 text-foreground"
               )}
-              >
+            >
               <span>{p.name}</span>
               {voteTarget === p.id && (
                 <Badge variant="secondary">{t("online.selected")}</Badge>
@@ -854,15 +854,15 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               {t("online.brief")}
             </div>
             <div className="text-xl font-black font-mono">
-            {room?.yourRole === "spy" ? (
-              <Badge variant="destructive" className="text-lg py-1 px-2">
+              {room?.yourRole === "spy" ? (
+                <Badge variant="destructive" className="text-lg py-1 px-2">
                   {t("online.spyBadge")}
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="text-lg py-1 px-2">
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-lg py-1 px-2">
                   {t("online.civilianBadge")}
-              </Badge>
-            )}
+                </Badge>
+              )}
             </div>
             {room?.yourRole === "civilian" && (
               <p className="text-sm text-muted-foreground">
@@ -896,10 +896,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
               <Vote className="w-4 h-4 mr-2" />
               {t("discussion.voting")}
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => leaveRoom()}
-            >
+            <Button variant="outline" onClick={() => leaveRoom()}>
               {t("online.leaveRoom")}
             </Button>
           </Card>
@@ -938,7 +935,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         {t("online.missionComplete")}
       </div>
       <div className="text-3xl font-black font-mono">
-          {room?.winner === "civilian" ? t("online.civiliansWin") : t("online.spiesWin")}
+        {room?.winner === "civilian"
+          ? t("online.civiliansWin")
+          : t("online.spiesWin")}
       </div>
       {room?.lastVote?.message && (
         <p className="text-sm text-muted-foreground">{room.lastVote.message}</p>
@@ -951,7 +950,9 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
           >
             <span>{p.name}</span>
             <Badge variant={p.role === "spy" ? "destructive" : "secondary"}>
-              {p.role === "spy" ? t("online.spyBadge") : t("online.civilianBadge")}
+              {p.role === "spy"
+                ? t("online.spyBadge")
+                : t("online.civilianBadge")}
             </Badge>
           </div>
         ))}
@@ -962,16 +963,26 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
         </div>
         <div className="text-xs text-muted-foreground flex justify-center gap-3">
           <span>
-            {t("online.voteSame")}: {Object.values(room.endVotes ?? {}).filter((v) => v === "same").length}
+            {t("online.voteSame")}:{" "}
+            {
+              Object.values(room.endVotes ?? {}).filter((v) => v === "same")
+                .length
+            }
           </span>
           <span>
-            {t("online.voteNew")}: {Object.values(room.endVotes ?? {}).filter((v) => v === "new").length}
+            {t("online.voteNew")}:{" "}
+            {
+              Object.values(room.endVotes ?? {}).filter((v) => v === "new")
+                .length
+            }
           </span>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
           <Button
             className="flex-1"
-            onClick={() => handle((prof) => onlineApi.endVote(prof, code, "same"))}
+            onClick={() =>
+              handle((prof) => onlineApi.endVote(prof, code, "same"))
+            }
           >
             {t("online.rematchSame")}
           </Button>
@@ -1029,11 +1040,7 @@ export default function OnlineRoom({ params }: OnlineRoomProps) {
     <Layout className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => leaveRoom()}
-          >
+          <Button variant="ghost" size="icon" onClick={() => leaveRoom()}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
