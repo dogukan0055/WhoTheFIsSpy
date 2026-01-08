@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../widgets/spy_scaffold.dart';
+import 'roster_screen.dart';
 
 class OfflineSetupScreen extends StatefulWidget {
   const OfflineSetupScreen({super.key});
@@ -21,8 +22,10 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
     final controller = context.read<GameController>();
     final existing = controller.state.players.isNotEmpty
         ? controller.state.players.map((p) => p.name).toList()
-        : List<String>.generate(
-            controller.state.settings.playerCount, (i) => 'Player ${i + 1}');
+        : controller.savedNames.isNotEmpty
+            ? controller.savedNames
+            : List<String>.generate(controller.state.settings.playerCount,
+                (i) => 'Player ${i + 1}');
     for (final name in existing) {
       _controllers.add(TextEditingController(text: name));
     }
@@ -43,7 +46,8 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
       }
     } else if (desired < _controllers.length) {
       final removeCount = _controllers.length - desired;
-      _controllers.removeRange(_controllers.length - removeCount, _controllers.length);
+      _controllers.removeRange(
+          _controllers.length - removeCount, _controllers.length);
     }
   }
 
@@ -76,7 +80,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
         _showMessage('Names must be 16 characters or fewer.');
         return;
       }
-      if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(name)) {
+      if (!RegExp(r'^[a-zA-ZçÇğĞıİöÖşŞüÜ\s]+$').hasMatch(name)) {
         _showMessage('Names can only contain letters and spaces.');
         return;
       }
@@ -84,6 +88,10 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
         _showMessage('"$name" is not allowed.');
         return;
       }
+    }
+    if (names.toSet().length != names.length) {
+      _showMessage('Duplicate names are not allowed.');
+      return;
     }
 
     final error = controller.startOfflineGame(names);
@@ -138,7 +146,8 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                 min: 4,
                 max: 8,
                 onChanged: (val) => _changePlayerCount(controller, val),
-                helper: 'Minimum 4, maximum 8 agents.',
+                helper:
+                    'In normal circumstances, at least 4 agents are required. You can have up to 8 agents in a mission.',
               ),
               const SizedBox(height: 12),
               _CounterTile(
@@ -149,8 +158,8 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                 locked: settings.playerCount <= 5,
                 onChanged: (val) => _changeSpyCount(controller, val),
                 helper: settings.playerCount <= 5
-                    ? 'Only one spy with 5 or fewer players.'
-                    : '1-2 spies when more than 5 players.',
+                    ? 'Only one spy can exist when there are less than 5 agents in the field.'
+                    : 'If there are more than 5 agents, you can have up to 2 spies in the mission.',
               ),
               const SizedBox(height: 12),
               Card(
@@ -168,7 +177,8 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                           ),
                           Switch(
                             value: settings.isTimerOn,
-                            onChanged: (val) => controller.updateSettings(isTimerOn: val),
+                            onChanged: (val) =>
+                                controller.updateSettings(isTimerOn: val),
                           ),
                         ],
                       ),
@@ -180,20 +190,28 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                           max: 30,
                           divisions: 25,
                           label: '${settings.timerDuration} min',
-                          onChanged: (val) => _changeTimer(controller, val.round()),
+                          onChanged: (val) =>
+                              _changeTimer(controller, val.round()),
                         ),
                         Text(
                           'Timer length: ${settings.timerDuration} minutes',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Colors.white70),
                         ),
                       ] else
                         Text(
                           'No timer active. Take your time.',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: Colors.white70),
                         ),
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).pushNamed('/locations'),
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed('/locations'),
                         icon: const Icon(Icons.map_outlined),
                         label: const Text('Manage Locations'),
                       ),
@@ -202,29 +220,27 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Agent Roster',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              ...List.generate(_controllers.length, (index) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: TextField(
-                    controller: _controllers[index],
-                    maxLength: 16,
-                    decoration: InputDecoration(
-                      counterText: '',
-                      prefixIcon: CircleAvatar(
-                        radius: 14,
-                        backgroundColor: Colors.white.withOpacity(0.1),
-                        child: Text('${index + 1}'),
-                      ),
-                      hintText: 'Agent ${index + 1}',
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.of(context).push<List<String>>(
+                    MaterialPageRoute(
+                      builder: (_) => AgentRosterScreen(
+                          initialNames:
+                              _controllers.map((c) => c.text).toList()),
                     ),
-                  ),
-                );
-              }),
+                  );
+                  if (result != null) {
+                    setState(() {
+                      _controllers.clear();
+                      for (final name in result) {
+                        _controllers.add(TextEditingController(text: name));
+                      }
+                    });
+                  }
+                },
+                icon: const Icon(Icons.manage_accounts),
+                label: const Text('Manage Agent Roster'),
+              ),
               const SizedBox(height: 80),
             ],
           ),
@@ -264,16 +280,23 @@ class _CounterTile extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(label,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 Row(
                   children: [
                     IconButton(
-                      onPressed: (!locked && value > min) ? () => onChanged(value - 1) : null,
+                      onPressed: (!locked && value > min)
+                          ? () => onChanged(value - 1)
+                          : null,
                       icon: const Icon(Icons.remove_circle_outline),
                     ),
-                    Text('$value', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                    Text('$value',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 18)),
                     IconButton(
-                      onPressed: (!locked && value < max) ? () => onChanged(value + 1) : null,
+                      onPressed: (!locked && value < max)
+                          ? () => onChanged(value + 1)
+                          : null,
                       icon: const Icon(Icons.add_circle_outline),
                     ),
                   ],
@@ -285,15 +308,21 @@ class _CounterTile extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   helper!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.white70),
                 ),
               ),
             if (locked)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  'Locked due to player count.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.orangeAccent),
+                  'Locked due to agents count.',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.orangeAccent),
                 ),
               ),
           ],

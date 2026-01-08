@@ -22,12 +22,14 @@ class SpyScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final highContrast = context.watch<GameController>().state.appSettings.highContrast;
 
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
       appBar: appBar,
       extendBodyBehindAppBar: true,
       bottomNavigationBar: bottom,
       body: Container(
-        decoration: const BoxDecoration(gradient: spyGradient),
+        decoration: BoxDecoration(gradient: spyGradient(isLight)),
         child: Stack(
           children: [
             if (!highContrast)
@@ -48,10 +50,10 @@ class SpyScaffold extends StatelessWidget {
                   height: 180,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.blueAccent.withOpacity(0.12),
+                    color: Colors.blueAccent.withValues(alpha: 0.12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.blueAccent.withOpacity(0.2),
+                        color: Colors.blueAccent.withValues(alpha: 0.2),
                         blurRadius: 90,
                         spreadRadius: 10,
                       ),
@@ -68,10 +70,10 @@ class SpyScaffold extends StatelessWidget {
                   height: 140,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.purpleAccent.withOpacity(0.12),
+                    color: Colors.purpleAccent.withValues(alpha: 0.12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.purpleAccent.withOpacity(0.2),
+                        color: Colors.purpleAccent.withValues(alpha: 0.2),
                         blurRadius: 80,
                         spreadRadius: 8,
                       ),
@@ -101,7 +103,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.04)
+      ..color = Colors.white.withValues(alpha: 0.04)
       ..strokeWidth = 0.5;
     const step = 28.0;
     for (double x = 0; x < size.width; x += step) {

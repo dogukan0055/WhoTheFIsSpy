@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,7 +23,8 @@ class GameRoomScreen extends StatelessWidget {
                 const Text('No mission in progress.'),
                 const SizedBox(height: 12),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
+                  onPressed: () =>
+                      Navigator.of(context).pushReplacementNamed('/'),
                   child: const Text('Back to menu'),
                 ),
               ],
@@ -47,20 +50,24 @@ class GameRoomScreen extends StatelessWidget {
             body = const SizedBox.shrink();
         }
 
-        return SpyScaffold(
-          scrollable: false,
-          appBar: AppBar(
-            title: Text(
-              state.phase == GamePhase.reveal
-                  ? 'Identity Reveal'
-                  : state.phase == GamePhase.playing
-                      ? 'Interrogation'
-                      : state.phase == GamePhase.voting
-                          ? 'Vote'
-                          : 'Results',
+        return PopScope(
+          canPop: false,
+          child: SpyScaffold(
+            scrollable: false,
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              title: Text(
+                state.phase == GamePhase.reveal
+                    ? 'Identity Reveal'
+                    : state.phase == GamePhase.playing
+                        ? 'Interrogation'
+                        : state.phase == GamePhase.voting
+                            ? 'Vote'
+                            : 'Results',
+              ),
             ),
+            child: body,
           ),
-          child: body,
         );
       },
     );
@@ -76,13 +83,16 @@ class _RoleRevealView extends StatefulWidget {
 
 class _RoleRevealViewState extends State<_RoleRevealView> {
   bool revealed = false;
+  double progress = 0;
+  Timer? _scanTimer;
 
   @override
   Widget build(BuildContext context) {
     final controller = context.read<GameController>();
     final state = controller.state;
     final player = state.players[state.gameData.currentRevealIndex];
-    final isLast = state.gameData.currentRevealIndex == state.players.length - 1;
+    final isLast =
+        state.gameData.currentRevealIndex == state.players.length - 1;
 
     return Center(
       child: Column(
@@ -90,52 +100,112 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
         children: [
           Text(
             'Agent ${state.gameData.currentRevealIndex + 1} / ${state.players.length}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 8),
           Text(
             player.name,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
-          Card(
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              width: 300,
-              child: revealed
-                  ? _RoleCardBody(player: player, location: state.gameData.currentLocation)
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.fingerprint, size: 64, color: Colors.white.withOpacity(0.4)),
-                        const SizedBox(height: 16),
-                        const Text('Pass the phone to this agent, then reveal.'),
-                      ],
-                    ),
+          GestureDetector(
+            onLongPressStart: (_) => _startScan(() {
+              setState(() => revealed = true);
+            }),
+            onLongPressEnd: (_) => _stopScan(),
+            child: Card(
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                width: 300,
+                child: revealed
+                    ? _RoleCardBody(
+                        player: player,
+                        location: state.gameData.currentLocation,
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              SizedBox(
+                                width: 120,
+                                height: 120,
+                                child: CircularProgressIndicator(
+                                  value: progress,
+                                  strokeWidth: 6,
+                                  color: Colors.lightBlueAccent,
+                                ),
+                              ),
+                              Icon(Icons.fingerprint,
+                                  size: 72,
+                                  color: Colors.white.withValues(alpha: 0.6)),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          const Text('Hold finger to scan'),
+                        ],
+                      ),
+              ),
             ),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {
-              if (!revealed) {
-                setState(() => revealed = true);
-              } else if (isLast) {
-                controller.startPlaying();
-              } else {
-                setState(() => revealed = false);
-                controller.nextReveal();
-              }
-            },
+            onPressed: revealed
+                ? () {
+                    if (isLast) {
+                      controller.startPlaying();
+                    } else {
+                      setState(() {
+                        revealed = false;
+                        progress = 0;
+                      });
+                      controller.nextReveal();
+                    }
+                  }
+                : null,
             style: ElevatedButton.styleFrom(minimumSize: const Size(220, 52)),
-            child: Text(!revealed
-                ? 'Reveal Identity'
-                : isLast
-                    ? 'Start Mission'
-                    : 'Next Agent'),
+            child: Text(isLast ? 'Start Mission' : 'Next Agent'),
           ),
         ],
       ),
     );
+  }
+
+  void _startScan(VoidCallback onComplete) {
+    progress = 0;
+    _scanTimer?.cancel();
+    _scanTimer = Timer.periodic(const Duration(milliseconds: 80), (timer) {
+      setState(() {
+        progress += 0.08;
+        if (progress >= 1) {
+          _stopScan();
+          onComplete();
+        }
+      });
+    });
+  }
+
+  void _stopScan() {
+    _scanTimer?.cancel();
+    _scanTimer = null;
+    if (!revealed) {
+      setState(() {
+        progress = 0;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scanTimer?.cancel();
+    super.dispose();
   }
 }
 
@@ -154,7 +224,9 @@ class _RoleCardBody extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 42,
-          backgroundColor: isSpy ? Colors.redAccent.withOpacity(0.25) : Colors.blueAccent.withOpacity(0.2),
+          backgroundColor: isSpy
+              ? Colors.redAccent.withValues(alpha: 0.25)
+              : Colors.blueAccent.withValues(alpha: 0.2),
           child: Icon(
             isSpy ? Icons.visibility_off_outlined : Icons.person_outline,
             size: 40,
@@ -173,14 +245,17 @@ class _RoleCardBody extends StatelessWidget {
         if (!isSpy)
           Column(
             children: [
-              Text('Secret Location', style: Theme.of(context).textTheme.bodySmall),
+              Text('Secret Location',
+                  style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
                 decoration: BoxDecoration(
-                  color: Colors.blueAccent.withOpacity(0.12),
+                  color: Colors.blueAccent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blueAccent.withOpacity(0.4)),
+                  border: Border.all(
+                      color: Colors.blueAccent.withValues(alpha: 0.4)),
                 ),
                 child: Text(
                   location,
@@ -210,9 +285,10 @@ class _DiscussionView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.read<GameController>();
+    final controller = context.watch<GameController>();
     final state = controller.state;
-    final spiesRemaining = state.players.where((p) => p.role == Role.spy && !p.isDead).length;
+    final spiesRemaining =
+        state.players.where((p) => p.role == Role.spy && !p.isDead).length;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -222,15 +298,20 @@ class _DiscussionView extends StatelessWidget {
             children: [
               Icon(
                 Icons.timer,
-                size: 52,
-                color: state.gameData.timeLeft < 60 ? Colors.redAccent : Colors.lightBlueAccent,
+                size: 72,
+                color: state.gameData.timeLeft < 60
+                    ? Colors.redAccent
+                    : Colors.lightBlueAccent,
               ),
               const SizedBox(height: 8),
               Text(
                 _format(state.gameData.timeLeft),
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: state.gameData.timeLeft < 60 ? Colors.redAccent : Colors.white,
+                style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                      color: state.gameData.timeLeft < 60
+                          ? Colors.redAccent
+                          : Colors.white,
                       fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
                     ),
               ),
             ],
@@ -238,7 +319,8 @@ class _DiscussionView extends StatelessWidget {
         else
           Column(
             children: [
-              const Icon(Icons.hourglass_disabled, size: 52, color: Colors.white70),
+              const Icon(Icons.hourglass_disabled,
+                  size: 52, color: Colors.white70),
               const SizedBox(height: 8),
               Text(
                 'No timer',
@@ -264,13 +346,58 @@ class _DiscussionView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 32),
-        ElevatedButton.icon(
-          onPressed: controller.startVoting,
-          icon: const Icon(Icons.how_to_vote),
-          label: const Text('Call Vote'),
-          style: ElevatedButton.styleFrom(minimumSize: const Size(220, 52)),
+        Column(
+          children: [
+            ElevatedButton.icon(
+              onPressed: controller.startVoting,
+              icon: const Icon(Icons.how_to_vote),
+              label: const Text('Call Vote'),
+              style: ElevatedButton.styleFrom(minimumSize: const Size(240, 52)),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () => _confirmExit(context, controller),
+              icon: const Icon(Icons.logout),
+              label: const Text('Main Menu'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                minimumSize: const Size(240, 52),
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  void _confirmExit(BuildContext context, GameController controller) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Leave Mission?'),
+          content:
+              const Text('Are you sure you want to return to the main menu?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Stay'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                controller.resetGame();
+                Navigator.of(ctx).pop();
+                Navigator.of(context)
+                    .pushNamedAndRemoveUntil('/', (route) => false);
+              },
+              icon: const Icon(Icons.exit_to_app),
+              label: const Text('Main Menu'),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -297,7 +424,10 @@ class _VotingViewState extends State<_VotingView> {
         Center(
           child: Text(
             'Emergency meeting',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.redAccent),
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.redAccent),
           ),
         ),
         const SizedBox(height: 16),
@@ -309,14 +439,19 @@ class _VotingViewState extends State<_VotingView> {
               return ListTile(
                 onTap: () => setState(() => selected = player.id),
                 leading: CircleAvatar(
-                  backgroundColor: isSelected ? Colors.redAccent : Colors.white.withOpacity(0.1),
+                  backgroundColor: isSelected
+                      ? Colors.redAccent
+                      : Colors.white.withValues(alpha: 0.1),
                   child: Text(player.name[0].toUpperCase()),
                 ),
                 title: Text(player.name),
-                trailing: isSelected ? const Icon(Icons.check, color: Colors.redAccent) : null,
+                trailing: isSelected
+                    ? const Icon(Icons.check, color: Colors.redAccent)
+                    : null,
               );
             },
-            separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.white24),
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, color: Colors.white24),
             itemCount: living.length,
           ),
         ),
@@ -367,13 +502,16 @@ class _ResultView extends StatelessWidget {
           Icon(
             Icons.emoji_events,
             size: 96,
-            color: winner == Role.spy ? Colors.redAccent : Colors.lightBlueAccent,
+            color:
+                winner == Role.spy ? Colors.redAccent : Colors.lightBlueAccent,
           ),
           const SizedBox(height: 12),
           Text(
             winner == Role.spy ? 'Spies win' : 'Civilians win',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: winner == Role.spy ? Colors.redAccent : Colors.lightBlueAccent,
+                  color: winner == Role.spy
+                      ? Colors.redAccent
+                      : Colors.lightBlueAccent,
                   fontWeight: FontWeight.w800,
                 ),
           ),
@@ -386,26 +524,31 @@ class _ResultView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Spies', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text('Spies',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   ...spies.map((spy) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           children: [
-                            const Icon(Icons.fingerprint, size: 18, color: Colors.redAccent),
+                            const Icon(Icons.fingerprint,
+                                size: 18, color: Colors.redAccent),
                             const SizedBox(width: 8),
                             Text(spy.name),
                             if (spy.isDead)
                               Container(
                                 margin: const EdgeInsets.only(left: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: Colors.redAccent.withOpacity(0.15),
+                                  color:
+                                      Colors.redAccent.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: const Text(
                                   'Caught',
-                                  style: TextStyle(color: Colors.redAccent, fontSize: 12),
+                                  style: TextStyle(
+                                      color: Colors.redAccent, fontSize: 12),
                                 ),
                               ),
                           ],
@@ -424,14 +567,17 @@ class _ResultView extends StatelessWidget {
                   onPressed: controller.resetGame,
                   icon: const Icon(Icons.replay_outlined),
                   label: const Text('Play again'),
-                  style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                  style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52)),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false),
+                  onPressed: () => Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (route) => false),
                   icon: const Icon(Icons.home_outlined),
                   label: const Text('Back to menu'),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+                  style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(52)),
                 ),
               ],
             ),
@@ -454,16 +600,22 @@ class _StatBlock extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text(value,
+              style:
+                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
+          Text(label,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: Colors.white70)),
         ],
       ),
     );

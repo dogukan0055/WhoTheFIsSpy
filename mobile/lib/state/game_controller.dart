@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/game_models.dart';
@@ -14,8 +16,16 @@ class GameController extends ChangeNotifier {
   GameState _state = GameState.initial();
   Timer? _timer;
   SharedPreferences? _prefs;
+  final AudioPlayer _sfxPlayer = AudioPlayer()
+    ..setReleaseMode(ReleaseMode.stop);
+  final AudioPlayer _musicPlayer = AudioPlayer()
+    ..setReleaseMode(ReleaseMode.loop);
+  List<String> _savedNames = [];
+  bool _seenOnboarding = false;
 
   GameState get state => _state;
+  List<String> get savedNames => List.unmodifiable(_savedNames);
+  bool get hasSeenOnboarding => _seenOnboarding;
 
   Future<void> _loadPreferences() async {
     try {
@@ -24,6 +34,10 @@ class GameController extends ChangeNotifier {
       final vibrate = _prefs!.getBool('vibrate');
       final music = _prefs!.getBool('music');
       final highContrast = _prefs!.getBool('highContrast');
+      final themeName = _prefs!.getString('themeMode');
+      final language = _prefs!.getString('language');
+      _savedNames = _prefs!.getStringList('playerNames') ?? _savedNames;
+      _seenOnboarding = _prefs!.getBool('seenOnboarding') ?? false;
 
       _state = _state.copyWith(
         appSettings: _state.appSettings.copyWith(
@@ -32,8 +46,11 @@ class GameController extends ChangeNotifier {
           music: music ?? _state.appSettings.music,
           highContrast: highContrast ?? _state.appSettings.highContrast,
         ),
+        themeMode: _themeFromString(themeName) ?? _state.themeMode,
+        language: _languageFromString(language) ?? _state.language,
       );
       notifyListeners();
+      _applyMusicState();
     } catch (_) {
       // Safe to ignore; defaults will be used.
     }
@@ -82,11 +99,50 @@ class GameController extends ChangeNotifier {
     } catch (_) {
       // Ignore persistence errors.
     }
+
+    if (key == 'sound' && sound) {
+      _playClick(ignorePreference: true);
+    }
+    if (key == 'music') {
+      _applyMusicState();
+    }
+    if (key == 'vibrate' && vibrate) {
+      HapticFeedback.mediumImpact();
+    }
   }
 
   void setMode(GameMode mode) {
     _state = _state.copyWith(mode: mode);
     notifyListeners();
+  }
+
+  Future<void> markOnboardingSeen() async {
+    _seenOnboarding = true;
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs!.setBool('seenOnboarding', true);
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> toggleThemeMode() async {
+    final next =
+        _state.themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    _state = _state.copyWith(themeMode: next);
+    notifyListeners();
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs!.setString('themeMode', next.name);
+    } catch (_) {}
+  }
+
+  Future<void> setLanguage(Language language) async {
+    _state = _state.copyWith(language: language);
+    notifyListeners();
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs!.setString('language', language.name);
+    } catch (_) {}
   }
 
   void updateSettings({
@@ -126,7 +182,9 @@ class GameController extends ChangeNotifier {
     for (var i = 0; i < names.length; i++) {
       updated.add(
         Player(
-          id: i < _state.players.length ? _state.players[i].id : generatePlayerId(i),
+          id: i < _state.players.length
+              ? _state.players[i].id
+              : generatePlayerId(i),
           name: names[i],
           role: Role.civilian,
           isDead: false,
@@ -144,7 +202,14 @@ class GameController extends ChangeNotifier {
     }
 
     final validCategories = _state.gameData.categories
-        .where((c) => _state.settings.selectedCategories.contains(c.id) && c.locations.isNotEmpty)
+        .where((c) => _state.settings.selectedCategories.contains(c.id))
+        .map((c) {
+          final active = c.locations
+              .where((loc) => !c.disabledLocations.contains(loc))
+              .toList();
+          return c.copyWith(locations: active);
+        })
+        .where((c) => c.locations.isNotEmpty)
         .toList();
 
     if (validCategories.isEmpty) {
@@ -157,8 +222,10 @@ class GameController extends ChangeNotifier {
     }
 
     final random = Random();
-    final chosenCategory = validCategories[random.nextInt(validCategories.length)];
-    final location = chosenCategory.locations[random.nextInt(chosenCategory.locations.length)];
+    final chosenCategory =
+        validCategories[random.nextInt(validCategories.length)];
+    final location = chosenCategory
+        .locations[random.nextInt(chosenCategory.locations.length)];
 
     final players = List<Player>.generate(trimmed.length, (index) {
       return Player(
@@ -191,6 +258,7 @@ class GameController extends ChangeNotifier {
         winner: null,
       ),
     );
+    _persistNames(trimmed);
     notifyListeners();
     return null;
   }
@@ -205,7 +273,13 @@ class GameController extends ChangeNotifier {
   }
 
   void startPlaying() {
-    _state = _state.copyWith(phase: GamePhase.playing);
+    final nextTime = _state.gameData.timeLeft <= 0
+        ? _state.settings.timerDuration * 60
+        : _state.gameData.timeLeft;
+    _state = _state.copyWith(
+      phase: GamePhase.playing,
+      gameData: _state.gameData.copyWith(timeLeft: nextTime),
+    );
     _startTimerIfNeeded();
     notifyListeners();
   }
@@ -224,9 +298,11 @@ class GameController extends ChangeNotifier {
         .toList();
 
     final remaining = updatedPlayers.where((p) => !p.isDead).toList();
-    final totalSpiesAtStart = _state.players.where((p) => p.role == Role.spy).length;
+    final totalSpiesAtStart =
+        _state.players.where((p) => p.role == Role.spy).length;
     final spiesLeft = remaining.where((p) => p.role == Role.spy).length;
-    final civiliansLeft = remaining.where((p) => p.role == Role.civilian).length;
+    final civiliansLeft =
+        remaining.where((p) => p.role == Role.civilian).length;
 
     var nextPhase = _state.phase;
     Role? winner = _state.gameData.winner;
@@ -274,7 +350,10 @@ class GameController extends ChangeNotifier {
     _state = GameState.initial().copyWith(
       mode: _state.mode,
       appSettings: _state.appSettings,
-      gameData: _state.gameData.copyWith(categories: _state.gameData.categories),
+      gameData:
+          _state.gameData.copyWith(categories: _state.gameData.categories),
+      themeMode: _state.themeMode,
+      language: _state.language,
     );
     notifyListeners();
   }
@@ -293,7 +372,8 @@ class GameController extends ChangeNotifier {
         return;
       }
       _state = _state.copyWith(
-        gameData: _state.gameData.copyWith(timeLeft: _state.gameData.timeLeft - 1),
+        gameData:
+            _state.gameData.copyWith(timeLeft: _state.gameData.timeLeft - 1),
       );
       notifyListeners();
     });
@@ -329,15 +409,18 @@ class GameController extends ChangeNotifier {
 
     _state = _state.copyWith(
       gameData: _state.gameData.copyWith(categories: updated),
-      settings: _state.settings.copyWith(selectedCategories: [..._state.settings.selectedCategories, id]),
+      settings: _state.settings.copyWith(
+          selectedCategories: [..._state.settings.selectedCategories, id]),
     );
     notifyListeners();
   }
 
   void deleteCategory(String id) {
     if (_state.gameData.categories.length <= 1) return;
-    final updatedCats = _state.gameData.categories.where((c) => c.id != id).toList();
-    final updatedSelected = _state.settings.selectedCategories.where((c) => c != id).toList();
+    final updatedCats =
+        _state.gameData.categories.where((c) => c.id != id).toList();
+    final updatedSelected =
+        _state.settings.selectedCategories.where((c) => c != id).toList();
 
     if (updatedSelected.isEmpty && updatedCats.isNotEmpty) {
       updatedSelected.add(updatedCats.first.id);
@@ -366,16 +449,74 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleLocation(String categoryId, String location, bool enabled) {
+    final updated = _state.gameData.categories.map((cat) {
+      if (cat.id != categoryId) return cat;
+      final disabled = List<String>.from(cat.disabledLocations);
+      if (!enabled) {
+        if (!disabled.contains(location)) disabled.add(location);
+      } else {
+        disabled.remove(location);
+      }
+      return cat.copyWith(disabledLocations: disabled);
+    }).toList();
+    _state = _state.copyWith(
+      gameData: _state.gameData.copyWith(categories: updated),
+    );
+    notifyListeners();
+  }
+
   void removeLocation(String categoryId, String location) {
     final updated = _state.gameData.categories.map((cat) {
       if (cat.id != categoryId) return cat;
       final newLocs = List<String>.from(cat.locations)..remove(location);
-      return cat.copyWith(locations: newLocs);
+      final newDisabled = List<String>.from(cat.disabledLocations)
+        ..remove(location);
+      return cat.copyWith(locations: newLocs, disabledLocations: newDisabled);
     }).toList();
 
     _state = _state.copyWith(
       gameData: _state.gameData.copyWith(categories: updated),
     );
     notifyListeners();
+  }
+
+  Future<void> _persistNames(List<String> names) async {
+    _savedNames = List.from(names);
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs!.setStringList('playerNames', _savedNames);
+    } catch (_) {}
+  }
+
+  Future<void> _playClick({bool ignorePreference = false}) async {
+    if (!_state.appSettings.sound && !ignorePreference) return;
+    await _sfxPlayer.play(AssetSource('audio/click.mp3'), volume: 0.6);
+  }
+
+  void _applyMusicState() {
+    if (_state.appSettings.music) {
+      _musicPlayer.play(AssetSource('audio/ambient.mp3'), volume: 0.18);
+    } else {
+      _musicPlayer.stop();
+    }
+  }
+
+  ThemeMode? _themeFromString(String? name) {
+    if (name == null) return null;
+    try {
+      return ThemeMode.values.firstWhere((m) => m.name == name);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Language? _languageFromString(String? name) {
+    if (name == null) return null;
+    try {
+      return Language.values.firstWhere((l) => l.name == name);
+    } catch (_) {
+      return null;
+    }
   }
 }

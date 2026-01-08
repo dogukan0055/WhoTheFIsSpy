@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
+import '../widgets/notifier.dart';
 import '../widgets/spy_scaffold.dart';
 
 class LocationManagerScreen extends StatefulWidget {
@@ -83,34 +84,51 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
             children: [
               const SizedBox(height: 12),
               ...state.gameData.categories.map((cat) {
-                final isSelected = state.settings.selectedCategories.contains(cat.id);
+                final isSelected =
+                    state.settings.selectedCategories.contains(cat.id);
                 final isCore = initialCategories.any((c) => c.id == cat.id);
                 final expanded = _expanded[cat.id] ?? false;
                 final isEmpty = cat.locations.isEmpty;
+                final activeLocations = cat.locations
+                    .where((loc) => !cat.disabledLocations.contains(loc))
+                    .length;
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.02),
+                    color: Colors.white.withValues(alpha: 0.02),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isSelected ? colorScheme.primary : Colors.white.withOpacity(0.08),
+                      color: isSelected
+                          ? colorScheme.primary
+                          : Colors.white.withValues(alpha: 0.08),
                       width: 1,
                     ),
                   ),
                   child: Column(
                     children: [
                       ListTile(
-                        title: Text(cat.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(cat.name,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(
-                          '${cat.locations.length} locations',
-                          style: TextStyle(color: Colors.white70),
+                          'Active $activeLocations / ${cat.locations.length}',
+                          style: const TextStyle(color: Colors.white70),
                         ),
                         leading: Checkbox(
                           value: isSelected,
                           onChanged: (_) {
-                            if (isEmpty) {
-                              _showSnack(context, 'Add at least one location before enabling.');
+                            if (isEmpty || activeLocations == 0) {
+                              Notifier.show(context,
+                                  'Add at least one active location first.',
+                                  error: true);
+                              return;
+                            }
+                            if (isSelected &&
+                                state.settings.selectedCategories.length == 1) {
+                              Notifier.show(context,
+                                  'At least one category is required.',
+                                  error: true);
                               return;
                             }
                             controller.toggleCategory(cat.id);
@@ -120,71 +138,94 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+                              icon: Icon(expanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more),
                               onPressed: () {
                                 setState(() => _expanded[cat.id] = !expanded);
                               },
                             ),
                             if (!isCore)
                               IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                onPressed: () => controller.deleteCategory(cat.id),
+                                icon: const Icon(Icons.delete_outline,
+                                    color: Colors.redAccent),
+                                onPressed: () =>
+                                    controller.deleteCategory(cat.id),
                               ),
                           ],
                         ),
                       ),
                       if (expanded)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: cat.locations
-                                    .map(
-                                      (loc) => Chip(
-                                        label: Text(loc),
-                                        onDeleted: isCore
-                                            ? null
-                                            : () => controller.removeLocation(cat.id, loc),
+                              ...cat.locations.map((loc) {
+                                final disabled =
+                                    cat.disabledLocations.contains(loc);
+                                final isCoreLoc = initialCategories.any(
+                                    (orig) =>
+                                        orig.id == cat.id &&
+                                        orig.locations.contains(loc));
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    children: [
+                                      Expanded(child: Text(loc)),
+                                      Switch(
+                                        value: !disabled,
+                                        onChanged: (val) {
+                                          controller.toggleLocation(
+                                              cat.id, loc, val);
+                                        },
                                       ),
-                                    )
-                                    .toList(),
-                              ),
-                              const SizedBox(height: 12),
-                              OutlinedButton.icon(
-                                onPressed: () => _showInputDialog(
-                                  context: context,
-                                  title: 'Add location to ${cat.name}',
-                                  hint: 'Ex: Submarine base',
-                                  onSubmit: (value) {
-                                    if (value.isEmpty) return;
-                                    controller.addLocation(cat.id, value);
-                                  },
+                                      if (!isCoreLoc)
+                                        IconButton(
+                                          icon:
+                                              const Icon(Icons.delete_outline),
+                                          onPressed: () => controller
+                                              .removeLocation(cat.id, loc),
+                                        )
+                                      else
+                                        const Icon(Icons.lock_outline,
+                                            size: 16, color: Colors.white54),
+                                    ],
+                                  ),
+                                );
+                              }),
+                              if (!isCore)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _showInputDialog(
+                                      context: context,
+                                      title: 'Add location to ${cat.name}',
+                                      hint: 'Ex: Submarine base',
+                                      onSubmit: (value) {
+                                        if (value.isEmpty) return;
+                                        controller.addLocation(cat.id, value);
+                                      },
+                                    ),
+                                    icon: const Icon(
+                                        Icons.add_location_alt_outlined),
+                                    label: const Text('Add location'),
+                                  ),
                                 ),
-                                icon: const Icon(Icons.add_location_alt_outlined),
-                                label: const Text('Add location'),
-                              ),
                             ],
                           ),
                         ),
                     ],
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 24),
             ],
           ),
         );
       },
-    );
-  }
-
-  void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
     );
   }
 }

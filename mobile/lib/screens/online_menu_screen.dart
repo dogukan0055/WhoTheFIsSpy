@@ -281,7 +281,7 @@ class _LobbyStep extends StatelessWidget {
                 final isFirst = index == 0;
                 return ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.1),
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
                     child: Text(players[index][0].toUpperCase()),
                   ),
                   title: Text(players[index]),

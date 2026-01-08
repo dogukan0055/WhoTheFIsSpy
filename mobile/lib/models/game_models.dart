@@ -1,10 +1,13 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
 
 enum GameMode { offline, online }
 
 enum Role { spy, civilian }
 
 enum GamePhase { setup, reveal, playing, voting, result }
+
+enum Language { en, tr }
 
 class Player {
   Player({
@@ -104,24 +107,28 @@ class Category {
     required this.name,
     required this.icon,
     required this.locations,
+    this.disabledLocations = const [],
   });
 
   final String id;
   final String name;
   final String icon;
   final List<String> locations;
+  final List<String> disabledLocations;
 
   Category copyWith({
     String? id,
     String? name,
     String? icon,
     List<String>? locations,
+    List<String>? disabledLocations,
   }) {
     return Category(
       id: id ?? this.id,
       name: name ?? this.name,
       icon: icon ?? this.icon,
       locations: locations ?? List.from(this.locations),
+      disabledLocations: disabledLocations ?? List.from(this.disabledLocations),
     );
   }
 }
@@ -166,6 +173,8 @@ class GameState {
     required this.settings,
     required this.gameData,
     required this.phase,
+    required this.themeMode,
+    required this.language,
   });
 
   final GameMode? mode;
@@ -174,6 +183,8 @@ class GameState {
   final GameSettings settings;
   final GameData gameData;
   final GamePhase phase;
+  final ThemeMode themeMode;
+  final Language language;
 
   factory GameState.initial() {
     return GameState(
@@ -200,6 +211,8 @@ class GameState {
         categories: _cloneCategories(initialCategories),
       ),
       phase: GamePhase.setup,
+      themeMode: ThemeMode.dark,
+      language: Language.en,
     );
   }
 
@@ -210,6 +223,8 @@ class GameState {
     GameSettings? settings,
     GameData? gameData,
     GamePhase? phase,
+    ThemeMode? themeMode,
+    Language? language,
   }) {
     return GameState(
       mode: mode ?? this.mode,
@@ -218,12 +233,21 @@ class GameState {
       settings: settings ?? this.settings,
       gameData: gameData ?? this.gameData,
       phase: phase ?? this.phase,
+      themeMode: themeMode ?? this.themeMode,
+      language: language ?? this.language,
     );
   }
 }
 
 List<Category> _cloneCategories(List<Category> categories) {
-  return categories.map((c) => c.copyWith(locations: List.from(c.locations))).toList();
+  return categories
+      .map(
+        (c) => c.copyWith(
+          locations: List.from(c.locations),
+          disabledLocations: List.from(c.disabledLocations),
+        ),
+      )
+      .toList();
 }
 
 const initialCategories = <Category>[

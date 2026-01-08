@@ -18,6 +18,8 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final controller = context.watch<GameController>();
+    final isLight = controller.state.themeMode == ThemeMode.light;
 
     return SpyScaffold(
       scrollable: false,
@@ -25,20 +27,27 @@ class HomeScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Align(
-            alignment: Alignment.topRight,
-            child: IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () => Navigator.of(context).pushNamed('/settings'),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(isLight ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
+                tooltip: 'Toggle theme',
+                onPressed: () => controller.toggleThemeMode(),
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: () => Navigator.of(context).pushNamed('/settings'),
+              ),
+            ],
           ),
           const Spacer(),
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.03),
+              color: Colors.white.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: Column(
               children: [
@@ -86,9 +95,13 @@ class HomeScreen extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               minimumSize: const Size.fromHeight(58),
             ),
-            onPressed: () => _goTo(context, '/online', GameMode.online),
-            icon: const Icon(Icons.wifi),
-            label: const Text('ONLINE MODE'),
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Online mode coming soon')),
+              );
+            },
+            icon: const Icon(Icons.wifi_off_outlined),
+            label: const Text('ONLINE MODE (COMING SOON)'),
           ),
           const SizedBox(height: 20),
           TextButton.icon(
@@ -110,7 +123,7 @@ class HomeScreen extends StatelessWidget {
   void _showHowToPlay(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface.withOpacity(0.95),
+      backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
