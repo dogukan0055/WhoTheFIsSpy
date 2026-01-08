@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../widgets/notifier.dart';
@@ -22,6 +23,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
     required void Function(String) onSubmit,
     String? hint,
   }) {
+    final l10n = context.l10n;
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -35,14 +37,14 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
+              child: Text(l10n.text('cancel')),
             ),
             ElevatedButton(
               onPressed: () {
                 onSubmit(controller.text.trim());
                 Navigator.pop(ctx);
               },
-              child: const Text('Save'),
+              child: Text(l10n.text('save')),
             ),
           ],
         );
@@ -56,6 +58,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
       builder: (context, controller, _) {
         final state = controller.state;
         final colorScheme = Theme.of(context).colorScheme;
+        final l10n = context.l10n;
 
         return SpyScaffold(
           appBar: AppBar(
@@ -63,15 +66,15 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: const Text('Location Database'),
+            title: Text(l10n.text('locationDb')),
             actions: [
               IconButton(
                 icon: const Icon(Icons.add),
-                tooltip: 'Add category',
+                tooltip: l10n.text('addCategory'),
                 onPressed: () => _showInputDialog(
                   context: context,
-                  title: 'New Category',
-                  hint: 'Ex: Cafes',
+                  title: l10n.text('newCategory'),
+                  hint: l10n.text('categoryHint'),
                   onSubmit: (value) {
                     if (value.isEmpty) return;
                     controller.addCategory(value);
@@ -112,22 +115,21 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(
-                          'Active $activeLocations / ${cat.locations.length}',
+                          l10n.activeCount(activeLocations, cat.locations.length),
                           style: const TextStyle(color: Colors.white70),
                         ),
                         leading: Checkbox(
                           value: isSelected,
                           onChanged: (_) {
                             if (isEmpty || activeLocations == 0) {
-                              Notifier.show(context,
-                                  'Add at least one active location first.',
+                              Notifier.show(context, l10n.text('needActiveLocation'),
                                   error: true);
                               return;
                             }
                             if (isSelected &&
                                 state.settings.selectedCategories.length == 1) {
-                              Notifier.show(context,
-                                  'At least one category is required.',
+                              Notifier.show(
+                                  context, l10n.text('needCategory'),
                                   error: true);
                               return;
                             }
@@ -202,8 +204,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                   child: OutlinedButton.icon(
                                     onPressed: () => _showInputDialog(
                                       context: context,
-                                      title: 'Add location to ${cat.name}',
-                                      hint: 'Ex: Submarine base',
+                                      title: l10n.addLocationTo(cat.name),
+                                      hint: l10n.text('locationHint'),
                                       onSubmit: (value) {
                                         if (value.isEmpty) return;
                                         controller.addLocation(cat.id, value);
@@ -211,7 +213,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                     ),
                                     icon: const Icon(
                                         Icons.add_location_alt_outlined),
-                                    label: const Text('Add location'),
+                                    label: Text(l10n.text('addLocation')),
                                   ),
                                 ),
                             ],

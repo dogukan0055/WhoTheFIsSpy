@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../widgets/spy_scaffold.dart';
@@ -13,6 +14,7 @@ class SettingsScreen extends StatelessWidget {
     return Consumer<GameController>(
       builder: (context, controller, _) {
         final app = controller.state.appSettings;
+        final l10n = context.l10n;
 
         return SpyScaffold(
           appBar: AppBar(
@@ -20,38 +22,38 @@ class SettingsScreen extends StatelessWidget {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: const Text('System Config'),
+            title: Text(l10n.text('systemConfig')),
           ),
           child: Column(
             children: [
               const SizedBox(height: 12),
               _SettingTile(
-                title: 'Sound Effects',
-                subtitle: 'UI interaction beeps',
+                title: l10n.text('soundEffects'),
+                subtitle: l10n.text('uiBeeps'),
                 value: app.sound,
                 iconOn: Icons.volume_up,
                 iconOff: Icons.volume_off,
                 onChanged: () => controller.toggleAppSetting('sound'),
               ),
               _SettingTile(
-                title: 'Background Ambience',
-                subtitle: 'Atmospheric music',
+                title: l10n.text('backgroundAmbience'),
+                subtitle: l10n.text('atmosphericMusic'),
                 value: app.music,
                 iconOn: Icons.music_note,
                 iconOff: Icons.music_off,
                 onChanged: () => controller.toggleAppSetting('music'),
               ),
               _SettingTile(
-                title: 'Haptics',
-                subtitle: 'Vibrate on actions',
+                title: l10n.text('haptics'),
+                subtitle: l10n.text('vibrate'),
                 value: app.vibrate,
                 iconOn: Icons.vibration,
                 iconOff: Icons.phone_android_outlined,
                 onChanged: () => controller.toggleAppSetting('vibrate'),
               ),
               _SettingTile(
-                title: 'High Contrast',
-                subtitle: 'More separation between layers',
+                title: l10n.text('highContrast'),
+                subtitle: l10n.text('highContrastDesc'),
                 value: app.highContrast,
                 iconOn: Icons.visibility,
                 iconOff: Icons.visibility_off,
@@ -61,20 +63,22 @@ class SettingsScreen extends StatelessWidget {
               _LanguageTile(
                 current: controller.state.language,
                 onChanged: controller.setLanguage,
+                label: l10n.text('language'),
+                subtitle: l10n.text('languageSubtitle'),
               ),
               const SizedBox(height: 24),
-              const Card(
+              Card(
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Credits',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 8),
-                      Text('Designed and developed by Doğukan Şıhman'),
-                      SizedBox(height: 4),
-                      Text('Special thanks to my lovely wife Deniz.'),
+                      Text(l10n.text('credits'),
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text(l10n.text('designedBy')),
+                      const SizedBox(height: 4),
+                      Text(l10n.text('thanks')),
                     ],
                   ),
                 ),
@@ -118,10 +122,17 @@ class _SettingTile extends StatelessWidget {
 }
 
 class _LanguageTile extends StatelessWidget {
-  const _LanguageTile({required this.current, required this.onChanged});
+  const _LanguageTile({
+    required this.current,
+    required this.onChanged,
+    required this.label,
+    required this.subtitle,
+  });
 
   final Language current;
   final ValueChanged<Language> onChanged;
+  final String label;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +142,8 @@ class _LanguageTile extends StatelessWidget {
           current == Language.tr ? '🇹🇷' : '🇺🇸',
           style: const TextStyle(fontSize: 24),
         ),
-        title: const Text('Language'),
-        subtitle: const Text('Türkçe / English'),
+        title: Text(label),
+        subtitle: Text(subtitle),
         trailing: DropdownButton<Language>(
           value: current,
           underline: const SizedBox(),

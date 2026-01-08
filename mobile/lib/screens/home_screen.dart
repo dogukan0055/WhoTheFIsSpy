@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../widgets/spy_scaffold.dart';
@@ -20,6 +21,7 @@ class HomeScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final controller = context.watch<GameController>();
     final isLight = controller.state.themeMode == ThemeMode.light;
+    final l10n = context.l10n;
 
     return SpyScaffold(
       scrollable: false,
@@ -32,7 +34,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               IconButton(
                 icon: Icon(isLight ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
-                tooltip: 'Toggle theme',
+                tooltip: l10n.text('toggleTheme'),
                 onPressed: () => controller.toggleThemeMode(),
               ),
               IconButton(
@@ -78,7 +80,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Deception, deduction, betrayal.',
+            l10n.text('homeTagline'),
             style: textTheme.bodyMedium?.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 36),
@@ -88,7 +90,7 @@ class HomeScreen extends StatelessWidget {
             ),
             onPressed: () => _goTo(context, '/setup', GameMode.offline),
             icon: const Icon(Icons.phone_android),
-            label: const Text('OFFLINE MODE'),
+            label: Text(l10n.text('offlineMode')),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
@@ -97,17 +99,17 @@ class HomeScreen extends StatelessWidget {
             ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Online mode coming soon')),
+                SnackBar(content: Text(l10n.text('onlineComing'))),
               );
             },
             icon: const Icon(Icons.wifi_off_outlined),
-            label: const Text('ONLINE MODE (COMING SOON)'),
+            label: Text(l10n.text('onlineMode')),
           ),
           const SizedBox(height: 20),
           TextButton.icon(
             onPressed: () => _showHowToPlay(context),
             icon: const Icon(Icons.help_outline),
-            label: const Text('How to play'),
+            label: Text(l10n.text('howToPlay')),
           ),
           const Spacer(),
           Text(
@@ -121,6 +123,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   void _showHowToPlay(BuildContext context) {
+    final l10n = context.l10n;
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
@@ -135,7 +138,7 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Mission Briefing',
+                  l10n.text('missionBriefing'),
                   style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                         color: Theme.of(ctx).colorScheme.primary,
                         fontWeight: FontWeight.bold,
@@ -143,29 +146,29 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Objective',
+                  l10n.text('objective'),
                   style: Theme.of(ctx).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
-                const Text('• Civilians: Find the spy without revealing the location.'),
-                const Text('• Spy: Blend in. Identify the location before being caught.'),
+                Text(l10n.text('objectiveCivilian')),
+                Text(l10n.text('objectiveSpy')),
                 const SizedBox(height: 16),
                 Text(
-                  'Gameplay',
+                  l10n.text('gameplay'),
                   style: Theme.of(ctx).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
-                const Text('1) Pass the phone, reveal your role.'),
-                const Text('2) Start the timer and ask sharp questions.'),
-                const Text('3) Call a vote when someone feels suspicious.'),
+                Text(l10n.text('gameplayStep1')),
+                Text(l10n.text('gameplayStep2')),
+                Text(l10n.text('gameplayStep3')),
                 const SizedBox(height: 16),
                 Text(
-                  'Win Conditions',
+                  l10n.text('winConditions'),
                   style: Theme.of(ctx).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
-                const Text('• Spy wins if a civilian is eliminated or time expires.'),
-                const Text('• Civilians win if all spies are caught.'),
+                Text(l10n.text('spyWins')),
+                Text(l10n.text('civiliansWin')),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../widgets/spy_scaffold.dart';
@@ -20,12 +21,13 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
   void initState() {
     super.initState();
     final controller = context.read<GameController>();
+    final l10n = SpyLocalizations.forLanguage(controller.state.language);
     final existing = controller.state.players.isNotEmpty
         ? controller.state.players.map((p) => p.name).toList()
         : controller.savedNames.isNotEmpty
             ? controller.savedNames
-            : List<String>.generate(controller.state.settings.playerCount,
-                (i) => 'Player ${i + 1}');
+            : List<String>.generate(
+                controller.state.settings.playerCount, (i) => l10n.agentHint(i));
     for (final name in existing) {
       _controllers.add(TextEditingController(text: name));
     }
@@ -40,9 +42,11 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
   }
 
   void _syncControllerLength(int desired) {
+    final l10n =
+        SpyLocalizations.forLanguage(context.read<GameController>().state.language);
     if (desired > _controllers.length) {
       for (var i = _controllers.length; i < desired; i++) {
-        _controllers.add(TextEditingController(text: 'Player ${i + 1}'));
+        _controllers.add(TextEditingController(text: l10n.agentHint(i)));
       }
     } else if (desired < _controllers.length) {
       final removeCount = _controllers.length - desired;
@@ -69,28 +73,29 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
   }
 
   void _startGame(GameController controller) {
+    final l10n = SpyLocalizations.forLanguage(controller.state.language);
     final names = _controllers.map((c) => c.text.trim()).toList();
 
     for (final name in names) {
       if (name.isEmpty) {
-        _showMessage('All players need a codename.');
+        _showMessage(l10n.text('codeNameRequired'));
         return;
       }
       if (name.length > 16) {
-        _showMessage('Names must be 16 characters or fewer.');
+        _showMessage(l10n.text('maxNameLength'));
         return;
       }
       if (!RegExp(r'^[a-zA-ZçÇğĞıİöÖşŞüÜ\s]+$').hasMatch(name)) {
-        _showMessage('Names can only contain letters and spaces.');
+        _showMessage(l10n.text('lettersOnly'));
         return;
       }
       if (containsProfanity(name)) {
-        _showMessage('"$name" is not allowed.');
+        _showMessage(l10n.nameNotAllowed(name));
         return;
       }
     }
     if (names.toSet().length != names.length) {
-      _showMessage('Duplicate names are not allowed.');
+      _showMessage(l10n.text('noDuplicates'));
       return;
     }
 
@@ -113,6 +118,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
   Widget build(BuildContext context) {
     return Consumer<GameController>(
       builder: (context, controller, _) {
+        final l10n = context.l10n;
         final settings = controller.state.settings;
         _syncControllerLength(settings.playerCount);
 
@@ -122,14 +128,14 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: const Text('Mission Setup'),
+            title: Text(l10n.text('missionSetup')),
           ),
           bottom: Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
             child: ElevatedButton.icon(
               onPressed: () => _startGame(controller),
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Start Mission'),
+              label: Text(l10n.text('startMission')),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(56),
                 textStyle: const TextStyle(fontSize: 18),
@@ -141,25 +147,24 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
             children: [
               const SizedBox(height: 12),
               _CounterTile(
-                label: 'Agents',
+                label: l10n.text('agents'),
                 value: settings.playerCount,
                 min: 4,
                 max: 8,
                 onChanged: (val) => _changePlayerCount(controller, val),
-                helper:
-                    'In normal circumstances, at least 4 agents are required. You can have up to 8 agents in a mission.',
+                helper: l10n.text('agentsHelper'),
               ),
               const SizedBox(height: 12),
               _CounterTile(
-                label: 'Spies',
+                label: l10n.text('spies'),
                 value: settings.playerCount <= 5 ? 1 : settings.spyCount,
                 min: 1,
                 max: settings.playerCount > 5 ? 2 : 1,
                 locked: settings.playerCount <= 5,
                 onChanged: (val) => _changeSpyCount(controller, val),
                 helper: settings.playerCount <= 5
-                    ? 'Only one spy can exist when there are less than 5 agents in the field.'
-                    : 'If there are more than 5 agents, you can have up to 2 spies in the mission.',
+                    ? l10n.text('spiesHelperLocked')
+                    : l10n.text('spiesHelper'),
               ),
               const SizedBox(height: 12),
               Card(
@@ -168,18 +173,18 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Mission Timer',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Switch(
-                            value: settings.isTimerOn,
-                            onChanged: (val) =>
-                                controller.updateSettings(isTimerOn: val),
-                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                l10n.text('missionTimer'),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              Switch(
+                                value: settings.isTimerOn,
+                                onChanged: (val) =>
+                                    controller.updateSettings(isTimerOn: val),
+                              ),
                         ],
                       ),
                       if (settings.isTimerOn) ...[
@@ -189,12 +194,14 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                           min: 5,
                           max: 30,
                           divisions: 25,
-                          label: '${settings.timerDuration} min',
+                          label: l10n.language == Language.tr
+                              ? '${settings.timerDuration} dk'
+                              : '${settings.timerDuration} min',
                           onChanged: (val) =>
                               _changeTimer(controller, val.round()),
                         ),
                         Text(
-                          'Timer length: ${settings.timerDuration} minutes',
+                          l10n.timerLength(settings.timerDuration),
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -202,7 +209,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                         ),
                       ] else
                         Text(
-                          'No timer active. Take your time.',
+                          l10n.text('noTimer'),
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -213,7 +220,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                         onPressed: () =>
                             Navigator.of(context).pushNamed('/locations'),
                         icon: const Icon(Icons.map_outlined),
-                        label: const Text('Manage Locations'),
+                        label: Text(l10n.text('manageLocations')),
                       ),
                     ],
                   ),
@@ -236,11 +243,11 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                         _controllers.add(TextEditingController(text: name));
                       }
                     });
-                  }
-                },
-                icon: const Icon(Icons.manage_accounts),
-                label: const Text('Manage Agent Roster'),
-              ),
+                      }
+                    },
+                    icon: const Icon(Icons.manage_accounts),
+                    label: Text(l10n.text('manageRoster')),
+                  ),
               const SizedBox(height: 80),
             ],
           ),
@@ -318,7 +325,7 @@ class _CounterTile extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
-                  'Locked due to agents count.',
+                  context.l10n.text('lockedDueToAgents'),
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall

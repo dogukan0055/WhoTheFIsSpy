@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 
 class GameController extends ChangeNotifier {
@@ -197,8 +198,9 @@ class GameController extends ChangeNotifier {
   }
 
   String? startOfflineGame(List<String> playerNames) {
+    final l10n = SpyLocalizations.forLanguage(_state.language);
     if (_state.settings.selectedCategories.isEmpty) {
-      return 'Select at least one location category.';
+      return l10n.text('selectCategory');
     }
 
     final validCategories = _state.gameData.categories
@@ -213,12 +215,12 @@ class GameController extends ChangeNotifier {
         .toList();
 
     if (validCategories.isEmpty) {
-      return 'Selected categories do not have any locations.';
+      return l10n.text('noLocationsSelected');
     }
 
     final trimmed = playerNames.map((n) => n.trim()).toList();
     if (trimmed.any((name) => name.isEmpty)) {
-      return 'All players need a codename.';
+      return l10n.text('codeNameRequired');
     }
 
     final random = Random();

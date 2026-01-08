@@ -11,6 +11,7 @@ import 'screens/settings_screen.dart';
 import 'state/game_controller.dart';
 import 'theme.dart';
 import 'models/game_models.dart';
+import 'l10n/spy_localizations.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +51,7 @@ class SpyApp extends StatelessWidget {
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
+              SpyLocalizationsDelegate(),
             ],
             home: controller.hasSeenOnboarding
                 ? const HomeScreen()

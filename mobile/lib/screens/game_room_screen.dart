@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../widgets/spy_scaffold.dart';
@@ -15,17 +16,18 @@ class GameRoomScreen extends StatelessWidget {
     return Consumer<GameController>(
       builder: (context, controller, _) {
         final state = controller.state;
+        final l10n = context.l10n;
         if (state.players.isEmpty) {
           return SpyScaffold(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('No mission in progress.'),
+                Text(l10n.text('noMission')),
                 const SizedBox(height: 12),
                 ElevatedButton(
                   onPressed: () =>
                       Navigator.of(context).pushReplacementNamed('/'),
-                  child: const Text('Back to menu'),
+                  child: Text(l10n.text('backToMenu')),
                 ),
               ],
             ),
@@ -58,12 +60,12 @@ class GameRoomScreen extends StatelessWidget {
               automaticallyImplyLeading: false,
               title: Text(
                 state.phase == GamePhase.reveal
-                    ? 'Identity Reveal'
+                    ? l10n.text('identityReveal')
                     : state.phase == GamePhase.playing
-                        ? 'Interrogation'
+                        ? l10n.text('interrogationPhase')
                         : state.phase == GamePhase.voting
-                            ? 'Vote'
-                            : 'Results',
+                            ? l10n.text('vote')
+                            : l10n.text('results'),
               ),
             ),
             child: body,
@@ -88,6 +90,7 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final controller = context.read<GameController>();
     final state = controller.state;
     final player = state.players[state.gameData.currentRevealIndex];
@@ -99,7 +102,8 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Agent ${state.gameData.currentRevealIndex + 1} / ${state.players.length}',
+            l10n.agentRevealCounter(
+                state.gameData.currentRevealIndex + 1, state.players.length),
             style: Theme.of(context)
                 .textTheme
                 .bodySmall
@@ -149,7 +153,7 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          const Text('Hold finger to scan'),
+                          Text(l10n.text('holdToScan')),
                         ],
                       ),
               ),
@@ -171,7 +175,8 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
                   }
                 : null,
             style: ElevatedButton.styleFrom(minimumSize: const Size(220, 52)),
-            child: Text(isLast ? 'Start Mission' : 'Next Agent'),
+            child: Text(
+                isLast ? l10n.text('startMission') : l10n.text('nextAgent')),
           ),
         ],
       ),
@@ -217,6 +222,7 @@ class _RoleCardBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final isSpy = player.role == Role.spy;
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -235,7 +241,7 @@ class _RoleCardBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          isSpy ? 'You are the SPY' : 'Civilian',
+          isSpy ? l10n.text('youAreSpy') : l10n.text('civilian'),
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: isSpy ? Colors.redAccent : Colors.blueAccent,
                 fontWeight: FontWeight.w800,
@@ -245,7 +251,7 @@ class _RoleCardBody extends StatelessWidget {
         if (!isSpy)
           Column(
             children: [
-              Text('Secret Location',
+              Text(l10n.text('secretLocation'),
                   style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 6),
               Container(
@@ -265,8 +271,8 @@ class _RoleCardBody extends StatelessWidget {
             ],
           )
         else
-          const Text(
-            'Blend in. Listen closely and guess the location.',
+          Text(
+            l10n.text('blendIn'),
             textAlign: TextAlign.center,
           ),
       ],
@@ -289,6 +295,7 @@ class _DiscussionView extends StatelessWidget {
     final state = controller.state;
     final spiesRemaining =
         state.players.where((p) => p.role == Role.spy && !p.isDead).length;
+    final l10n = context.l10n;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -323,7 +330,7 @@ class _DiscussionView extends StatelessWidget {
                   size: 52, color: Colors.white70),
               const SizedBox(height: 8),
               Text(
-                'No timer',
+                l10n.text('noTimerShort'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ],
@@ -334,12 +341,12 @@ class _DiscussionView extends StatelessWidget {
           child: Column(
             children: [
               _StatBlock(
-                label: 'Agents Active',
+                label: l10n.text('agentsActive'),
                 value: state.players.where((p) => !p.isDead).length.toString(),
               ),
               const SizedBox(height: 12),
               _StatBlock(
-                label: 'Spies Remaining',
+                label: l10n.text('spiesRemaining'),
                 value: spiesRemaining.toString(),
               ),
             ],
@@ -351,14 +358,14 @@ class _DiscussionView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: controller.startVoting,
               icon: const Icon(Icons.how_to_vote),
-              label: const Text('Call Vote'),
+              label: Text(l10n.text('callVote')),
               style: ElevatedButton.styleFrom(minimumSize: const Size(240, 52)),
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () => _confirmExit(context, controller),
               icon: const Icon(Icons.logout),
-              label: const Text('Main Menu'),
+              label: Text(l10n.text('mainMenu')),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,
                 minimumSize: const Size(240, 52),
@@ -371,17 +378,17 @@ class _DiscussionView extends StatelessWidget {
   }
 
   void _confirmExit(BuildContext context, GameController controller) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: const Text('Leave Mission?'),
-          content:
-              const Text('Are you sure you want to return to the main menu?'),
+          title: Text(l10n.text('leaveMission')),
+          content: Text(l10n.text('returnToMenu')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Stay'),
+              child: Text(l10n.text('stay')),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -391,7 +398,7 @@ class _DiscussionView extends StatelessWidget {
                     .pushNamedAndRemoveUntil('/', (route) => false);
               },
               icon: const Icon(Icons.exit_to_app),
-              label: const Text('Main Menu'),
+              label: Text(l10n.text('mainMenu')),
               style:
                   ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
             ),
@@ -416,6 +423,7 @@ class _VotingViewState extends State<_VotingView> {
   Widget build(BuildContext context) {
     final controller = context.read<GameController>();
     final living = controller.state.players.where((p) => !p.isDead).toList();
+    final l10n = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -423,7 +431,7 @@ class _VotingViewState extends State<_VotingView> {
         const SizedBox(height: 12),
         Center(
           child: Text(
-            'Emergency meeting',
+            l10n.text('emergencyMeeting'),
             style: Theme.of(context)
                 .textTheme
                 .titleLarge
@@ -461,7 +469,7 @@ class _VotingViewState extends State<_VotingView> {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => controller.startPlaying(),
-                child: const Text('Cancel'),
+                child: Text(l10n.text('cancel')),
               ),
             ),
             const SizedBox(width: 12),
@@ -474,7 +482,7 @@ class _VotingViewState extends State<_VotingView> {
                         setState(() => selected = null);
                       },
                 icon: const Icon(Icons.warning_amber_rounded),
-                label: const Text('Eliminate'),
+                label: Text(l10n.text('eliminate')),
               ),
             ),
           ],
@@ -494,6 +502,7 @@ class _ResultView extends StatelessWidget {
     final state = controller.state;
     final winner = state.gameData.winner;
     final spies = state.players.where((p) => p.role == Role.spy).toList();
+    final l10n = context.l10n;
 
     return Center(
       child: Column(
@@ -507,7 +516,9 @@ class _ResultView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            winner == Role.spy ? 'Spies win' : 'Civilians win',
+            winner == Role.spy
+                ? l10n.text('spiesWin')
+                : l10n.text('civiliansWinResult'),
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: winner == Role.spy
                       ? Colors.redAccent
@@ -516,7 +527,7 @@ class _ResultView extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 12),
-          Text('Secret location: ${state.gameData.currentLocation}'),
+          Text(l10n.secretLocationReveal(state.gameData.currentLocation)),
           const SizedBox(height: 24),
           Card(
             child: Padding(
@@ -524,8 +535,8 @@ class _ResultView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Spies',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(l10n.text('spiesHeader'),
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   ...spies.map((spy) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -545,9 +556,9 @@ class _ResultView extends StatelessWidget {
                                       Colors.redAccent.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Text(
-                                  'Caught',
-                                  style: TextStyle(
+                                child: Text(
+                                  l10n.text('caught'),
+                                  style: const TextStyle(
                                       color: Colors.redAccent, fontSize: 12),
                                 ),
                               ),
@@ -566,7 +577,7 @@ class _ResultView extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: controller.resetGame,
                   icon: const Icon(Icons.replay_outlined),
-                  label: const Text('Play again'),
+                  label: Text(l10n.text('playAgain')),
                   style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(52)),
                 ),
@@ -575,7 +586,7 @@ class _ResultView extends StatelessWidget {
                   onPressed: () => Navigator.of(context)
                       .pushNamedAndRemoveUntil('/', (route) => false),
                   icon: const Icon(Icons.home_outlined),
-                  label: const Text('Back to menu'),
+                  label: Text(l10n.text('backToMenu')),
                   style: OutlinedButton.styleFrom(
                       minimumSize: const Size.fromHeight(52)),
                 ),

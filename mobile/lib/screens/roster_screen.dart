@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../widgets/notifier.dart';
 
@@ -31,29 +32,29 @@ class _AgentRosterScreenState extends State<AgentRosterScreen> {
   }
 
   void _save() {
+    final l10n = context.l10n;
     final names = _controllers.map((c) => c.text.trim()).toList();
     for (final name in names) {
       if (name.isEmpty) {
-        Notifier.show(context, 'All players need a codename.', error: true);
+        Notifier.show(context, l10n.text('codeNameRequired'), error: true);
         return;
       }
       if (name.length > 16) {
-        Notifier.show(context, 'Max 16 characters per name.', error: true);
+        Notifier.show(context, l10n.text('maxNameLength'), error: true);
         return;
       }
       if (!RegExp(r'^[a-zA-ZçÇğĞıİöÖşŞüÜ\s]+$').hasMatch(name)) {
-        Notifier.show(context, 'Names can only contain letters and spaces.',
-            error: true);
+        Notifier.show(context, l10n.text('lettersOnly'), error: true);
         return;
       }
       if (containsProfanity(name)) {
-        Notifier.show(context, '"$name" is not allowed.', error: true);
+        Notifier.show(context, l10n.nameNotAllowed(name), error: true);
         return;
       }
     }
     final unique = names.toSet();
     if (unique.length != names.length) {
-      Notifier.show(context, 'Duplicate names are not allowed.', error: true);
+      Notifier.show(context, l10n.text('noDuplicates'), error: true);
       return;
     }
 
@@ -64,11 +65,11 @@ class _AgentRosterScreenState extends State<AgentRosterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agent Roster'),
+        title: Text(context.l10n.text('agentRoster')),
         actions: [
           TextButton(
             onPressed: _save,
-            child: const Text('Save'),
+            child: Text(context.l10n.text('save')),
           ),
         ],
       ),
@@ -89,7 +90,7 @@ class _AgentRosterScreenState extends State<AgentRosterScreen> {
                   backgroundColor: Colors.white.withValues(alpha: 0.1),
                   child: Text('${index + 1}'),
                 ),
-                hintText: 'Agent ${index + 1}',
+                hintText: context.l10n.agentHint(index),
               ),
               onChanged: (_) => setState(() {}),
             ),
@@ -99,7 +100,7 @@ class _AgentRosterScreenState extends State<AgentRosterScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _save,
         icon: const Icon(Icons.check),
-        label: const Text('Save Roster'),
+        label: Text(context.l10n.text('saveRoster')),
       ),
     );
   }

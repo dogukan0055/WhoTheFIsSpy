@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../l10n/spy_localizations.dart';
 import '../state/game_controller.dart';
 import '../widgets/spy_scaffold.dart';
 
@@ -9,22 +10,23 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const pages = [
+    final l10n = context.l10n;
+    final pages = [
       _OnboardPage(
-        title: 'Welcome, Agent',
-        body: 'A spy hides among you. Keep your answers vague, but sharp.',
+        title: l10n.text('welcomeTitle'),
+        body: l10n.text('welcomeBody'),
       ),
       _OnboardPage(
-        title: 'Reveal in Secret',
-        body: 'Pass the device and scan to reveal your identity. No peeking.',
+        title: l10n.text('secretTitle'),
+        body: l10n.text('secretBody'),
       ),
       _OnboardPage(
-        title: 'Interrogate & Vote',
-        body: 'Ask pointed questions, call a vote, and catch the impostor.',
+        title: l10n.text('interrogateTitle'),
+        body: l10n.text('interrogateBody'),
       ),
     ];
 
-    return const SpyScaffold(
+    return SpyScaffold(
       scrollable: false,
       child: _Pager(pages: pages),
     );
@@ -50,6 +52,7 @@ class _PagerState extends State<_Pager> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Column(
       children: [
         Align(
@@ -57,7 +60,7 @@ class _PagerState extends State<_Pager> {
           child: index < widget.pages.length - 1
               ? TextButton(
                   onPressed: () => _finish(context),
-                  child: const Text('Skip'),
+                  child: Text(l10n.text('skip')),
                 )
               : const SizedBox.shrink(),
         ),
@@ -99,8 +102,9 @@ class _PagerState extends State<_Pager> {
                     curve: Curves.easeOut);
               }
             },
-            child: Text(
-                index == widget.pages.length - 1 ? 'Enter Mission' : 'Next'),
+            child: Text(index == widget.pages.length - 1
+                ? l10n.text('enterMission')
+                : l10n.text('next')),
           ),
         ),
       ],
