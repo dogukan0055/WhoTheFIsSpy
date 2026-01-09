@@ -276,6 +276,7 @@ class GameController extends ChangeNotifier {
     _state = _state.copyWith(
       phase: GamePhase.playing,
       gameData: _state.gameData.copyWith(timeLeft: nextTime),
+      isPaused: false,
     );
     _startTimerIfNeeded();
     notifyListeners();
@@ -284,13 +285,19 @@ class GameController extends ChangeNotifier {
   void startVoting() {
     _stopTimer();
     final resetVotes = _state.players.map((p) => p.copyWith(votes: 0)).toList();
-    _state = _state.copyWith(phase: GamePhase.voting, players: resetVotes);
+    _state = _state.copyWith(
+      phase: GamePhase.voting,
+      players: resetVotes,
+      isPaused: false,
+    );
     notifyListeners();
   }
 
   void pauseGame() {
     if (_state.phase != GamePhase.playing) return;
     _stopTimer();
+    _state = _state.copyWith(isPaused: true);
+    notifyListeners();
   }
 
   void playClick() {
@@ -380,7 +387,7 @@ class GameController extends ChangeNotifier {
   }
 
   void _startTimerIfNeeded() {
-    if (!_state.settings.isTimerOn) return;
+    if (!_state.settings.isTimerOn || _state.isPaused) return;
     _stopTimer();
     _startTickSound();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {

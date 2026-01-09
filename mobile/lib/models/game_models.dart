@@ -176,6 +176,7 @@ class GameState {
     required this.phase,
     required this.themeMode,
     required this.language,
+    required this.isPaused,
   });
 
   final GameMode? mode;
@@ -186,6 +187,7 @@ class GameState {
   final GamePhase phase;
   final ThemeMode themeMode;
   final Language language;
+  final bool isPaused;
 
   factory GameState.initial() {
     return GameState(
@@ -214,6 +216,7 @@ class GameState {
       phase: GamePhase.setup,
       themeMode: ThemeMode.dark,
       language: Language.en,
+      isPaused: false,
     );
   }
 
@@ -226,6 +229,7 @@ class GameState {
     GamePhase? phase,
     ThemeMode? themeMode,
     Language? language,
+    bool? isPaused,
   }) {
     return GameState(
       mode: mode ?? this.mode,
@@ -236,6 +240,7 @@ class GameState {
       phase: phase ?? this.phase,
       themeMode: themeMode ?? this.themeMode,
       language: language ?? this.language,
+      isPaused: isPaused ?? this.isPaused,
     );
   }
 }

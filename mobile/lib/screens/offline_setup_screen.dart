@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +19,7 @@ class OfflineSetupScreen extends StatefulWidget {
 
 class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
   final List<TextEditingController> _controllers = [];
+  Timer? _holdTimer;
 
   @override
   void initState() {
@@ -39,6 +42,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
     for (final c in _controllers) {
       c.dispose();
     }
+    _stopHold();
     super.dispose();
   }
 
@@ -65,11 +69,6 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
 
   void _changeSpyCount(GameController controller, int next) {
     controller.updateSettings(spyCount: next);
-    setState(() {});
-  }
-
-  void _changeTimer(GameController controller, int minutes) {
-    controller.updateSettings(timerDuration: minutes);
     setState(() {});
   }
 
@@ -111,6 +110,25 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
 
   void _showMessage(String text) {
     Notifier.show(context, text, error: true);
+  }
+
+  void _adjustTimer(GameController controller, int delta) {
+    final next = (controller.state.settings.timerDuration + delta).clamp(5, 30);
+    controller.updateSettings(timerDuration: next);
+    setState(() {});
+  }
+
+  void _startHold(GameController controller, int delta) {
+    _holdTimer?.cancel();
+    _holdTimer = Timer.periodic(
+      const Duration(milliseconds: 120),
+      (_) => _adjustTimer(controller, delta),
+    );
+  }
+
+  void _stopHold() {
+    _holdTimer?.cancel();
+    _holdTimer = null;
   }
 
   @override
@@ -210,34 +228,97 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              const Icon(Icons.schedule_outlined,
+                                  color: Colors.white70),
+                              const SizedBox(width: 8),
                               Text(
                                 l10n.text('missionTimer'),
                                 style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              Switch(
-                                value: settings.isTimerOn,
-                                onChanged: (val) {
-                                  controller.playClick();
-                                  controller.updateSettings(isTimerOn: val);
-                                },
-                              ),
+                            ],
+                          ),
+                          Switch(
+                            value: settings.isTimerOn,
+                            onChanged: (val) {
+                              controller.playClick();
+                              controller.updateSettings(isTimerOn: val);
+                            },
+                          ),
                         ],
                       ),
                       if (settings.isTimerOn) ...[
                         const SizedBox(height: 12),
-                        Slider(
-                          value: settings.timerDuration.toDouble(),
-                          min: 5,
-                          max: 30,
-                          divisions: 25,
-                          label: l10n.language == Language.tr
-                              ? '${settings.timerDuration} dk'
-                              : '${settings.timerDuration} min',
-                          onChanged: (val) =>
-                              _changeTimer(controller, val.round()),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                l10n.text('timerRange'),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(color: Colors.white70),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onLongPressStart: (_) {
+                                    controller.playClick();
+                                    _startHold(controller, -1);
+                                  },
+                                  onLongPressEnd: (_) => _stopHold(),
+                                  child: IconButton(
+                                    onPressed: settings.timerDuration > 5
+                                        ? () {
+                                            controller.playClick();
+                                            _adjustTimer(controller, -1);
+                                          }
+                                        : null,
+                                    icon: const Icon(Icons.remove_circle_outline),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                        color:
+                                            Colors.white.withValues(alpha: 0.2)),
+                                  ),
+                                  child: Text(
+                                    '${settings.timerDuration} ${l10n.language == Language.tr ? 'dk' : 'min'}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onLongPressStart: (_) {
+                                    controller.playClick();
+                                    _startHold(controller, 1);
+                                  },
+                                  onLongPressEnd: (_) => _stopHold(),
+                                  child: IconButton(
+                                    onPressed: settings.timerDuration < 30
+                                        ? () {
+                                            controller.playClick();
+                                            _adjustTimer(controller, 1);
+                                          }
+                                        : null,
+                                    icon: const Icon(Icons.add_circle_outline),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                         Text(
                           l10n.timerLength(settings.timerDuration),

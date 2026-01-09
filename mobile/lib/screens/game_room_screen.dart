@@ -11,8 +11,87 @@ import '../state/game_controller.dart';
 import '../widgets/notifier.dart';
 import '../widgets/spy_scaffold.dart';
 
-class GameRoomScreen extends StatelessWidget {
+class GameRoomScreen extends StatefulWidget {
   const GameRoomScreen({super.key});
+
+  @override
+  State<GameRoomScreen> createState() => _GameRoomScreenState();
+}
+
+class _GameRoomScreenState extends State<GameRoomScreen>
+    with WidgetsBindingObserver {
+  bool _autoPaused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted) return;
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      final controller = context.read<GameController>();
+      if (controller.state.phase == GamePhase.playing) {
+        controller.pauseGame();
+        _autoPaused = true;
+      }
+    } else if (state == AppLifecycleState.resumed && _autoPaused) {
+      final controller = context.read<GameController>();
+      if (controller.state.phase == GamePhase.playing) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          controller.pauseGame();
+          showDialog(
+            context: context,
+            builder: (ctx) {
+              final l10n = context.l10n;
+              return BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                child: AlertDialog(
+                  title: Text(l10n.text('pauseTitle')),
+                  content: Text(l10n.text('autoPaused')),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        controller.playClick();
+                        Navigator.of(ctx).pop();
+                        controller.startPlaying();
+                      },
+                      child: Text(l10n.text('continue')),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        controller.playClick();
+                        controller.resetGame();
+                        Navigator.of(ctx).pop();
+                        Navigator.of(context)
+                            .pushNamedAndRemoveUntil('/', (route) => false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent),
+                      child: Text(l10n.text('mainMenu')),
+                    ),
+                  ],
+                ),
+              );
+            },
+            barrierDismissible: false,
+          );
+        });
+      }
+      _autoPaused = false;
+    }
+    super.didChangeAppLifecycleState(state);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -550,7 +629,8 @@ class _DiscussionViewState extends State<_DiscussionView> {
     );
   }
 
-  void _showPauseDialog(BuildContext context, GameController controller) {
+  void _showPauseDialog(BuildContext context, GameController controller,
+      {String? overrideMessage}) {
     final l10n = context.l10n;
     controller.pauseGame();
     showDialog(
@@ -560,7 +640,8 @@ class _DiscussionViewState extends State<_DiscussionView> {
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: AlertDialog(
             title: Text(l10n.text('pauseTitle')),
-            content: Text(l10n.text('pauseSubtitle')),
+            content: Text(
+                overrideMessage ?? l10n.text('pauseSubtitle')),
             actions: [
               TextButton(
                 onPressed: () {
