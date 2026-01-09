@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/spy_localizations.dart';
@@ -169,6 +170,7 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
           ElevatedButton(
             onPressed: revealed
                 ? () {
+                    controller.playClick();
                     if (isLast) {
                       controller.startPlaying();
                     } else {
@@ -286,8 +288,15 @@ class _RoleCardBody extends StatelessWidget {
   }
 }
 
-class _DiscussionView extends StatelessWidget {
+class _DiscussionView extends StatefulWidget {
   const _DiscussionView();
+
+  @override
+  State<_DiscussionView> createState() => _DiscussionViewState();
+}
+
+class _DiscussionViewState extends State<_DiscussionView> {
+  int? _lastTime;
 
   String _format(int seconds) {
     final m = (seconds ~/ 60).toString().padLeft(2, '0');
@@ -304,6 +313,8 @@ class _DiscussionView extends StatelessWidget {
     final agentsActive =
         state.players.where((p) => p.role == Role.agent && !p.isDead).length;
     final l10n = context.l10n;
+
+    _handleTimerFeedback(state, controller, l10n);
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -348,7 +359,7 @@ class _DiscussionView extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
             children: [
-              if (state.phase == GamePhase.voting)
+              if (state.settings.isTimerOn && state.phase == GamePhase.voting)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(
@@ -377,14 +388,20 @@ class _DiscussionView extends StatelessWidget {
         Column(
           children: [
             ElevatedButton.icon(
-              onPressed: controller.startVoting,
+              onPressed: () {
+                controller.playClick();
+                controller.startVoting();
+              },
               icon: const Icon(Icons.how_to_vote),
               label: Text(l10n.text('callVote')),
               style: ElevatedButton.styleFrom(minimumSize: const Size(240, 52)),
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: () => _showPauseDialog(context, controller),
+              onPressed: () {
+                controller.playClick();
+                _showPauseDialog(context, controller);
+              },
               icon: const Icon(Icons.pause_circle_outline),
               label: Text(l10n.text('pause')),
               style: OutlinedButton.styleFrom(
@@ -394,7 +411,10 @@ class _DiscussionView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
-              onPressed: () => _confirmExit(context, controller),
+              onPressed: () {
+                controller.playClick();
+                _confirmExit(context, controller);
+              },
               icon: const Icon(Icons.logout),
               label: Text(l10n.text('mainMenu')),
               style: ElevatedButton.styleFrom(
@@ -406,6 +426,35 @@ class _DiscussionView extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _handleTimerFeedback(
+      GameState state, GameController controller, SpyLocalizations l10n) {
+    final time = state.gameData.timeLeft;
+    if (!state.settings.isTimerOn || state.phase != GamePhase.playing) {
+      _lastTime = time;
+      return;
+    }
+    if (_lastTime == time) return;
+    final app = state.appSettings;
+    String? message;
+    final initialSeconds = state.settings.timerDuration * 60;
+    if (time > 0 && time % 60 == 0 && time != initialSeconds) {
+      final minutes = (time ~/ 60);
+      message = minutes == 1
+          ? l10n.text('minuteRemaining')
+          : l10n.text('minutesRemaining').replaceAll('{minutes}', '$minutes');
+      if (app.vibrate) HapticFeedback.vibrate();
+    }
+    if (time <= 10 && time > 0 && app.vibrate) {
+      HapticFeedback.vibrate();
+    }
+    if (message != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Notifier.show(context, message!, warning: true);
+      });
+    }
+    _lastTime = time;
   }
 
   void _confirmExit(BuildContext context, GameController controller) {
@@ -422,6 +471,7 @@ class _DiscussionView extends StatelessWidget {
             actions: [
               TextButton(
                 onPressed: () {
+                  controller.playClick();
                   Navigator.of(ctx).pop();
                   if (controller.state.phase == GamePhase.playing) {
                     controller.startPlaying();
@@ -431,6 +481,7 @@ class _DiscussionView extends StatelessWidget {
               ),
               ElevatedButton.icon(
                 onPressed: () {
+                  controller.playClick();
                   controller.resetGame();
                   Navigator.of(ctx).pop();
                   Navigator.of(context)
@@ -450,6 +501,7 @@ class _DiscussionView extends StatelessWidget {
 
   void _showPauseDialog(BuildContext context, GameController controller) {
     final l10n = context.l10n;
+    final state = controller.state;
     controller.pauseGame();
     showDialog(
       context: context,
@@ -457,11 +509,14 @@ class _DiscussionView extends StatelessWidget {
         return BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: AlertDialog(
-            title: Text(l10n.text('pause')),
-            content: Text(l10n.text('timerPaused')),
+            title: Text(l10n.text('pauseTitle')),
+            content: Text(state.settings.isTimerOn
+                ? l10n.text('timerPaused')
+                : l10n.text('pause')),
             actions: [
               TextButton(
                 onPressed: () {
+                  controller.playClick();
                   Navigator.of(ctx).pop();
                   controller.startPlaying();
                 },
@@ -469,6 +524,7 @@ class _DiscussionView extends StatelessWidget {
               ),
               ElevatedButton(
                 onPressed: () {
+                  controller.playClick();
                   controller.resetGame();
                   Navigator.of(ctx).pop();
                   Navigator.of(context)
@@ -516,16 +572,18 @@ class _VotingViewState extends State<_VotingView> {
                 ?.copyWith(color: Colors.redAccent),
           ),
         ),
-        const SizedBox(height: 8),
-        Center(
-          child: Text(
-            l10n.text('timerPaused'),
-            style: Theme.of(context)
-                .textTheme
-                .labelLarge
-                ?.copyWith(color: Colors.orangeAccent),
+        if (controller.state.settings.isTimerOn) ...[
+          const SizedBox(height: 8),
+          Center(
+            child: Text(
+              l10n.text('timerPaused'),
+              style: Theme.of(context)
+                  .textTheme
+                  .labelLarge
+                  ?.copyWith(color: Colors.orangeAccent),
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 16),
         Expanded(
           child: ListView.separated(
@@ -556,7 +614,10 @@ class _VotingViewState extends State<_VotingView> {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => controller.startPlaying(),
+                onPressed: () {
+                  controller.playClick();
+                  controller.startPlaying();
+                },
                 child: Text(l10n.text('cancel')),
               ),
             ),
@@ -566,6 +627,7 @@ class _VotingViewState extends State<_VotingView> {
                 onPressed: selected == null
                     ? null
                     : () {
+                        controller.playClick();
                         controller.eliminatePlayer(selected!);
                         setState(() => selected = null);
                       },
@@ -663,7 +725,8 @@ class _ResultView extends StatelessWidget {
             child: Column(
               children: [
                 ElevatedButton.icon(
-                onPressed: () {
+                  onPressed: () {
+                    controller.playClick();
                     final error = controller.restartGameWithSameSettings();
                     if (error != null) {
                       Notifier.show(context, error, error: true);
@@ -676,8 +739,11 @@ class _ResultView extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/', (route) => false),
+                  onPressed: () {
+                    controller.playClick();
+                    Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/', (route) => false);
+                  },
                   icon: const Icon(Icons.home_outlined),
                   label: Text(l10n.text('backToMenu')),
                   style: OutlinedButton.styleFrom(

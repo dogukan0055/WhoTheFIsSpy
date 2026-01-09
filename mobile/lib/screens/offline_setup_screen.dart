@@ -125,7 +125,10 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
           appBar: AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                context.read<GameController>().playClick();
+                Navigator.of(context).pop();
+              },
             ),
             backgroundColor: Colors.transparent,
             surfaceTintColor: Colors.transparent,
@@ -136,7 +139,10 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
           bottom: SafeArea(
             minimum: const EdgeInsets.fromLTRB(16, 0, 16, 28),
             child: ElevatedButton.icon(
-              onPressed: () => _startGame(controller),
+              onPressed: () {
+                controller.playClick();
+                _startGame(controller);
+              },
               icon: const Icon(Icons.play_arrow_rounded),
               label: Text(l10n.text('startMission')),
               style: ElevatedButton.styleFrom(
@@ -175,6 +181,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                 padding: const EdgeInsets.only(top: 12),
                 child: OutlinedButton.icon(
                   onPressed: () async {
+                    controller.playClick();
                     final result = await Navigator.of(context).push<List<String>>(
                       MaterialPageRoute(
                         builder: (_) => AgentRosterScreen(
@@ -212,8 +219,10 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                               ),
                               Switch(
                                 value: settings.isTimerOn,
-                                onChanged: (val) =>
-                                    controller.updateSettings(isTimerOn: val),
+                                onChanged: (val) {
+                                  controller.playClick();
+                                  controller.updateSettings(isTimerOn: val);
+                                },
                               ),
                         ],
                       ),
@@ -247,8 +256,10 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                         ),
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
-                        onPressed: () =>
-                            Navigator.of(context).pushNamed('/locations'),
+                        onPressed: () {
+                          controller.playClick();
+                          Navigator.of(context).pushNamed('/locations');
+                        },
                         icon: const Icon(Icons.map_outlined),
                         label: Text(l10n.text('manageLocations')),
                       ),
@@ -301,7 +312,10 @@ class _CounterTile extends StatelessWidget {
                   children: [
                     IconButton(
                       onPressed: (!locked && value > min)
-                          ? () => onChanged(value - 1)
+                          ? () {
+                              context.read<GameController>().playClick();
+                              onChanged(value - 1);
+                            }
                           : null,
                       icon: const Icon(Icons.remove_circle_outline),
                     ),
@@ -310,7 +324,10 @@ class _CounterTile extends StatelessWidget {
                             fontWeight: FontWeight.w800, fontSize: 18)),
                     IconButton(
                       onPressed: (!locked && value < max)
-                          ? () => onChanged(value + 1)
+                          ? () {
+                              context.read<GameController>().playClick();
+                              onChanged(value + 1);
+                            }
                           : null,
                       icon: const Icon(Icons.add_circle_outline),
                     ),

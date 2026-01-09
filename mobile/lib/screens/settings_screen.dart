@@ -20,7 +20,10 @@ class SettingsScreen extends StatelessWidget {
           appBar: AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                context.read<GameController>().playClick();
+                Navigator.of(context).pop();
+              },
             ),
             title: Text(l10n.text('systemConfig')),
           ),
@@ -33,6 +36,7 @@ class SettingsScreen extends StatelessWidget {
                 value: app.sound,
                 iconOn: Icons.volume_up,
                 iconOff: Icons.volume_off,
+                playClick: false,
                 onChanged: () => controller.toggleAppSetting('sound'),
               ),
               _SettingTile(
@@ -99,6 +103,7 @@ class _SettingTile extends StatelessWidget {
     required this.iconOn,
     required this.iconOff,
     required this.onChanged,
+    this.playClick = true,
   });
 
   final String title;
@@ -107,15 +112,22 @@ class _SettingTile extends StatelessWidget {
   final IconData iconOn;
   final IconData iconOff;
   final VoidCallback onChanged;
+  final bool playClick;
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.read<GameController>();
     return Card(
       child: ListTile(
         leading: Icon(value ? iconOn : iconOff),
         title: Text(title),
         subtitle: Text(subtitle),
-        trailing: Switch(value: value, onChanged: (_) => onChanged()),
+        trailing: Switch(
+            value: value,
+            onChanged: (_) {
+              if (playClick) controller.playClick();
+              onChanged();
+            }),
       ),
     );
   }
@@ -136,6 +148,7 @@ class _LanguageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = context.read<GameController>();
     return Card(
       child: ListTile(
         leading: Text(
@@ -153,8 +166,10 @@ class _LanguageTile extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 40, minWidth: 52),
           onPressed: (index) {
             if (index == 0 && current != Language.en) {
+              controller.playClick();
               onChanged(Language.en);
             } else if (index == 1 && current != Language.tr) {
+              controller.playClick();
               onChanged(Language.tr);
             }
           },

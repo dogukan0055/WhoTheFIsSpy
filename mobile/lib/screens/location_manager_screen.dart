@@ -64,22 +64,28 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
           appBar: AppBar(
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                context.read<GameController>().playClick();
+                Navigator.of(context).pop();
+              },
             ),
             title: Text(l10n.text('locationDb')),
             actions: [
               IconButton(
                 icon: const Icon(Icons.add),
                 tooltip: l10n.text('addCategory'),
-                onPressed: () => _showInputDialog(
-                  context: context,
-                  title: l10n.text('newCategory'),
-                  hint: l10n.text('categoryHint'),
-                  onSubmit: (value) {
-                    if (value.isEmpty) return;
-                    controller.addCategory(value);
-                  },
-                ),
+                onPressed: () {
+                  controller.playClick();
+                  _showInputDialog(
+                    context: context,
+                    title: l10n.text('newCategory'),
+                    hint: l10n.text('categoryHint'),
+                    onSubmit: (value) {
+                      if (value.isEmpty) return;
+                      controller.addCategory(value);
+                    },
+                  );
+                },
               ),
             ],
           ),
@@ -121,6 +127,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                         leading: Checkbox(
                           value: isSelected,
                           onChanged: (_) {
+                            controller.playClick();
                             if (isEmpty || activeLocations == 0) {
                               Notifier.show(context, l10n.text('needActiveLocation'),
                                   error: true);
@@ -133,7 +140,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                   error: true);
                               return;
                             }
-                            controller.toggleCategory(cat.id);
+                              controller.toggleCategory(cat.id);
                           },
                         ),
                         trailing: Row(
@@ -144,6 +151,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                   ? Icons.expand_less
                                   : Icons.expand_more),
                               onPressed: () {
+                                controller.playClick();
                                 setState(() => _expanded[cat.id] = !expanded);
                               },
                             ),
@@ -151,8 +159,10 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
                                     color: Colors.redAccent),
-                                onPressed: () =>
-                                    controller.deleteCategory(cat.id),
+                                onPressed: () {
+                                  controller.playClick();
+                                  controller.deleteCategory(cat.id);
+                                },
                               ),
                           ],
                         ),
@@ -180,6 +190,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                       Switch(
                                         value: !disabled,
                                         onChanged: (val) {
+                                          controller.playClick();
                                           controller.toggleLocation(
                                               cat.id, loc, val);
                                         },
@@ -188,8 +199,11 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                         IconButton(
                                           icon:
                                               const Icon(Icons.delete_outline),
-                                          onPressed: () => controller
-                                              .removeLocation(cat.id, loc),
+                                          onPressed: () {
+                                            controller.playClick();
+                                            controller
+                                                .removeLocation(cat.id, loc);
+                                          },
                                         )
                                       else
                                         const Icon(Icons.lock_outline,
@@ -202,15 +216,18 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8),
                                   child: OutlinedButton.icon(
-                                    onPressed: () => _showInputDialog(
-                                      context: context,
-                                      title: l10n.addLocationTo(cat.name),
-                                      hint: l10n.text('locationHint'),
-                                      onSubmit: (value) {
-                                        if (value.isEmpty) return;
-                                        controller.addLocation(cat.id, value);
-                                      },
-                                    ),
+                                    onPressed: () {
+                                      controller.playClick();
+                                      _showInputDialog(
+                                        context: context,
+                                        title: l10n.addLocationTo(cat.name),
+                                        hint: l10n.text('locationHint'),
+                                        onSubmit: (value) {
+                                          if (value.isEmpty) return;
+                                          controller.addLocation(cat.id, value);
+                                        },
+                                      );
+                                    },
                                     icon: const Icon(
                                         Icons.add_location_alt_outlined),
                                     label: Text(l10n.text('addLocation')),

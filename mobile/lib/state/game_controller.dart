@@ -21,6 +21,9 @@ class GameController extends ChangeNotifier {
     ..setReleaseMode(ReleaseMode.stop);
   final AudioPlayer _musicPlayer = AudioPlayer()
     ..setReleaseMode(ReleaseMode.loop);
+  final AudioPlayer _tickPlayer = AudioPlayer()
+    ..setReleaseMode(ReleaseMode.loop);
+  bool _tickPlaying = false;
   List<String> _savedNames = [];
   bool _seenOnboarding = false;
 
@@ -290,6 +293,10 @@ class GameController extends ChangeNotifier {
     _stopTimer();
   }
 
+  void playClick() {
+    _playClick();
+  }
+
   void eliminatePlayer(String playerId) {
     final eliminated = _state.players.firstWhere((p) => p.id == playerId);
     final updatedPlayers = _state.players
@@ -375,6 +382,7 @@ class GameController extends ChangeNotifier {
   void _startTimerIfNeeded() {
     if (!_state.settings.isTimerOn) return;
     _stopTimer();
+    _startTickSound();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_state.gameData.timeLeft <= 0) {
         timer.cancel();
@@ -382,6 +390,7 @@ class GameController extends ChangeNotifier {
           phase: GamePhase.result,
           gameData: _state.gameData.copyWith(winner: Role.spy),
         );
+        _stopTickSound();
         notifyListeners();
         return;
       }
@@ -396,6 +405,7 @@ class GameController extends ChangeNotifier {
   void _stopTimer() {
     _timer?.cancel();
     _timer = null;
+    _stopTickSound();
   }
 
   void toggleCategory(String id) {
@@ -514,6 +524,21 @@ class GameController extends ChangeNotifier {
     } else {
       _musicPlayer.stop();
     }
+  }
+
+  void _startTickSound() {
+    if (!_state.appSettings.sound || !_state.settings.isTimerOn) return;
+    if (_tickPlaying) return;
+    _tickPlaying = true;
+    _tickPlayer
+        .setSourceAsset('audio/tick.mp3')
+        .then((_) => _tickPlayer.resume());
+  }
+
+  void _stopTickSound() {
+    if (!_tickPlaying) return;
+    _tickPlayer.stop();
+    _tickPlaying = false;
   }
 
   Language? _languageFromString(String? name) {

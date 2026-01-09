@@ -20,6 +20,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final controller = context.read<GameController>();
     final l10n = context.l10n;
 
     return SpyScaffold(
@@ -33,7 +34,10 @@ class HomeScreen extends StatelessWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.settings_outlined),
-                onPressed: () => Navigator.of(context).pushNamed('/settings'),
+                onPressed: () {
+                  controller.playClick();
+                  Navigator.of(context).pushNamed('/settings');
+                },
               ),
             ],
           ),
@@ -75,7 +79,10 @@ class HomeScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               minimumSize: const Size.fromHeight(58),
             ),
-            onPressed: () => _goTo(context, '/setup', GameMode.offline),
+            onPressed: () {
+              controller.playClick();
+              _goTo(context, '/setup', GameMode.offline);
+            },
             icon: const Icon(Icons.phone_android),
             label: Text(l10n.text('offlineMode')),
           ),
@@ -85,6 +92,7 @@ class HomeScreen extends StatelessWidget {
               minimumSize: const Size.fromHeight(58),
             ),
             onPressed: () {
+              controller.playClick();
               Notifier.show(context, l10n.text('onlineComing'), warning: true);
             },
             icon: const Icon(Icons.wifi_off_outlined),

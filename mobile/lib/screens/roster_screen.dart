@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
+import '../state/game_controller.dart';
 import '../widgets/notifier.dart';
 
 class AgentRosterScreen extends StatefulWidget {
@@ -33,6 +35,7 @@ class _AgentRosterScreenState extends State<AgentRosterScreen> {
 
   void _save() {
     final l10n = context.l10n;
+    context.read<GameController>().playClick();
     final names = _controllers.map((c) => c.text.trim()).toList();
     for (final name in names) {
       if (name.isEmpty) {
