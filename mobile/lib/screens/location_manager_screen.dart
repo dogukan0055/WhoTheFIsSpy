@@ -16,6 +16,23 @@ class LocationManagerScreen extends StatefulWidget {
 
 class _LocationManagerScreenState extends State<LocationManagerScreen> {
   final Map<String, bool> _expanded = {};
+  late List<Category> _categories;
+  late List<String> _selectedCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = context.read<GameController>().state;
+    _categories = state.gameData.categories
+        .map(
+          (c) => c.copyWith(
+            locations: List<String>.from(c.locations),
+            disabledLocations: List<String>.from(c.disabledLocations),
+          ),
+        )
+        .toList();
+    _selectedCategories = List<String>.from(state.settings.selectedCategories);
+  }
 
   void _showInputDialog({
     required BuildContext context,
@@ -32,6 +49,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
           title: Text(title),
           content: TextField(
             controller: controller,
+            textCapitalization: TextCapitalization.words,
+            maxLength: 16,
             decoration: InputDecoration(hintText: hint),
           ),
           actions: [
@@ -56,7 +75,6 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
   Widget build(BuildContext context) {
     return Consumer<GameController>(
       builder: (context, controller, _) {
-        final state = controller.state;
         final colorScheme = Theme.of(context).colorScheme;
         final l10n = context.l10n;
 
@@ -82,7 +100,24 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                     hint: l10n.text('categoryHint'),
                     onSubmit: (value) {
                       if (value.isEmpty) return;
-                      controller.addCategory(value);
+                      if (value.length > 16) {
+                        Notifier.show(context, l10n.text('max16'),
+                            warning: true);
+                        return;
+                      }
+                      final id = value
+                          .toLowerCase()
+                          .replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+                      setState(() {
+                        _categories.add(Category(
+                          id: id,
+                          name: value,
+                          icon: 'Folder',
+                          locations: [],
+                          disabledLocations: const [],
+                        ));
+                        _expanded[id] = true;
+                      });
                     },
                   );
                 },
@@ -92,9 +127,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
           child: Column(
             children: [
               const SizedBox(height: 12),
-              ...state.gameData.categories.map((cat) {
-                final isSelected =
-                    state.settings.selectedCategories.contains(cat.id);
+              ..._categories.map((cat) {
+                final isSelected = _selectedCategories.contains(cat.id);
                 final isCore = initialCategories.any((c) => c.id == cat.id);
                 final expanded = _expanded[cat.id] ?? false;
                 final isEmpty = cat.locations.isEmpty;
@@ -102,16 +136,20 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                     .where((loc) => !cat.disabledLocations.contains(loc))
                     .length;
 
+                final isPartial =
+                    activeLocations > 0 && activeLocations < cat.locations.length;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.02),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: isSelected
-                          ? colorScheme.primary
-                          : Colors.white.withValues(alpha: 0.08),
-                      width: 1,
+                      color: isPartial
+                          ? Colors.orangeAccent
+                          : isSelected
+                              ? colorScheme.primary
+                              : Colors.white.withValues(alpha: 0.08),
+                      width: isPartial ? 2 : 1.5,
                     ),
                   ),
                   child: Column(
@@ -121,26 +159,49 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(
-                          l10n.activeCount(activeLocations, cat.locations.length),
+                          l10n.activeCount(
+                              activeLocations, cat.locations.length),
                           style: const TextStyle(color: Colors.white70),
                         ),
                         leading: Checkbox(
+                          checkColor: Colors.white,
+                          activeColor: isPartial
+                              ? Colors.orangeAccent
+                              : colorScheme.primary,
                           value: isSelected,
                           onChanged: (_) {
                             controller.playClick();
-                            if (isEmpty || activeLocations == 0) {
-                              Notifier.show(context, l10n.text('needActiveLocation'),
-                                  error: true);
-                              return;
-                            }
-                            if (isSelected &&
-                                state.settings.selectedCategories.length == 1) {
+                            if (isEmpty) {
                               Notifier.show(
-                                  context, l10n.text('needCategory'),
+                                  context, l10n.text('needActiveLocation'),
                                   error: true);
                               return;
                             }
-                              controller.toggleCategory(cat.id);
+                            if (isSelected && _selectedCategories.length <= 1) {
+                              Notifier.show(context, l10n.text('needCategory'),
+                                  error: true);
+                              return;
+                            }
+                            setState(() {
+                              if (isSelected) {
+                                _selectedCategories.remove(cat.id);
+                                final idx = _categories
+                                    .indexWhere((c) => c.id == cat.id);
+                                if (idx != -1) {
+                                  _categories[idx] = _categories[idx].copyWith(
+                                      disabledLocations:
+                                          List<String>.from(cat.locations));
+                                }
+                              } else {
+                                _selectedCategories.add(cat.id);
+                                final idx = _categories
+                                    .indexWhere((c) => c.id == cat.id);
+                                if (idx != -1) {
+                                  _categories[idx] = _categories[idx].copyWith(
+                                      disabledLocations: const []);
+                                }
+                              }
+                            });
                           },
                         ),
                         trailing: Row(
@@ -161,11 +222,19 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                     color: Colors.redAccent),
                                 onPressed: () {
                                   controller.playClick();
-                                  controller.deleteCategory(cat.id);
+                                  setState(() {
+                                    _categories.removeWhere(
+                                        (existing) => existing.id == cat.id);
+                                    _selectedCategories.remove(cat.id);
+                                  });
                                 },
                               ),
                           ],
                         ),
+                        onTap: () {
+                          controller.playClick();
+                          setState(() => _expanded[cat.id] = !expanded);
+                        },
                       ),
                       if (expanded)
                         Padding(
@@ -174,44 +243,83 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              ...cat.locations.map((loc) {
-                                final disabled =
-                                    cat.disabledLocations.contains(loc);
-                                final isCoreLoc = initialCategories.any(
-                                    (orig) =>
-                                        orig.id == cat.id &&
-                                        orig.locations.contains(loc));
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  child: Row(
-                                    children: [
-                                      Expanded(child: Text(loc)),
-                                      Switch(
-                                        value: !disabled,
-                                        onChanged: (val) {
-                                          controller.playClick();
-                                          controller.toggleLocation(
-                                              cat.id, loc, val);
-                                        },
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: cat.locations.map((loc) {
+                                  final disabled =
+                                      cat.disabledLocations.contains(loc);
+                                  final activeColor = isPartial
+                                      ? Colors.orangeAccent
+                                      : Theme.of(context).colorScheme.primary;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      controller.playClick();
+                                      setState(() {
+                                        final catIndex = _categories.indexWhere(
+                                           (element) => element.id == cat.id);
+                                       if (catIndex == -1) return;
+                                       final disabledList = List<String>.from(
+                                           _categories[catIndex]
+                                               .disabledLocations);
+                                       if (!disabled) {
+                                         disabledList.add(loc);
+                                       } else {
+                                         disabledList.remove(loc);
+                                       }
+                                       var updatedCat = _categories[catIndex]
+                                           .copyWith(
+                                               disabledLocations:
+                                                   disabledList);
+                                       final activeCount = updatedCat.locations
+                                           .where((l) => !updatedCat
+                                               .disabledLocations
+                                               .contains(l))
+                                           .length;
+                                       if (activeCount == 0) {
+                                         _selectedCategories
+                                             .remove(updatedCat.id);
+                                        } else {
+                                          if (!_selectedCategories
+                                              .contains(updatedCat.id)) {
+                                            _selectedCategories
+                                                .add(updatedCat.id);
+                                          }
+                                        }
+                                       _categories[catIndex] = updatedCat;
+                                     });
+                                   },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          color: disabled
+                                              ? Colors.white
+                                                  .withValues(alpha: 0.08)
+                                              : activeColor
+                                                  .withValues(alpha: 0.18),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: disabled
+                                                ? Colors.white
+                                                    .withValues(alpha: 0.2)
+                                                : activeColor
+                                                    .withValues(alpha: 0.5),
+                                          ),
+                                        ),
+                                      child: Text(
+                                        loc,
+                                        style: TextStyle(
+                                          color: disabled
+                                              ? Colors.white70
+                                              : Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
-                                      if (!isCoreLoc)
-                                        IconButton(
-                                          icon:
-                                              const Icon(Icons.delete_outline),
-                                          onPressed: () {
-                                            controller.playClick();
-                                            controller
-                                                .removeLocation(cat.id, loc);
-                                          },
-                                        )
-                                      else
-                                        const Icon(Icons.lock_outline,
-                                            size: 16, color: Colors.white54),
-                                    ],
-                                  ),
-                                );
-                              }),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                               if (!isCore)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8),
@@ -224,7 +332,25 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                         hint: l10n.text('locationHint'),
                                         onSubmit: (value) {
                                           if (value.isEmpty) return;
-                                          controller.addLocation(cat.id, value);
+                                          if (value.length > 16) {
+                                            Notifier.show(
+                                                context, l10n.text('max16'),
+                                                warning: true);
+                                            return;
+                                          }
+                                          setState(() {
+                                            final catIndex = _categories
+                                                .indexWhere((element) =>
+                                                    element.id == cat.id);
+                                            if (catIndex == -1) return;
+                                            final newLocs = List<String>.from(
+                                                _categories[catIndex]
+                                                    .locations);
+                                            newLocs.add(value);
+                                            _categories[catIndex] =
+                                                _categories[catIndex].copyWith(
+                                                    locations: newLocs);
+                                          });
                                         },
                                       );
                                     },
@@ -240,6 +366,24 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                   ),
                 );
               }),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    controller.playClick();
+                    controller.updateLocations(
+                        categories: _categories,
+                        selectedCategories: _selectedCategories);
+                    Notifier.show(context, l10n.text('locationsSaved'));
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.save_outlined),
+                  label: Text(l10n.text('save')),
+                  style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50)),
+                ),
+              ),
               const SizedBox(height: 24),
             ],
           ),

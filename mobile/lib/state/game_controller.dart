@@ -474,19 +474,51 @@ class GameController extends ChangeNotifier {
   }
 
   void toggleLocation(String categoryId, String location, bool enabled) {
-    final updated = _state.gameData.categories.map((cat) {
-      if (cat.id != categoryId) return cat;
+    List<Category> updatedCats = [];
+    List<String> updatedSelected =
+        List<String>.from(_state.settings.selectedCategories);
+
+    for (final cat in _state.gameData.categories) {
+      if (cat.id != categoryId) {
+        updatedCats.add(cat);
+        continue;
+      }
       final disabled = List<String>.from(cat.disabledLocations);
       if (!enabled) {
         if (!disabled.contains(location)) disabled.add(location);
       } else {
         disabled.remove(location);
       }
-      return cat.copyWith(disabledLocations: disabled);
-    }).toList();
+      final updatedCat = cat.copyWith(disabledLocations: disabled);
+      final activeLocations = updatedCat.locations
+          .where((loc) => !updatedCat.disabledLocations.contains(loc))
+          .length;
+      if (activeLocations == 0) {
+        updatedSelected.remove(cat.id);
+      }
+      updatedCats.add(updatedCat);
+    }
+
     _state = _state.copyWith(
-      gameData: _state.gameData.copyWith(categories: updated),
+      gameData: _state.gameData.copyWith(categories: updatedCats),
+      settings: _state.settings.copyWith(selectedCategories: updatedSelected),
     );
+    notifyListeners();
+  }
+
+  void updateLocations({
+    required List<Category> categories,
+    required List<String> selectedCategories,
+  }) {
+    _state = _state.copyWith(
+      gameData: _state.gameData.copyWith(categories: categories),
+      settings: _state.settings.copyWith(selectedCategories: selectedCategories),
+    );
+    notifyListeners();
+  }
+
+  void saveLocationsSelection() {
+    // Persist categories and selection to state (already held in memory).
     notifyListeners();
   }
 

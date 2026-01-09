@@ -202,7 +202,7 @@ class GameState {
         spyCount: 1,
         isTimerOn: true,
         timerDuration: 5,
-        selectedCategories: ['standard'],
+        selectedCategories: initialCategories.map((c) => c.id).toList(),
       ),
       gameData: GameData(
         currentLocation: '',

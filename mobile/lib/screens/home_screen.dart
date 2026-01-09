@@ -163,6 +163,19 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(l10n.text('spyWins')),
                 Text(l10n.text('agentsWin')),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.swipe_vertical,
+                        size: 18, color: Colors.white70),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.text('swipeHint'),
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
