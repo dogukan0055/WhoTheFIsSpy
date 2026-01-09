@@ -22,6 +22,8 @@ class HomeScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final controller = context.read<GameController>();
     final l10n = context.l10n;
+    final isTurkish = l10n.language == Language.tr;
+    final letterSpacingTight = isTurkish ? 0.1 : -1.1;
 
     return SpyScaffold(
       scrollable: false,
@@ -55,7 +57,7 @@ class HomeScreen extends StatelessWidget {
                   l10n.text('appTitleTop'),
                   style: textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w900,
-                    letterSpacing: -1.5,
+                    letterSpacing: letterSpacingTight,
                   ),
                 ),
                 Text(
@@ -63,7 +65,7 @@ class HomeScreen extends StatelessWidget {
                   style: textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                     color: colorScheme.primary,
-                    letterSpacing: -1.5,
+                    letterSpacing: letterSpacingTight,
                   ),
                 ),
               ],
