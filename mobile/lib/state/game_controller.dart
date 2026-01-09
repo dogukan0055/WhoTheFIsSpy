@@ -546,6 +546,9 @@ class GameController extends ChangeNotifier {
   }
 
   Future<void> _playClick({bool ignorePreference = false}) async {
+    if (_state.appSettings.vibrate) {
+      HapticFeedback.selectionClick();
+    }
     if (!_state.appSettings.sound && !ignorePreference) return;
     await _sfxPlayer.play(AssetSource('audio/click.mp3'), volume: 0.6);
   }

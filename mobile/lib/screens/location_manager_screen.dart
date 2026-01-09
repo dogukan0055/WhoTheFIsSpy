@@ -70,7 +70,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
   void _showInputDialog({
     required BuildContext context,
     required String title,
-    required void Function(String) onSubmit,
+    required bool Function(String) onSubmit,
     String? hint,
   }) {
     final l10n = context.l10n;
@@ -95,8 +95,10 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
               ),
               ElevatedButton(
                 onPressed: () {
-                  onSubmit(controller.text.trim());
-                  Navigator.pop(ctx);
+                  final ok = onSubmit(controller.text.trim());
+                  if (ok) {
+                    Navigator.pop(ctx);
+                  }
                 },
                 child: Text(l10n.text('save')),
               ),
@@ -135,11 +137,16 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                     title: l10n.text('newCategory'),
                     hint: l10n.text('categoryHint'),
                     onSubmit: (value) {
-                      if (value.isEmpty) return;
+                      if (value.isEmpty) {
+                        Notifier.show(
+                            context, l10n.text('nameRequired'),
+                            warning: true);
+                        return false;
+                      }
                       if (value.length > 16) {
                         Notifier.show(context, l10n.text('max16'),
                             warning: true);
-                        return;
+                        return false;
                       }
                       final id = value
                           .toLowerCase()
@@ -159,6 +166,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                             context,
                             l10n.text('addedCategory').replaceAll('{name}', value));
                       });
+                      return true;
                     },
                   );
                 },
@@ -213,7 +221,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                       ListTile(
                         title: Row(
                           mainAxisSize: MainAxisSize.min,
-                        children: [
+                          children: [
                             if (!isCore) ...[
                               Icon(Icons.star_rounded,
                                   size: 16,
@@ -221,9 +229,16 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                       Colors.amberAccent.withValues(alpha: 0.9)),
                               const SizedBox(width: 6),
                             ],
-                            Text(l10n.categoryName(cat.name),
+                            Expanded(
+                              child: Text(
+                                l10n.categoryName(cat.name),
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
+                                    fontWeight: FontWeight.bold),
+                                maxLines: 2,
+                                overflow: TextOverflow.fade,
+                                softWrap: true,
+                              ),
+                            ),
                           ],
                         ),
                         subtitle: Text(
@@ -293,11 +308,17 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                    title: l10n.text('renameCategory'),
                                    hint: cat.name,
                                    onSubmit: (value) {
-                                     if (value.isEmpty || value.length > 16) {
+                                     if (value.isEmpty) {
+                                       Notifier.show(
+                                           context, l10n.text('nameRequired'),
+                                           warning: true);
+                                       return false;
+                                     }
+                                     if (value.length > 16) {
                                        Notifier.show(
                                            context, l10n.text('max16'),
                                            warning: true);
-                                       return;
+                                       return false;
                                      }
                                      setState(() {
                                        final idx = _categories.indexWhere(
@@ -315,6 +336,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                 .text('categoryRenamed')
                                                 .replaceAll('{name}', value));
                                      });
+                                     return true;
                                    },
                                  );
                                },
@@ -397,24 +419,32 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                           .text('renameLocation'),
                                                       hint: loc,
                                                       onSubmit: (value) {
-                                                        if (value.isEmpty ||
-                                                            value.length >
-                                                                16) {
+                                                        if (value.isEmpty) {
+                                                          Notifier.show(
+                                                              context,
+                                                              l10n.text(
+                                                                  'nameRequired'),
+                                                              warning: true);
+                                                          return false;
+                                                        }
+                                                        if (value.length >
+                                                            16) {
                                                           Notifier.show(
                                                               context,
                                                               l10n.text(
                                                                   'max16'),
                                                               warning: true);
-                                                          return;
+                                                          return false;
+                                                        }
+                                                        final catIndex =
+                                                            _categories.indexWhere(
+                                                                (element) =>
+                                                                    element.id ==
+                                                                    cat.id);
+                                                        if (catIndex == -1) {
+                                                          return false;
                                                         }
                                                         setState(() {
-                                                          final catIndex = _categories
-                                                              .indexWhere((element) =>
-                                                                  element.id ==
-                                                                  cat.id);
-                                                          if (catIndex == -1) {
-                                                            return;
-                                                          }
                                                           final newLocs =
                                                               List<String>.from(
                                                                   _categories[
@@ -464,6 +494,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                                       '{name}',
                                                                       value));
                                                         });
+                                                        return true;
                                                       },
                                                     );
                                                   }
@@ -639,22 +670,29 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                     l10n.addLocationTo(cat.name),
                                                 hint: l10n.text('locationHint'),
                                                 onSubmit: (value) {
-                                                  if (value.isEmpty) return;
+                                                  if (value.isEmpty) {
+                                                    Notifier.show(
+                                                      context,
+                                                      l10n.text('nameRequired'),
+                                                      warning: true,
+                                                    );
+                                                    return false;
+                                                  }
                                                   if (value.length > 16) {
                                                     Notifier.show(
                                                       context,
                                                       l10n.text('max16'),
                                                       warning: true,
                                                     );
-                                                    return;
+                                                    return false;
+                                                  }
+                                                  final catIndex = _categories
+                                                      .indexWhere((element) =>
+                                                          element.id == cat.id);
+                                                  if (catIndex == -1) {
+                                                    return false;
                                                   }
                                                   setState(() {
-                                                    final catIndex =
-                                                        _categories.indexWhere(
-                                                            (element) =>
-                                                                element.id ==
-                                                                cat.id);
-                                                    if (catIndex == -1) return;
                                                     final newLocs =
                                                         List<String>.from(
                                                             _categories[
@@ -683,6 +721,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                                   cat.name)),
                                                     );
                                                   });
+                                                  return true;
                                                 },
                                               );
                                             },

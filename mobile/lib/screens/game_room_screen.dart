@@ -247,6 +247,9 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
         if (progress >= 1) {
           _stopScan();
           onComplete();
+          if (context.read<GameController>().state.appSettings.vibrate) {
+            HapticFeedback.mediumImpact();
+          }
         }
       });
     });
