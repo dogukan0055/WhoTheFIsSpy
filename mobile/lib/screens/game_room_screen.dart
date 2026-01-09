@@ -21,6 +21,8 @@ class GameRoomScreen extends StatefulWidget {
 class _GameRoomScreenState extends State<GameRoomScreen>
     with WidgetsBindingObserver {
   bool _autoPaused = false;
+  bool _pauseDialogOpen = false;
+  Future<void>? _pauseDialogFuture;
 
   @override
   void initState() {
@@ -48,49 +50,65 @@ class _GameRoomScreenState extends State<GameRoomScreen>
       final controller = context.read<GameController>();
       if (controller.state.phase == GamePhase.playing) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
+          if (!mounted || _pauseDialogOpen) return;
           controller.pauseGame();
-          showDialog(
-            context: context,
-            builder: (ctx) {
-              final l10n = context.l10n;
-              return BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                child: AlertDialog(
-                  title: Text(l10n.text('pauseTitle')),
-                  content: Text(l10n.text('autoPaused')),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        controller.playClick();
-                        Navigator.of(ctx).pop();
-                        controller.startPlaying();
-                      },
-                      child: Text(l10n.text('continue')),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        controller.playClick();
-                        controller.resetGame();
-                        Navigator.of(ctx).pop();
-                        Navigator.of(context)
-                            .pushNamedAndRemoveUntil('/', (route) => false);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent),
-                      child: Text(l10n.text('mainMenu')),
-                    ),
-                  ],
-                ),
-              );
-            },
-            barrierDismissible: false,
-          );
+          _showPauseDialog(context, controller,
+              overrideMessage: context.l10n.text('autoPaused'));
         });
       }
       _autoPaused = false;
     }
     super.didChangeAppLifecycleState(state);
+  }
+
+  void _showPauseDialog(BuildContext context, GameController controller,
+      {String? overrideMessage}) {
+    if (_pauseDialogOpen || _pauseDialogFuture != null) return;
+    _pauseDialogOpen = true;
+    final l10n = context.l10n;
+    controller.pauseGame();
+    _pauseDialogFuture = showDialog(
+      context: context,
+      builder: (ctx) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: AlertDialog(
+            title: Text(l10n.text('pauseTitle')),
+            content: Text(overrideMessage ?? l10n.text('pauseSubtitle')),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  controller.playClick();
+                  Navigator.of(ctx).pop();
+                  controller.startPlaying();
+                },
+                child: Text(l10n.text('continue')),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.exit_to_app_outlined),
+                onPressed: () {
+                  controller.playClick();
+                  Navigator.of(ctx).pop();
+                  controller.resetGame();
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (route) => false);
+                },
+                label: const Text('Ana Menüye Dön'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  iconColor: Colors.redAccent,
+                  backgroundColor: Colors.redAccent.withValues(alpha: 0.12),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      barrierDismissible: false,
+    ).whenComplete(() {
+      _pauseDialogOpen = false;
+      _pauseDialogFuture = null;
+    });
   }
 
   @override
@@ -174,43 +192,6 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
   bool revealed = false;
   double progress = 0;
   Timer? _scanTimer;
-
-  void _confirmExit(BuildContext context, GameController controller) {
-    final l10n = context.l10n;
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-          child: AlertDialog(
-            title: Text(l10n.text('leaveMission')),
-            content: Text(l10n.text('returnToMenu')),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  controller.playClick();
-                  Navigator.of(ctx).pop();
-                },
-                child: Text(l10n.text('stay')),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  controller.playClick();
-                  controller.resetGame();
-                  Navigator.of(ctx).pop();
-                  Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.exit_to_app),
-                label: Text(l10n.text('yes')),
-                style:
-                    ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -308,11 +289,10 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
             onPressed: () {
               controller.playClick();
               controller.resetGame();
-              Navigator.of(context)
-                  .pushNamedAndRemoveUntil(
-                    '/setup',
-                    (route) => route.settings.name == '/',
-                  );
+              Navigator.of(context).pushNamedAndRemoveUntil(
+                '/setup',
+                (route) => route.settings.name == '/',
+              );
             },
             icon: const Icon(Icons.logout),
             label: Text(l10n.text('backToSetup')),
@@ -450,6 +430,7 @@ class _DiscussionViewState extends State<_DiscussionView> {
   Widget build(BuildContext context) {
     final controller = context.watch<GameController>();
     final state = controller.state;
+    final gameRoomState = context.findAncestorStateOfType<_GameRoomScreenState>();
     final spiesRemaining =
         state.players.where((p) => p.role == Role.spy && !p.isDead).length;
     final agentsActive =
@@ -603,26 +584,13 @@ class _DiscussionViewState extends State<_DiscussionView> {
             OutlinedButton.icon(
               onPressed: () {
                 controller.playClick();
-                _showPauseDialog(context, controller);
+                gameRoomState?._showPauseDialog(context, controller);
               },
               icon: const Icon(Icons.pause_circle_outline),
               label: Text(l10n.text('pause')),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(240, 52),
                 foregroundColor: Colors.orangeAccent,
-              ),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: () {
-                controller.playClick();
-                _confirmExit(context, controller);
-              },
-              icon: const Icon(Icons.logout),
-              label: Text(l10n.text('mainMenu')),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-                minimumSize: const Size(240, 52),
               ),
             ),
           ],
@@ -660,88 +628,6 @@ class _DiscussionViewState extends State<_DiscussionView> {
     _lastTime = time;
   }
 
-  void _confirmExit(BuildContext context, GameController controller) {
-    final l10n = context.l10n;
-    controller.pauseGame();
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-          child: AlertDialog(
-            title: Text(l10n.text('leaveMission')),
-            content: Text(l10n.text('returnToMenu')),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  controller.playClick();
-                  Navigator.of(ctx).pop();
-                  if (controller.state.phase == GamePhase.playing) {
-                    controller.startPlaying();
-                  }
-                },
-                child: Text(l10n.text('stay')),
-              ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  controller.playClick();
-                  controller.resetGame();
-                  Navigator.of(ctx).pop();
-                  Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/', (route) => false);
-                },
-                icon: const Icon(Icons.exit_to_app),
-                label: Text(l10n.text('yes')),
-                style:
-                    ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showPauseDialog(BuildContext context, GameController controller,
-      {String? overrideMessage}) {
-    final l10n = context.l10n;
-    controller.pauseGame();
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-          child: AlertDialog(
-            title: Text(l10n.text('pauseTitle')),
-            content: Text(overrideMessage ?? l10n.text('pauseSubtitle')),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  controller.playClick();
-                    Navigator.of(ctx).pop();
-                    controller.startPlaying();
-                  },
-                  child: Text(l10n.text('continue')),
-                ),
-                ElevatedButton(
-                onPressed: () {
-                  controller.playClick();
-                  controller.resetGame();
-                  Navigator.of(ctx).pop();
-                  Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/', (route) => false);
-                },
-                style:
-                    ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                child: Text(l10n.text('mainMenu')),
-                ),
-              ],
-            ),
-          );
-      },
-      barrierDismissible: false,
-    );
-  }
 }
 
 class _VotingView extends StatefulWidget {
@@ -886,15 +772,20 @@ class _ResultView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.text('spiesHeader'),
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Text(l10n.text('spiesHeader'),
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
                   const SizedBox(height: 8),
                   ...spies.map((spy) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
                           children: [
-                            const Icon(Icons.fingerprint,
-                                size: 18, color: Colors.redAccent),
+                            const Icon(Icons.person_search_rounded,
+                                size: 22, color: Colors.redAccent),
                             const SizedBox(width: 8),
                             Text(spy.name),
                             if (spy.isDead)

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/spy_localizations.dart';
@@ -108,9 +109,21 @@ class HomeScreen extends StatelessWidget {
             label: Text(l10n.text('howToPlay')),
           ),
           const Spacer(),
-          Text(
-            'v1.1.0 demo',
-            style: textTheme.bodySmall?.copyWith(color: Colors.white38),
+          FutureBuilder<String>(
+            future: PackageInfo.fromPlatform().then((info) {
+              final build = info.buildNumber.isNotEmpty ? '+${info.buildNumber}' : '';
+              return 'v${info.version}$build';
+            }),
+            builder: (context, snapshot) {
+              final version = snapshot.data;
+              if (version == null || version.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Text(
+                version,
+                style: textTheme.bodySmall?.copyWith(color: Colors.white38),
+              );
+            },
           ),
           const SizedBox(height: 12),
         ],

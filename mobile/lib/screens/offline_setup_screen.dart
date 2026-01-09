@@ -177,6 +177,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
               const SizedBox(height: 12),
               _CounterTile(
                 label: l10n.text('agents'),
+                icon: Icons.badge_outlined,
                 value: settings.playerCount,
                 min: 4,
                 max: 8,
@@ -186,6 +187,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
               const SizedBox(height: 12),
               _CounterTile(
                 label: l10n.text('spies'),
+                icon: Icons.person_search_rounded,
                 value: settings.playerCount <= 5 ? 1 : settings.spyCount,
                 min: 1,
                 max: settings.playerCount > 5 ? 2 : 1,
@@ -364,6 +366,7 @@ class _CounterTile extends StatelessWidget {
     required this.min,
     required this.max,
     required this.onChanged,
+    this.icon,
     this.helper,
     this.locked = false,
   });
@@ -374,6 +377,7 @@ class _CounterTile extends StatelessWidget {
   final int max;
   final bool locked;
   final void Function(int) onChanged;
+  final IconData? icon;
   final String? helper;
 
   @override
@@ -387,8 +391,16 @@ class _CounterTile extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(label,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, color: Colors.white70),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(label,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
                 Row(
                   children: [
                     IconButton(

@@ -404,7 +404,6 @@ class GameController extends ChangeNotifier {
 
   void _startTimerIfNeeded() {
     if (!_state.settings.isTimerOn || _state.isPaused) return;
-    _stopTimer();
     _startTickSound();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_state.gameData.timeLeft <= 0) {
