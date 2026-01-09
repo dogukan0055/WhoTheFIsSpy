@@ -100,6 +100,8 @@ class SpyLocalizations {
       'callVote': 'Call Vote',
       'pause': 'Pause Mission',
       'pauseTitle': 'Mission Paused',
+      'pauseSubtitle':
+          'You can resume the mission when you are ready or return to the main menu.',
       'continue': 'Continue',
       'mainMenu': 'Main Menu',
       'leaveMission': 'Leave Mission?',
@@ -241,6 +243,8 @@ class SpyLocalizations {
       'callVote': 'Oylama Başlat',
       'pause': 'Görevi Duraklat',
       'pauseTitle': 'Görev Duraklatıldı',
+      'pauseSubtitle':
+          'Hazır olduğunda oyuna kaldığın yerden devam edebilir ya da ana menüye dönebilirsin.',
       'continue': 'Devam Et',
       'mainMenu': 'Ana Menü',
       'leaveMission': 'Görevden Çıkılsın mı?',
@@ -420,8 +424,8 @@ class SpyLocalizations {
   String nameNotAllowed(String name) =>
       _translate('nameNotAllowed').replaceAll('{name}', name);
 
-  String addLocationTo(String category) =>
-      _translate('addLocationTo').replaceAll('{category}', categoryName(category));
+  String addLocationTo(String category) => _translate('addLocationTo')
+      .replaceAll('{category}', categoryName(category));
 
   String agentHint(int index) =>
       language == Language.tr ? 'Ajan ${index + 1}' : 'Agent ${index + 1}';

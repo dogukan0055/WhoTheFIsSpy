@@ -95,6 +95,44 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
   double progress = 0;
   Timer? _scanTimer;
 
+  void _confirmExit(BuildContext context, GameController controller) {
+    final l10n = context.l10n;
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: AlertDialog(
+            title: Text(l10n.text('leaveMission')),
+            content: Text(l10n.text('returnToMenu')),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  controller.playClick();
+                  Navigator.of(ctx).pop();
+                },
+                child: Text(l10n.text('stay')),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  controller.playClick();
+                  controller.resetGame();
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (route) => false);
+                },
+                icon: const Icon(Icons.exit_to_app),
+                label: Text(l10n.text('yes')),
+                style:
+                    ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -185,6 +223,15 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
             style: ElevatedButton.styleFrom(minimumSize: const Size(220, 52)),
             child: Text(
                 isLast ? l10n.text('startMission') : l10n.text('nextAgent')),
+          ),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () {
+              controller.playClick();
+              _confirmExit(context, controller);
+            },
+            icon: const Icon(Icons.logout),
+            label: Text(l10n.text('mainMenu')),
           ),
         ],
       ),
@@ -502,7 +549,6 @@ class _DiscussionViewState extends State<_DiscussionView> {
 
   void _showPauseDialog(BuildContext context, GameController controller) {
     final l10n = context.l10n;
-    final state = controller.state;
     controller.pauseGame();
     showDialog(
       context: context,
@@ -511,9 +557,7 @@ class _DiscussionViewState extends State<_DiscussionView> {
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: AlertDialog(
             title: Text(l10n.text('pauseTitle')),
-            content: Text(state.settings.isTimerOn
-                ? l10n.text('timerPaused')
-                : l10n.text('pause')),
+            content: Text(l10n.text('pauseSubtitle')),
             actions: [
               TextButton(
                 onPressed: () {

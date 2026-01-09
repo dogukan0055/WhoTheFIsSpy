@@ -26,6 +26,7 @@ class SpyScaffold extends StatelessWidget {
 
     return Scaffold(
       appBar: appBar,
+      extendBody: true,
       extendBodyBehindAppBar: true,
       bottomNavigationBar: bottom,
       body: Container(
