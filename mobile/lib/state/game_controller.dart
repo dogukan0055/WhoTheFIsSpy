@@ -187,7 +187,7 @@ class GameController extends ChangeNotifier {
               ? _state.players[i].id
               : generatePlayerId(i),
           name: names[i],
-          role: Role.civilian,
+          role: Role.agent,
           isDead: false,
           votes: 0,
         ),
@@ -233,7 +233,7 @@ class GameController extends ChangeNotifier {
       return Player(
         id: generatePlayerId(index),
         name: trimmed[index],
-        role: Role.civilian,
+        role: Role.agent,
         isDead: false,
         votes: 0,
       );
@@ -303,8 +303,7 @@ class GameController extends ChangeNotifier {
     final totalSpiesAtStart =
         _state.players.where((p) => p.role == Role.spy).length;
     final spiesLeft = remaining.where((p) => p.role == Role.spy).length;
-    final civiliansLeft =
-        remaining.where((p) => p.role == Role.civilian).length;
+    final agentsLeft = remaining.where((p) => p.role == Role.agent).length;
 
     var nextPhase = _state.phase;
     Role? winner = _state.gameData.winner;
@@ -312,7 +311,7 @@ class GameController extends ChangeNotifier {
     if (eliminated.role == Role.spy) {
       if (spiesLeft == 0) {
         nextPhase = GamePhase.result;
-        winner = Role.civilian;
+        winner = Role.agent;
       } else {
         nextPhase = GamePhase.playing;
       }
@@ -330,7 +329,7 @@ class GameController extends ChangeNotifier {
       }
     }
 
-    if (spiesLeft >= civiliansLeft) {
+    if (spiesLeft >= agentsLeft) {
       nextPhase = GamePhase.result;
       winner = Role.spy;
     }

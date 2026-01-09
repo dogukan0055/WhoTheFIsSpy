@@ -33,7 +33,9 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(isLight ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
+                icon: Icon(isLight
+                    ? Icons.dark_mode_outlined
+                    : Icons.light_mode_outlined),
                 tooltip: l10n.text('toggleTheme'),
                 onPressed: () => controller.toggleThemeMode(),
               ),
@@ -126,7 +128,8 @@ class HomeScreen extends StatelessWidget {
     final l10n = context.l10n;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
+      backgroundColor:
+          Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -150,7 +153,7 @@ class HomeScreen extends StatelessWidget {
                   style: Theme.of(ctx).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 8),
-                Text(l10n.text('objectiveCivilian')),
+                Text(l10n.text('objectiveAgent')),
                 Text(l10n.text('objectiveSpy')),
                 const SizedBox(height: 16),
                 Text(
@@ -168,7 +171,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(l10n.text('spyWins')),
-                Text(l10n.text('civiliansWin')),
+                Text(l10n.text('agentsWin')),
               ],
             ),
           ),

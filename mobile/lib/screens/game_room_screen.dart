@@ -241,7 +241,7 @@ class _RoleCardBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          isSpy ? l10n.text('youAreSpy') : l10n.text('civilian'),
+          isSpy ? l10n.text('youAreSpy') : l10n.text('agent'),
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: isSpy ? Colors.redAccent : Colors.blueAccent,
                 fontWeight: FontWeight.w800,
@@ -518,7 +518,7 @@ class _ResultView extends StatelessWidget {
           Text(
             winner == Role.spy
                 ? l10n.text('spiesWin')
-                : l10n.text('civiliansWinResult'),
+                : l10n.text('agentsWinResult'),
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   color: winner == Role.spy
                       ? Colors.redAccent

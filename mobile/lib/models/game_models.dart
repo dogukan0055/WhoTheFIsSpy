@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 enum GameMode { offline, online }
 
-enum Role { spy, civilian }
+enum Role { spy, agent }
 
 enum GamePhase { setup, reveal, playing, voting, result }
 
@@ -96,7 +96,8 @@ class GameSettings {
       spyCount: spyCount ?? this.spyCount,
       isTimerOn: isTimerOn ?? this.isTimerOn,
       timerDuration: timerDuration ?? this.timerDuration,
-      selectedCategories: selectedCategories ?? List.from(this.selectedCategories),
+      selectedCategories:
+          selectedCategories ?? List.from(this.selectedCategories),
     );
   }
 }

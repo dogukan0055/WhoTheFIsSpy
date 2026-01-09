@@ -5,8 +5,9 @@ import '../models/game_models.dart';
 
 class SpyLocalizations {
   SpyLocalizations(this.locale)
-      : language =
-            locale.languageCode.toLowerCase() == 'tr' ? Language.tr : Language.en;
+      : language = locale.languageCode.toLowerCase() == 'tr'
+            ? Language.tr
+            : Language.en;
 
   final Locale locale;
   final Language language;
@@ -16,11 +17,14 @@ class SpyLocalizations {
   static const _strings = {
     'en': {
       'welcomeTitle': 'Welcome, Agent',
-      'welcomeBody': 'A spy hides among you. Keep your answers vague, but sharp.',
+      'welcomeBody':
+          'A spy hides among you. Keep your answers vague, but sharp.',
       'secretTitle': 'Reveal in Secret',
-      'secretBody': 'Pass the device and scan to reveal your identity. No peeking.',
+      'secretBody':
+          'Pass the device and scan to reveal your identity. No peeking.',
       'interrogateTitle': 'Interrogate & Vote',
-      'interrogateBody': 'Ask pointed questions, call a vote, and catch the impostor.',
+      'interrogateBody':
+          'Ask pointed questions, call a vote, and catch the impostor.',
       'skip': 'Skip',
       'next': 'Next',
       'enterMission': 'Enter Mission',
@@ -61,15 +65,17 @@ class SpyLocalizations {
       'howToPlay': 'How to play',
       'missionBriefing': 'Mission Briefing',
       'objective': 'Objective',
-      'objectiveCivilian': '• Civilians: Find the spy without revealing the location.',
-      'objectiveSpy': '• Spy: Blend in. Identify the location before being caught.',
+      'objectiveAgent':
+          '• Agents: Find the spy without revealing the location.',
+      'objectiveSpy':
+          '• Spy: Blend in. Identify the location before being caught.',
       'gameplay': 'Gameplay',
       'gameplayStep1': '1) Pass the phone, reveal your role.',
       'gameplayStep2': '2) Start the timer and ask sharp questions.',
       'gameplayStep3': '3) Call a vote when someone feels suspicious.',
       'winConditions': 'Win Conditions',
-      'spyWins': '• Spy wins if a civilian is eliminated or time expires.',
-      'civiliansWin': '• Civilians win if all spies are caught.',
+      'spyWins': '• Spy wins if an agent is eliminated or time expires.',
+      'agentsWin': '• Agents win if all spies are caught.',
       'toggleTheme': 'Toggle theme',
       'noMission': 'No mission in progress.',
       'backToMenu': 'Back to menu',
@@ -80,7 +86,7 @@ class SpyLocalizations {
       'holdToScan': 'Hold finger to scan',
       'nextAgent': 'Next Agent',
       'youAreSpy': 'You are the SPY',
-      'civilian': 'Civilian',
+      'agent': 'Agent',
       'secretLocation': 'Secret Location',
       'blendIn': 'Blend in. Listen closely and guess the location.',
       'noTimerShort': 'No timer',
@@ -95,7 +101,7 @@ class SpyLocalizations {
       'cancel': 'Cancel',
       'eliminate': 'Eliminate',
       'spiesWin': 'Spies win',
-      'civiliansWinResult': 'Civilians win',
+      'agentsWinResult': 'Agents win',
       'secretLocationReveal': 'Secret location: {location}',
       'spiesHeader': 'Spies',
       'caught': 'Caught',
@@ -125,11 +131,14 @@ class SpyLocalizations {
     },
     'tr': {
       'welcomeTitle': 'Hoş geldin Ajan',
-      'welcomeBody': 'İçinizde bir casus var. Cevapların net olsun ama gizli kal.',
+      'welcomeBody':
+          'İçinizde bir casus var. Cevapların net olsun ama gizli kal.',
       'secretTitle': 'Gizlice Açığa Çık',
-      'secretBody': 'Cihazı sırayla ver ve kimliğini tarayarak öğren. Sakın bakma.',
+      'secretBody':
+          'Cihazı sırayla ver ve kimliğini tarayarak öğren. Sakın bakma.',
       'interrogateTitle': 'Sorgula ve Oyla',
-      'interrogateBody': 'Keskin sorular sor, oylama çağır ve sahtekârı yakala.',
+      'interrogateBody':
+          'Keskin sorular sor, oylama çağır ve sahtekârı yakala.',
       'skip': 'Geç',
       'next': 'İleri',
       'enterMission': 'Göreve Gir',
@@ -141,8 +150,7 @@ class SpyLocalizations {
       'spies': 'Casuslar',
       'spiesHelperLocked':
           '5 ajandan az olduğunda yalnızca bir casus olabilir.',
-      'spiesHelper':
-          '5 ajandan fazlaysa görevde en fazla 2 casus olabilir.',
+      'spiesHelper': '5 ajandan fazlaysa görevde en fazla 2 casus olabilir.',
       'missionTimer': 'Görev Zamanlayıcısı',
       'noTimer': 'Zamanlayıcı yok. Acele etme.',
       'timerLength': 'Zamanlayıcı süresi: {minutes} dakika',
@@ -170,16 +178,15 @@ class SpyLocalizations {
       'howToPlay': 'Nasıl oynanır',
       'missionBriefing': 'Görev Brifingi',
       'objective': 'Amaç',
-      'objectiveCivilian':
-          '• Siviller: Lokasyonu belli etmeden casusu bul.',
+      'objectiveAgent': '• Ajanlar: Lokasyonu belli etmeden casusu bul.',
       'objectiveSpy': '• Casus: Fark edilme. Lokasyonu öğren ve hayatta kal.',
       'gameplay': 'Oynanış',
       'gameplayStep1': '1) Telefonu sırayla ver, rolünü aç.',
       'gameplayStep2': '2) Zamanlayıcıyı başlat ve keskin sorular sor.',
       'gameplayStep3': '3) Şüphelenince oylama başlat.',
       'winConditions': 'Kazanma Şartları',
-      'spyWins': '• Casus, bir sivil elenirse veya süre biterse kazanır.',
-      'civiliansWin': '• Tüm casuslar yakalanırsa siviller kazanır.',
+      'spyWins': '• Casus, bir ajan elenirse veya süre biterse kazanır.',
+      'agentsWin': '• Tüm casuslar yakalanırsa ajanlar kazanır.',
       'toggleTheme': 'Temayı değiştir',
       'noMission': 'Devam eden bir görev yok.',
       'backToMenu': 'Menüye dön',
@@ -190,7 +197,7 @@ class SpyLocalizations {
       'holdToScan': 'Tarama için basılı tut',
       'nextAgent': 'Sonraki Ajan',
       'youAreSpy': 'Sen CASUSSUN',
-      'civilian': 'Sivil',
+      'agent': 'Ajan',
       'secretLocation': 'Gizli Lokasyon',
       'blendIn': 'Uyum sağla. Dikkatlice dinle ve lokasyonu tahmin et.',
       'noTimerShort': 'Zamanlayıcı yok',
@@ -205,7 +212,7 @@ class SpyLocalizations {
       'cancel': 'Vazgeç',
       'eliminate': 'Ele',
       'spiesWin': 'Casuslar kazandı',
-      'civiliansWinResult': 'Siviller kazandı',
+      'agentsWinResult': 'Ajanlar kazandı',
       'secretLocationReveal': 'Gizli lokasyon: {location}',
       'spiesHeader': 'Casuslar',
       'caught': 'Yakalandı',
@@ -236,9 +243,8 @@ class SpyLocalizations {
   };
 
   String _translate(String key) {
-    final langCode = supported.contains(locale.languageCode)
-        ? locale.languageCode
-        : 'en';
+    final langCode =
+        supported.contains(locale.languageCode) ? locale.languageCode : 'en';
     return _strings[langCode]?[key] ?? _strings['en']![key]!;
   }
 
@@ -248,8 +254,8 @@ class SpyLocalizations {
       ? 'Ajan $current / $total'
       : 'Agent $current / $total';
 
-  String timerLength(int minutes) => _translate('timerLength')
-      .replaceAll('{minutes}', minutes.toString());
+  String timerLength(int minutes) =>
+      _translate('timerLength').replaceAll('{minutes}', minutes.toString());
 
   String activeCount(int active, int total) => _translate('activeCount')
       .replaceAll('{active}', active.toString())
@@ -274,8 +280,7 @@ class SpyLocalizations {
       SpyLocalizations(Locale(language == Language.tr ? 'tr' : 'en'));
 }
 
-class SpyLocalizationsDelegate
-    extends LocalizationsDelegate<SpyLocalizations> {
+class SpyLocalizationsDelegate extends LocalizationsDelegate<SpyLocalizations> {
   const SpyLocalizationsDelegate();
 
   @override
