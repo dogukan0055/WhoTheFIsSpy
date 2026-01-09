@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,6 +20,36 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
   final Map<String, bool> _expanded = {};
   late List<Category> _categories;
   late List<String> _selectedCategories;
+
+  void _confirmDelete({
+    required BuildContext context,
+    required String target,
+    required String message,
+    required VoidCallback onConfirm,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: AlertDialog(
+          title: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(context.l10n.text('cancel')),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                onConfirm();
+                Navigator.of(ctx).pop();
+              },
+              child: Text(context.l10n.text('yes')),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -45,27 +77,30 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
     showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text(title),
-          content: TextField(
-            controller: controller,
-            textCapitalization: TextCapitalization.words,
-            maxLength: 16,
-            decoration: InputDecoration(hintText: hint),
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: AlertDialog(
+            title: Text(title),
+            content: TextField(
+              controller: controller,
+              textCapitalization: TextCapitalization.words,
+              maxLength: 16,
+              decoration: InputDecoration(hintText: hint),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l10n.text('cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  onSubmit(controller.text.trim());
+                  Navigator.pop(ctx);
+                },
+                child: Text(l10n.text('save')),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.text('cancel')),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                onSubmit(controller.text.trim());
-                Navigator.pop(ctx);
-              },
-              child: Text(l10n.text('save')),
-            ),
-          ],
         );
       },
     );
@@ -118,6 +153,11 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                         ));
                         _expanded[id] = true;
                       });
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        Notifier.show(
+                            context,
+                            l10n.text('addedCategory').replaceAll('{name}', value));
+                      });
                     },
                   );
                 },
@@ -127,6 +167,21 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
           child: Column(
             children: [
               const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.text('customCategoryHint'),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall
+                        ?.copyWith(
+                            fontWeight: FontWeight.w600, color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
               ..._categories.map((cat) {
                 final isSelected = _selectedCategories.contains(cat.id);
                 final isCore = initialCategories.any((c) => c.id == cat.id);
@@ -155,9 +210,21 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                   child: Column(
                     children: [
                       ListTile(
-                        title: Text(cat.name,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Row(
+                          mainAxisSize: MainAxisSize.min,
+                        children: [
+                            if (!isCore) ...[
+                              Icon(Icons.star_rounded,
+                                  size: 16,
+                                  color:
+                                      Colors.amberAccent.withValues(alpha: 0.9)),
+                              const SizedBox(width: 6),
+                            ],
+                            Text(l10n.categoryName(cat.name),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                         subtitle: Text(
                           l10n.activeCount(
                               activeLocations, cat.locations.length),
@@ -208,25 +275,77 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(expanded
-                                  ? Icons.expand_less
-                                  : Icons.expand_more),
+                              icon: Icon(
+                                  expanded ? Icons.expand_less : Icons.expand_more),
                               onPressed: () {
                                 controller.playClick();
                                 setState(() => _expanded[cat.id] = !expanded);
                               },
                             ),
+                           if (!isCore)
+                             IconButton(
+                               icon: const Icon(Icons.edit),
+                               onPressed: () {
+                                 controller.playClick();
+                                 _showInputDialog(
+                                   context: context,
+                                   title: l10n.text('renameCategory'),
+                                   hint: cat.name,
+                                   onSubmit: (value) {
+                                     if (value.isEmpty || value.length > 16) {
+                                       Notifier.show(
+                                           context, l10n.text('max16'),
+                                           warning: true);
+                                       return;
+                                     }
+                                     setState(() {
+                                       final idx = _categories.indexWhere(
+                                           (element) => element.id == cat.id);
+                                       if (idx != -1) {
+                                         _categories[idx] = _categories[idx]
+                                             .copyWith(name: value);
+                                       }
+                                     });
+                                     WidgetsBinding.instance
+                                         .addPostFrameCallback((_) {
+                                       Notifier.show(
+                                           context,
+                                            l10n
+                                                .text('categoryRenamed')
+                                                .replaceAll('{name}', value));
+                                     });
+                                   },
+                                 );
+                               },
+                             ),
                             if (!isCore)
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
                                     color: Colors.redAccent),
                                 onPressed: () {
                                   controller.playClick();
-                                  setState(() {
-                                    _categories.removeWhere(
-                                        (existing) => existing.id == cat.id);
-                                    _selectedCategories.remove(cat.id);
-                                  });
+                                  _confirmDelete(
+                                    context: context,
+                                    target: cat.name,
+                                    message: l10n
+                                        .text('confirmDeleteCategory')
+                                        .replaceAll('{name}', cat.name),
+                                    onConfirm: () {
+                                      setState(() {
+                                        _categories.removeWhere(
+                                            (existing) => existing.id == cat.id);
+                                        _selectedCategories.remove(cat.id);
+                                      });
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        Notifier.show(
+                                            context,
+                                            l10n
+                                                .text('deletedCategory')
+                                                .replaceAll('{name}', cat.name));
+                                      });
+                                    },
+                                  );
                                 },
                               ),
                           ],
@@ -253,62 +372,184 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                       ? Colors.orangeAccent
                                       : Theme.of(context).colorScheme.primary;
                                   return GestureDetector(
+                                    onLongPress: !isCore
+                                        ? () {
+                                            controller.playClick();
+                                            _showInputDialog(
+                                              context: context,
+                                              title: l10n
+                                                  .text('renameLocation'),
+                                              hint: loc,
+                                              onSubmit: (value) {
+                                                if (value.isEmpty ||
+                                                    value.length > 16) {
+                                                  Notifier.show(
+                                                      context, l10n.text('max16'),
+                                                      warning: true);
+                                                  return;
+                                                }
+                                                setState(() {
+                                                  final catIndex =
+                                                      _categories.indexWhere(
+                                                          (element) =>
+                                                              element.id ==
+                                                              cat.id);
+                                                  if (catIndex == -1) return;
+                                                  final newLocs = List<String>.from(
+                                                      _categories[catIndex]
+                                                          .locations);
+                                                  final locIndex =
+                                                      newLocs.indexOf(loc);
+                                                  if (locIndex != -1) {
+                                                    newLocs[locIndex] = value;
+                                                    final newDisabled =
+                                                        List<String>.from(
+                                                            _categories[
+                                                                    catIndex]
+                                                                .disabledLocations);
+                                                    final disabledIdx =
+                                                        newDisabled.indexOf(loc);
+                                                    if (disabledIdx != -1) {
+                                                      newDisabled[disabledIdx] =
+                                                          value;
+                                                    }
+                                                    _categories[catIndex] =
+                                                        _categories[catIndex]
+                                                            .copyWith(
+                                                                locations:
+                                                                    newLocs,
+                                                                disabledLocations:
+                                                                    newDisabled);
+                                                  }
+                                                });
+                                                WidgetsBinding.instance
+                                                    .addPostFrameCallback((_) {
+                                                  Notifier.show(
+                                                      context,
+                                                      l10n
+                                                          .text('renameSuccess')
+                                                          .replaceAll(
+                                                              '{name}', value));
+                                                });
+                                              },
+                                            );
+                                          }
+                                        : null,
                                     onTap: () {
                                       controller.playClick();
                                       setState(() {
                                         final catIndex = _categories.indexWhere(
-                                           (element) => element.id == cat.id);
-                                       if (catIndex == -1) return;
-                                       final disabledList = List<String>.from(
-                                           _categories[catIndex]
-                                               .disabledLocations);
-                                       if (!disabled) {
-                                         disabledList.add(loc);
-                                       } else {
-                                         disabledList.remove(loc);
-                                       }
-                                       var updatedCat = _categories[catIndex]
-                                           .copyWith(
-                                               disabledLocations:
-                                                   disabledList);
-                                       final activeCount = updatedCat.locations
-                                           .where((l) => !updatedCat
-                                               .disabledLocations
-                                               .contains(l))
-                                           .length;
-                                       if (activeCount == 0) {
-                                         _selectedCategories
-                                             .remove(updatedCat.id);
+                                            (element) => element.id == cat.id);
+                                        if (catIndex == -1) return;
+                                        final disabledList = List<String>.from(
+                                            _categories[catIndex]
+                                                .disabledLocations);
+                                        if (!disabled) {
+                                          disabledList.add(loc);
+                                        } else {
+                                          disabledList.remove(loc);
+                                        }
+                                        var updatedCat = _categories[catIndex]
+                                            .copyWith(
+                                                disabledLocations:
+                                                    disabledList);
+                                        final activeCount = updatedCat.locations
+                                            .where((l) => !updatedCat
+                                                .disabledLocations
+                                                .contains(l))
+                                            .length;
+                                        if (activeCount == 0) {
+                                          _selectedCategories
+                                              .remove(updatedCat.id);
                                         } else {
                                           if (!_selectedCategories
                                               .contains(updatedCat.id)) {
                                             _selectedCategories
                                                 .add(updatedCat.id);
                                           }
-                                        }
-                                       _categories[catIndex] = updatedCat;
-                                     });
-                                   },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12, vertical: 10),
-                                        decoration: BoxDecoration(
+                                      }
+                                      _categories[catIndex] = updatedCat;
+                                    });
+                                  },
+                                    onDoubleTap: !isCore
+                                        ? () {
+                                            controller.playClick();
+                                            _confirmDelete(
+                                              context: context,
+                                              target: loc,
+                                              message: l10n
+                                                  .text('confirmDeleteLocation')
+                                                  .replaceAll('{name}', loc),
+                                              onConfirm: () {
+                                                setState(() {
+                                                  final catIndex =
+                                                      _categories.indexWhere(
+                                                          (element) =>
+                                                              element.id ==
+                                                              cat.id);
+                                                  if (catIndex == -1) return;
+                                                  final newLocs = List<String>.from(
+                                                      _categories[catIndex]
+                                                          .locations)
+                                                    ..remove(loc);
+                                                  final newDisabled = List<String>.from(
+                                                      _categories[catIndex]
+                                                          .disabledLocations)
+                                                    ..remove(loc);
+                                                  var updatedCat =
+                                                      _categories[catIndex]
+                                                          .copyWith(
+                                                              locations:
+                                                                  newLocs,
+                                                              disabledLocations:
+                                                                  newDisabled);
+                                                  final activeCount =
+                                                      updatedCat.locations
+                                                          .where((l) =>
+                                                              !updatedCat
+                                                                  .disabledLocations
+                                                                  .contains(l))
+                                                          .length;
+                                                  if (activeCount == 0) {
+                                                    _selectedCategories
+                                                        .remove(updatedCat.id);
+                                                  }
+                                                  _categories[catIndex] =
+                                                      updatedCat;
+                                                });
+                                                WidgetsBinding.instance
+                                                    .addPostFrameCallback((_) {
+                                                  Notifier.show(
+                                                      context,
+                                                      l10n
+                                                          .text('deleteSuccess')
+                                                          .replaceAll(
+                                                              '{name}', loc));
+                                                });
+                                              },
+                                            );
+                                          }
+                                        : null,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: disabled
+                                            ? Colors.white
+                                                .withValues(alpha: 0.08)
+                                            : activeColor
+                                                .withValues(alpha: 0.18),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
                                           color: disabled
                                               ? Colors.white
-                                                  .withValues(alpha: 0.08)
+                                                  .withValues(alpha: 0.2)
                                               : activeColor
-                                                  .withValues(alpha: 0.18),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: disabled
-                                                ? Colors.white
-                                                    .withValues(alpha: 0.2)
-                                                : activeColor
-                                                    .withValues(alpha: 0.5),
-                                          ),
+                                                  .withValues(alpha: 0.5),
                                         ),
+                                      ),
                                       child: Text(
-                                        loc,
+                                        l10n.locationName(loc),
                                         style: TextStyle(
                                           color: disabled
                                               ? Colors.white70
@@ -334,22 +575,37 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                                           if (value.isEmpty) return;
                                           if (value.length > 16) {
                                             Notifier.show(
-                                                context, l10n.text('max16'),
-                                                warning: true);
+                                              context,
+                                              l10n.text('max16'),
+                                              warning: true,
+                                            );
                                             return;
                                           }
                                           setState(() {
-                                            final catIndex = _categories
-                                                .indexWhere((element) =>
-                                                    element.id == cat.id);
+                                            final catIndex =
+                                                _categories.indexWhere(
+                                                    (element) =>
+                                                        element.id == cat.id);
                                             if (catIndex == -1) return;
                                             final newLocs = List<String>.from(
-                                                _categories[catIndex]
-                                                    .locations);
+                                                _categories[catIndex].locations);
                                             newLocs.add(value);
                                             _categories[catIndex] =
                                                 _categories[catIndex].copyWith(
                                                     locations: newLocs);
+                                          });
+                                          WidgetsBinding.instance
+                                              .addPostFrameCallback((_) {
+                                            Notifier.show(
+                                              context,
+                                              l10n
+                                                  .text('addedLocationTo')
+                                                  .replaceAll('{loc}', value)
+                                                  .replaceAll(
+                                                      '{cat}',
+                                                      l10n
+                                                          .categoryName(cat.name)),
+                                            );
                                           });
                                         },
                                       );
@@ -382,6 +638,17 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                   label: Text(l10n.text('save')),
                   style: ElevatedButton.styleFrom(
                       minimumSize: const Size.fromHeight(50)),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  l10n.text('editHint'),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: Colors.white70),
+                  textAlign: TextAlign.center,
                 ),
               ),
               const SizedBox(height: 24),

@@ -232,6 +232,7 @@ class _RoleCardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final isSpy = player.role == Role.spy;
+    final displayLocation = l10n.locationName(location);
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -272,7 +273,7 @@ class _RoleCardBody extends StatelessWidget {
                       color: Colors.blueAccent.withValues(alpha: 0.4)),
                 ),
                 child: Text(
-                  location,
+                  displayLocation,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),

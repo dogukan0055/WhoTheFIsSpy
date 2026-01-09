@@ -79,7 +79,7 @@ class SpyLocalizations {
       'winConditions': 'Win Conditions',
       'spyWins': '• Spy wins if an agent is eliminated or time expires.',
       'agentsWin': '• Agents win if all spies are caught.',
-      'swipeHint': 'Swipe up/down to read more',
+      'swipeHint': 'Swipe down or tap outside to dismiss',
       'toggleTheme': 'Toggle theme',
       'noMission': 'No mission in progress.',
       'backToMenu': 'Back to menu',
@@ -123,6 +123,8 @@ class SpyLocalizations {
       'saveRoster': 'Save Roster',
       'timerOff': 'No timer',
       'locationDb': 'Location Database',
+      'customCategoryHint':
+          'Tap + to add a custom category. Default categories cannot be edited.',
       'addCategory': 'Add category',
       'newCategory': 'New Category',
       'categoryHint': 'Ex: Cafes',
@@ -132,6 +134,20 @@ class SpyLocalizations {
       'activeCount': 'Active {active} / {total}',
       'needActiveLocation': 'Add at least one active location first.',
       'needCategory': 'At least one category is required.',
+      'max16': 'Max 16 characters allowed.',
+      'confirmDeleteCategory': 'Delete category "{name}"?',
+      'confirmDeleteLocation': 'Delete location "{name}"?',
+      'renameCategory': 'Rename Category',
+      'renameLocation': 'Rename Location',
+      'renameSuccess': 'Location name is updated as "{name}".',
+      'deleteSuccess': 'Location "{name}" is removed.',
+      'addedCategory': 'Category "{name}" added.',
+      'addedLocation': 'Location "{name}" added.',
+      'addedLocationTo': 'Location "{loc}" added to "{cat}".',
+      'deletedCategory': 'Category "{name}" deleted.',
+      'categoryRenamed': 'Category renamed to "{name}".',
+      'editHint':
+          'Long-press to rename, double-tap to delete custom locations.',
       'onlineUnavailable': 'Online mode coming soon',
       'codeNameRequired': 'All players need a codename.',
       'maxNameLength': 'Names must be 16 characters or fewer.',
@@ -248,6 +264,8 @@ class SpyLocalizations {
       'saveRoster': 'Listeyi Kaydet',
       'timerOff': 'Zamanlayıcı yok',
       'locationDb': 'Lokasyon Veritabanı',
+      'customCategoryHint':
+          'Özel kategori eklemek için + butonuna dokunun. Varsayılan kategoriler düzenlenemez.',
       'addCategory': 'Kategori ekle',
       'newCategory': 'Yeni Kategori',
       'categoryHint': 'Örn: Kafeler',
@@ -257,6 +275,20 @@ class SpyLocalizations {
       'activeCount': 'Aktif {active} / {total}',
       'needActiveLocation': 'Önce en az bir aktif lokasyon ekleyin.',
       'needCategory': 'En az bir kategori seçilmelidir.',
+      'max16': 'En fazla 16 karakter olabilir.',
+      'confirmDeleteCategory': '"{name}" kategorisini sil?',
+      'confirmDeleteLocation': '"{name}" lokasyonunu sil?',
+      'renameCategory': 'Kategoriyi Yeniden Adlandır',
+      'renameLocation': 'Lokasyonu Yeniden Adlandır',
+      'renameSuccess': 'Lokasyon adı "{name}" olarak güncellendi.',
+      'deleteSuccess': '"{name}" lokasyonu silindi.',
+      'addedCategory': '"{name}" kategorisi eklendi.',
+      'addedLocation': '"{name}" lokasyonu eklendi.',
+      'addedLocationTo': '"{loc}" lokasyonu "{cat}" kategorisine eklendi.',
+      'deletedCategory': '"{name}" kategorisi silindi.',
+      'categoryRenamed': 'Kategori adı "{name}" olarak değiştirildi.',
+      'editHint':
+          'Özel lokasyonları yeniden adlandırmak için basılı tut, silmek için çift dokun.',
       'onlineUnavailable': 'Çevrimiçi mod çok yakında',
       'codeNameRequired': 'Tüm oyuncuların bir kod adı olmalı.',
       'maxNameLength': 'İsimler en fazla 16 karakter olabilir.',
@@ -267,6 +299,86 @@ class SpyLocalizations {
       'locationsSaved': 'Lokasyonlar kaydedildi.',
       'selectCategory': 'En az bir lokasyon kategorisi seçin.',
       'noLocationsSelected': 'Seçili kategorilerde lokasyon yok.',
+    },
+  };
+
+  static const _categoryTranslations = {
+    'en': {
+      'Standard': 'Standard',
+      'Vacation': 'Vacation',
+      'Workplace': 'Workplace',
+    },
+    'tr': {
+      'Standard': 'Standart',
+      'Vacation': 'Tatil',
+      'Workplace': 'İşyeri',
+    },
+  };
+
+  static const _locationTranslations = {
+    'en': {
+      'Hospital': 'Hospital',
+      'School': 'School',
+      'Police Station': 'Police Station',
+      'Supermarket': 'Supermarket',
+      'Cinema': 'Cinema',
+      'Restaurant': 'Restaurant',
+      'Hotel': 'Hotel',
+      'Bank': 'Bank',
+      'Airplane': 'Airplane',
+      'Library': 'Library',
+      'Beach': 'Beach',
+      'Ski Resort': 'Ski Resort',
+      'Cruise Ship': 'Cruise Ship',
+      'Camping Site': 'Camping Site',
+      'Theme Park': 'Theme Park',
+      'Museum': 'Museum',
+      'Spa': 'Spa',
+      'Casino': 'Casino',
+      'Zoo': 'Zoo',
+      'National Park': 'National Park',
+      'Office': 'Office',
+      'Construction Site': 'Construction Site',
+      'Studio': 'Studio',
+      'Laboratory': 'Laboratory',
+      'Factory': 'Factory',
+      'Farm': 'Farm',
+      'Space Station': 'Space Station',
+      'Submarine': 'Submarine',
+      'Fire Station': 'Fire Station',
+      'News Room': 'News Room',
+    },
+    'tr': {
+      'Hospital': 'Hastane',
+      'School': 'Okul',
+      'Police Station': 'Polis Karakolu',
+      'Supermarket': 'Süpermarket',
+      'Cinema': 'Sinema',
+      'Restaurant': 'Restoran',
+      'Hotel': 'Otel',
+      'Bank': 'Banka',
+      'Airplane': 'Uçak',
+      'Library': 'Kütüphane',
+      'Beach': 'Plaj',
+      'Ski Resort': 'Kayak Merkezi',
+      'Cruise Ship': 'Kruvaziyer Gemisi',
+      'Camping Site': 'Kamp Alanı',
+      'Theme Park': 'Tema Parkı',
+      'Museum': 'Müze',
+      'Spa': 'Spa',
+      'Casino': 'Kumarhane',
+      'Zoo': 'Hayvanat Bahçesi',
+      'National Park': 'Milli Park',
+      'Office': 'Ofis',
+      'Construction Site': 'İnşaat Sahası',
+      'Studio': 'Stüdyo',
+      'Laboratory': 'Laboratuvar',
+      'Factory': 'Fabrika',
+      'Farm': 'Çiftlik',
+      'Space Station': 'Uzay İstasyonu',
+      'Submarine': 'Denizaltı',
+      'Fire Station': 'İtfaiye',
+      'News Room': 'Haber Odası',
     },
   };
 
@@ -282,6 +394,18 @@ class SpyLocalizations {
       ? 'Ajan $current / $total'
       : 'Agent $current / $total';
 
+  String categoryName(String name) {
+    final langCode =
+        supported.contains(locale.languageCode) ? locale.languageCode : 'en';
+    return _categoryTranslations[langCode]?[name] ?? name;
+  }
+
+  String locationName(String name) {
+    final langCode =
+        supported.contains(locale.languageCode) ? locale.languageCode : 'en';
+    return _locationTranslations[langCode]?[name] ?? name;
+  }
+
   String timerLength(int minutes) =>
       _translate('timerLength').replaceAll('{minutes}', minutes.toString());
 
@@ -290,13 +414,14 @@ class SpyLocalizations {
       .replaceAll('{total}', total.toString());
 
   String secretLocationReveal(String location) =>
-      _translate('secretLocationReveal').replaceAll('{location}', location);
+      _translate('secretLocationReveal')
+          .replaceAll('{location}', locationName(location));
 
   String nameNotAllowed(String name) =>
       _translate('nameNotAllowed').replaceAll('{name}', name);
 
   String addLocationTo(String category) =>
-      _translate('addLocationTo').replaceAll('{category}', category);
+      _translate('addLocationTo').replaceAll('{category}', categoryName(category));
 
   String agentHint(int index) =>
       language == Language.tr ? 'Ajan ${index + 1}' : 'Agent ${index + 1}';
