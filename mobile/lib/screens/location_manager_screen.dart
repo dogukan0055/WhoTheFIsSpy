@@ -16,7 +16,8 @@ class LocationManagerScreen extends StatefulWidget {
   State<LocationManagerScreen> createState() => _LocationManagerScreenState();
 }
 
-class _LocationManagerScreenState extends State<LocationManagerScreen> {
+class _LocationManagerScreenState extends State<LocationManagerScreen>
+    with SingleTickerProviderStateMixin {
   final Map<String, bool> _expanded = {};
   late List<Category> _categories;
   late List<String> _selectedCategories;
@@ -355,269 +356,348 @@ class _LocationManagerScreenState extends State<LocationManagerScreen> {
                           setState(() => _expanded[cat.id] = !expanded);
                         },
                       ),
-                      if (expanded)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: cat.locations.map((loc) {
-                                  final disabled =
-                                      cat.disabledLocations.contains(loc);
-                                  final activeColor = isPartial
-                                      ? Colors.orangeAccent
-                                      : Theme.of(context).colorScheme.primary;
-                                  return GestureDetector(
-                                    onLongPress: !isCore
-                                        ? () {
-                                            controller.playClick();
-                                            _showInputDialog(
-                                              context: context,
-                                              title: l10n
-                                                  .text('renameLocation'),
-                                              hint: loc,
-                                              onSubmit: (value) {
-                                                if (value.isEmpty ||
-                                                    value.length > 16) {
-                                                  Notifier.show(
-                                                      context, l10n.text('max16'),
-                                                      warning: true);
-                                                  return;
+                      ClipRect(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 220),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeIn,
+                          transitionBuilder: (child, animation) => FadeTransition(
+                            opacity: animation,
+                            child: SizeTransition(
+                              sizeFactor: animation,
+                              child: child,
+                            ),
+                          ),
+                          child: expanded
+                              ? Padding(
+                                  key: ValueKey('expanded-${cat.id}'),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 8),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: cat.locations.map((loc) {
+                                          final disabled =
+                                              cat.disabledLocations.contains(loc);
+                                          final activeColor = isPartial
+                                              ? Colors.orangeAccent
+                                              : Theme.of(context)
+                                                  .colorScheme
+                                                  .primary;
+                                          return GestureDetector(
+                                            onLongPress: !isCore
+                                                ? () {
+                                                    controller.playClick();
+                                                    _showInputDialog(
+                                                      context: context,
+                                                      title: l10n
+                                                          .text('renameLocation'),
+                                                      hint: loc,
+                                                      onSubmit: (value) {
+                                                        if (value.isEmpty ||
+                                                            value.length >
+                                                                16) {
+                                                          Notifier.show(
+                                                              context,
+                                                              l10n.text(
+                                                                  'max16'),
+                                                              warning: true);
+                                                          return;
+                                                        }
+                                                        setState(() {
+                                                          final catIndex = _categories
+                                                              .indexWhere((element) =>
+                                                                  element.id ==
+                                                                  cat.id);
+                                                          if (catIndex == -1) {
+                                                            return;
+                                                          }
+                                                          final newLocs =
+                                                              List<String>.from(
+                                                                  _categories[
+                                                                          catIndex]
+                                                                      .locations);
+                                                          final locIndex =
+                                                              newLocs
+                                                                  .indexOf(loc);
+                                                          if (locIndex != -1) {
+                                                            newLocs[locIndex] =
+                                                                value;
+                                                            final newDisabled =
+                                                                List<String>.from(
+                                                                    _categories[
+                                                                            catIndex]
+                                                                        .disabledLocations);
+                                                            final disabledIdx =
+                                                                newDisabled
+                                                                    .indexOf(
+                                                                        loc);
+                                                            if (disabledIdx !=
+                                                                -1) {
+                                                              newDisabled[
+                                                                      disabledIdx] =
+                                                                  value;
+                                                            }
+                                                            _categories[
+                                                                    catIndex] =
+                                                                _categories[
+                                                                        catIndex]
+                                                                    .copyWith(
+                                                                        locations:
+                                                                            newLocs,
+                                                                        disabledLocations:
+                                                                            newDisabled);
+                                                          }
+                                                        });
+                                                        WidgetsBinding.instance
+                                                            .addPostFrameCallback(
+                                                                (_) {
+                                                          Notifier.show(
+                                                              context,
+                                                              l10n
+                                                                  .text(
+                                                                      'renameSuccess')
+                                                                  .replaceAll(
+                                                                      '{name}',
+                                                                      value));
+                                                        });
+                                                      },
+                                                    );
+                                                  }
+                                                : null,
+                                            onTap: () {
+                                              controller.playClick();
+                                              setState(() {
+                                                final catIndex =
+                                                    _categories.indexWhere(
+                                                        (element) =>
+                                                            element.id ==
+                                                            cat.id);
+                                                if (catIndex == -1) return;
+                                                final disabledList =
+                                                    List<String>.from(
+                                                        _categories[catIndex]
+                                                            .disabledLocations);
+                                                if (!disabled) {
+                                                  disabledList.add(loc);
+                                                } else {
+                                                  disabledList.remove(loc);
                                                 }
-                                                setState(() {
-                                                  final catIndex =
-                                                      _categories.indexWhere(
-                                                          (element) =>
-                                                              element.id ==
-                                                              cat.id);
-                                                  if (catIndex == -1) return;
-                                                  final newLocs = List<String>.from(
-                                                      _categories[catIndex]
-                                                          .locations);
-                                                  final locIndex =
-                                                      newLocs.indexOf(loc);
-                                                  if (locIndex != -1) {
-                                                    newLocs[locIndex] = value;
-                                                    final newDisabled =
+                                                var updatedCat =
+                                                    _categories[catIndex]
+                                                        .copyWith(
+                                                            disabledLocations:
+                                                                disabledList);
+                                                final activeCount = updatedCat
+                                                    .locations
+                                                    .where((l) => !updatedCat
+                                                        .disabledLocations
+                                                        .contains(l))
+                                                    .length;
+                                                if (activeCount == 0) {
+                                                  _selectedCategories
+                                                      .remove(updatedCat.id);
+                                                } else {
+                                                  if (!_selectedCategories
+                                                      .contains(
+                                                          updatedCat.id)) {
+                                                    _selectedCategories
+                                                        .add(updatedCat.id);
+                                                  }
+                                                }
+                                                _categories[catIndex] =
+                                                    updatedCat;
+                                              });
+                                            },
+                                            onDoubleTap: !isCore
+                                                ? () {
+                                                    controller.playClick();
+                                                    _confirmDelete(
+                                                      context: context,
+                                                      target: loc,
+                                                      message: l10n
+                                                          .text(
+                                                              'confirmDeleteLocation')
+                                                          .replaceAll('{name}',
+                                                              loc),
+                                                      onConfirm: () {
+                                                        setState(() {
+                                                          final catIndex = _categories
+                                                              .indexWhere(
+                                                                  (element) =>
+                                                                      element
+                                                                          .id ==
+                                                                      cat.id);
+                                                          if (catIndex == -1) {
+                                                            return;
+                                                          }
+                                                          final newLocs =
+                                                              List<String>.from(
+                                                                  _categories[
+                                                                          catIndex]
+                                                                      .locations)
+                                                                ..remove(loc);
+                                                          final newDisabled =
+                                                              List<String>.from(
+                                                                  _categories[
+                                                                          catIndex]
+                                                                      .disabledLocations)
+                                                                ..remove(loc);
+                                                          var updatedCat =
+                                                              _categories[
+                                                                      catIndex]
+                                                                  .copyWith(
+                                                                      locations:
+                                                                          newLocs,
+                                                                      disabledLocations:
+                                                                          newDisabled);
+                                                          final activeCount =
+                                                              updatedCat
+                                                                  .locations
+                                                                  .where((l) =>
+                                                                      !updatedCat
+                                                                          .disabledLocations
+                                                                          .contains(
+                                                                              l))
+                                                                  .length;
+                                                          if (activeCount ==
+                                                              0) {
+                                                            _selectedCategories
+                                                                .remove(
+                                                                    updatedCat
+                                                                        .id);
+                                                          }
+                                                          _categories[
+                                                                  catIndex] =
+                                                              updatedCat;
+                                                        });
+                                                        WidgetsBinding.instance
+                                                            .addPostFrameCallback(
+                                                                (_) {
+                                                          Notifier.show(
+                                                              context,
+                                                              l10n
+                                                                  .text(
+                                                                      'deleteSuccess')
+                                                                  .replaceAll(
+                                                                      '{name}',
+                                                                      loc));
+                                                        });
+                                                      },
+                                                    );
+                                                  }
+                                                : null,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 10),
+                                              decoration: BoxDecoration(
+                                                color: disabled
+                                                    ? Colors.white
+                                                        .withValues(
+                                                            alpha: 0.08)
+                                                    : activeColor.withValues(
+                                                        alpha: 0.18),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: disabled
+                                                      ? Colors.white
+                                                          .withValues(
+                                                              alpha: 0.2)
+                                                      : activeColor.withValues(
+                                                          alpha: 0.5),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                l10n.locationName(loc),
+                                                style: TextStyle(
+                                                  color: disabled
+                                                      ? Colors.white70
+                                                      : Colors.white,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                      if (!isCore)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 8),
+                                          child: OutlinedButton.icon(
+                                            onPressed: () {
+                                              controller.playClick();
+                                              _showInputDialog(
+                                                context: context,
+                                                title:
+                                                    l10n.addLocationTo(cat.name),
+                                                hint: l10n.text('locationHint'),
+                                                onSubmit: (value) {
+                                                  if (value.isEmpty) return;
+                                                  if (value.length > 16) {
+                                                    Notifier.show(
+                                                      context,
+                                                      l10n.text('max16'),
+                                                      warning: true,
+                                                    );
+                                                    return;
+                                                  }
+                                                  setState(() {
+                                                    final catIndex =
+                                                        _categories.indexWhere(
+                                                            (element) =>
+                                                                element.id ==
+                                                                cat.id);
+                                                    if (catIndex == -1) return;
+                                                    final newLocs =
                                                         List<String>.from(
                                                             _categories[
                                                                     catIndex]
-                                                                .disabledLocations);
-                                                    final disabledIdx =
-                                                        newDisabled.indexOf(loc);
-                                                    if (disabledIdx != -1) {
-                                                      newDisabled[disabledIdx] =
-                                                          value;
-                                                    }
+                                                                .locations);
+                                                    newLocs.add(value);
                                                     _categories[catIndex] =
                                                         _categories[catIndex]
                                                             .copyWith(
                                                                 locations:
-                                                                    newLocs,
-                                                                disabledLocations:
-                                                                    newDisabled);
-                                                  }
-                                                });
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                  Notifier.show(
+                                                                    newLocs);
+                                                  });
+                                                  WidgetsBinding.instance
+                                                      .addPostFrameCallback(
+                                                          (_) {
+                                                    Notifier.show(
                                                       context,
                                                       l10n
-                                                          .text('renameSuccess')
+                                                          .text(
+                                                              'addedLocationTo')
                                                           .replaceAll(
-                                                              '{name}', value));
-                                                });
-                                              },
-                                            );
-                                          }
-                                        : null,
-                                    onTap: () {
-                                      controller.playClick();
-                                      setState(() {
-                                        final catIndex = _categories.indexWhere(
-                                            (element) => element.id == cat.id);
-                                        if (catIndex == -1) return;
-                                        final disabledList = List<String>.from(
-                                            _categories[catIndex]
-                                                .disabledLocations);
-                                        if (!disabled) {
-                                          disabledList.add(loc);
-                                        } else {
-                                          disabledList.remove(loc);
-                                        }
-                                        var updatedCat = _categories[catIndex]
-                                            .copyWith(
-                                                disabledLocations:
-                                                    disabledList);
-                                        final activeCount = updatedCat.locations
-                                            .where((l) => !updatedCat
-                                                .disabledLocations
-                                                .contains(l))
-                                            .length;
-                                        if (activeCount == 0) {
-                                          _selectedCategories
-                                              .remove(updatedCat.id);
-                                        } else {
-                                          if (!_selectedCategories
-                                              .contains(updatedCat.id)) {
-                                            _selectedCategories
-                                                .add(updatedCat.id);
-                                          }
-                                      }
-                                      _categories[catIndex] = updatedCat;
-                                    });
-                                  },
-                                    onDoubleTap: !isCore
-                                        ? () {
-                                            controller.playClick();
-                                            _confirmDelete(
-                                              context: context,
-                                              target: loc,
-                                              message: l10n
-                                                  .text('confirmDeleteLocation')
-                                                  .replaceAll('{name}', loc),
-                                              onConfirm: () {
-                                                setState(() {
-                                                  final catIndex =
-                                                      _categories.indexWhere(
-                                                          (element) =>
-                                                              element.id ==
-                                                              cat.id);
-                                                  if (catIndex == -1) return;
-                                                  final newLocs = List<String>.from(
-                                                      _categories[catIndex]
-                                                          .locations)
-                                                    ..remove(loc);
-                                                  final newDisabled = List<String>.from(
-                                                      _categories[catIndex]
-                                                          .disabledLocations)
-                                                    ..remove(loc);
-                                                  var updatedCat =
-                                                      _categories[catIndex]
-                                                          .copyWith(
-                                                              locations:
-                                                                  newLocs,
-                                                              disabledLocations:
-                                                                  newDisabled);
-                                                  final activeCount =
-                                                      updatedCat.locations
-                                                          .where((l) =>
-                                                              !updatedCat
-                                                                  .disabledLocations
-                                                                  .contains(l))
-                                                          .length;
-                                                  if (activeCount == 0) {
-                                                    _selectedCategories
-                                                        .remove(updatedCat.id);
-                                                  }
-                                                  _categories[catIndex] =
-                                                      updatedCat;
-                                                });
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                  Notifier.show(
-                                                      context,
-                                                      l10n
-                                                          .text('deleteSuccess')
+                                                              '{loc}', value)
                                                           .replaceAll(
-                                                              '{name}', loc));
-                                                });
-                                              },
-                                            );
-                                          }
-                                        : null,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: disabled
-                                            ? Colors.white
-                                                .withValues(alpha: 0.08)
-                                            : activeColor
-                                                .withValues(alpha: 0.18),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: disabled
-                                              ? Colors.white
-                                                  .withValues(alpha: 0.2)
-                                              : activeColor
-                                                  .withValues(alpha: 0.5),
+                                                              '{cat}',
+                                                              l10n.categoryName(
+                                                                  cat.name)),
+                                                    );
+                                                  });
+                                                },
+                                              );
+                                            },
+                                            icon: const Icon(
+                                                Icons.add_location_alt_outlined),
+                                            label:
+                                                Text(l10n.text('addLocation')),
+                                          ),
                                         ),
-                                      ),
-                                      child: Text(
-                                        l10n.locationName(loc),
-                                        style: TextStyle(
-                                          color: disabled
-                                              ? Colors.white70
-                                              : Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                              if (!isCore)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8),
-                                  child: OutlinedButton.icon(
-                                    onPressed: () {
-                                      controller.playClick();
-                                      _showInputDialog(
-                                        context: context,
-                                        title: l10n.addLocationTo(cat.name),
-                                        hint: l10n.text('locationHint'),
-                                        onSubmit: (value) {
-                                          if (value.isEmpty) return;
-                                          if (value.length > 16) {
-                                            Notifier.show(
-                                              context,
-                                              l10n.text('max16'),
-                                              warning: true,
-                                            );
-                                            return;
-                                          }
-                                          setState(() {
-                                            final catIndex =
-                                                _categories.indexWhere(
-                                                    (element) =>
-                                                        element.id == cat.id);
-                                            if (catIndex == -1) return;
-                                            final newLocs = List<String>.from(
-                                                _categories[catIndex].locations);
-                                            newLocs.add(value);
-                                            _categories[catIndex] =
-                                                _categories[catIndex].copyWith(
-                                                    locations: newLocs);
-                                          });
-                                          WidgetsBinding.instance
-                                              .addPostFrameCallback((_) {
-                                            Notifier.show(
-                                              context,
-                                              l10n
-                                                  .text('addedLocationTo')
-                                                  .replaceAll('{loc}', value)
-                                                  .replaceAll(
-                                                      '{cat}',
-                                                      l10n
-                                                          .categoryName(cat.name)),
-                                            );
-                                          });
-                                        },
-                                      );
-                                    },
-                                    icon: const Icon(
-                                        Icons.add_location_alt_outlined),
-                                    label: Text(l10n.text('addLocation')),
+                                    ],
                                   ),
-                                ),
-                            ],
-                          ),
+                                )
+                              : const SizedBox.shrink(),
                         ),
+                      ),
                     ],
                   ),
                 );
