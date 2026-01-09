@@ -89,7 +89,7 @@ class SpyLocalizations {
       'interrogationPhase': 'Interrogation Phase',
       'vote': 'Vote',
       'results': 'Results',
-      'holdToScan': 'Hold finger to scan',
+      'holdToScan': 'Hold finger to scan. Do not leave early.',
       'nextAgent': 'Next Agent',
       'youAreSpy': 'You are the SPY',
       'agent': 'Agent',
@@ -237,7 +237,8 @@ class SpyLocalizations {
       'interrogationPhase': 'Sorgu Aşaması',
       'vote': 'Oylama',
       'results': 'Sonuçlar',
-      'holdToScan': 'Tarama için parmağınızı basılı tutun',
+      'holdToScan':
+          'Tarama için parmağınızı basılı tutun. Bitene kadar bırakmayın.',
       'nextAgent': 'Sonraki Ajan',
       'youAreSpy': 'Sen CASUSSUN',
       'agent': 'Ajan',

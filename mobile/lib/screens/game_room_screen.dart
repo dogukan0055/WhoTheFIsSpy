@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/spy_localizations.dart';
@@ -188,10 +189,14 @@ class _RoleRevealView extends StatefulWidget {
   State<_RoleRevealView> createState() => _RoleRevealViewState();
 }
 
-class _RoleRevealViewState extends State<_RoleRevealView> {
+class _RoleRevealViewState extends State<_RoleRevealView>
+    with SingleTickerProviderStateMixin {
   bool revealed = false;
   double progress = 0;
-  Timer? _scanTimer;
+  late final AnimationController _resultController;
+  bool _playingResult = false;
+  bool _currentIsSpy = false;
+  bool _resultCompleted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -199,6 +204,7 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
     final controller = context.read<GameController>();
     final state = controller.state;
     final player = state.players[state.gameData.currentRevealIndex];
+    final isSpy = player.role == Role.spy;
     final isLast =
         state.gameData.currentRevealIndex == state.players.length - 1;
 
@@ -224,9 +230,7 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
           ),
           const SizedBox(height: 24),
           GestureDetector(
-            onLongPressStart: (_) => _startScan(() {
-              setState(() => revealed = true);
-            }),
+            onLongPressStart: (_) => _playResultAnimation(isSpy),
             onLongPressEnd: (_) => _stopScan(),
             child: Card(
               child: Container(
@@ -237,30 +241,30 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
                         player: player,
                         location: state.gameData.currentLocation,
                       )
-                    : Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Stack(
-                            alignment: Alignment.center,
+                    : _playingResult
+                        ? _ResultLottie(
+                            key: ValueKey(
+                                '${player.id}-${_currentIsSpy ? 'spy' : 'agent'}'),
+                            controller: _resultController,
+                            isSpy: _currentIsSpy,
+                            onComplete: () {
+                              if (!mounted) return;
+                              setState(() {
+                                _playingResult = false;
+                                revealed = true;
+                                progress = 0;
+                                _resultCompleted = true;
+                              });
+                            },
+                          )
+                        : Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(
-                                width: 120,
-                                height: 120,
-                                child: CircularProgressIndicator(
-                                  value: progress,
-                                  strokeWidth: 6,
-                                  color: Colors.lightBlueAccent,
-                                ),
-                              ),
-                              Icon(Icons.fingerprint,
-                                  size: 72,
-                                  color: Colors.white.withValues(alpha: 0.6)),
+                              _HoldScanner(progress: progress),
+                              const SizedBox(height: 16),
+                              Text(l10n.text('holdToScan')),
                             ],
                           ),
-                          const SizedBox(height: 16),
-                          Text(l10n.text('holdToScan')),
-                        ],
-                      ),
               ),
             ),
           ),
@@ -302,27 +306,32 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
     );
   }
 
-  void _startScan(VoidCallback onComplete) {
-    progress = 0;
-    _scanTimer?.cancel();
-    _scanTimer = Timer.periodic(const Duration(milliseconds: 80), (timer) {
-      setState(() {
-        progress += 0.08;
-        if (progress >= 1) {
-          _stopScan();
-          onComplete();
-          if (context.read<GameController>().state.appSettings.vibrate) {
-            HapticFeedback.mediumImpact();
-          }
-        }
-      });
+  @override
+  void initState() {
+    super.initState();
+    _resultController = AnimationController(vsync: this);
+  }
+
+  void _playResultAnimation(bool isSpy) {
+    if (_playingResult || revealed) return;
+    _resultController.stop();
+    _resultController.reset();
+    setState(() {
+      progress = 1;
+      _playingResult = true;
+      _currentIsSpy = isSpy;
+      _resultCompleted = false;
     });
   }
 
   void _stopScan() {
-    _scanTimer?.cancel();
-    _scanTimer = null;
-    if (!revealed) {
+    if (_playingResult && !_resultCompleted) {
+      _resultController.stop();
+      setState(() {
+        _playingResult = false;
+        progress = 0;
+      });
+    } else if (!revealed) {
       setState(() {
         progress = 0;
       });
@@ -331,8 +340,111 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
 
   @override
   void dispose() {
-    _scanTimer?.cancel();
+    _resultController.dispose();
     super.dispose();
+  }
+}
+
+class _HoldScanner extends StatelessWidget {
+  const _HoldScanner({required this.progress});
+
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 130,
+              height: 130,
+              child: CircularProgressIndicator(
+                value: progress.clamp(0, 1),
+                strokeWidth: 6,
+                color: Colors.redAccent,
+                backgroundColor: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+            Icon(Icons.fingerprint,
+                size: 80, color: Colors.white.withValues(alpha: 0.4)),
+          ],
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+}
+
+class _ResultLottie extends StatefulWidget {
+  const _ResultLottie(
+      {super.key,
+      required this.controller,
+      required this.isSpy,
+      required this.onComplete});
+
+  final AnimationController controller;
+  final bool isSpy;
+  final VoidCallback onComplete;
+
+  @override
+  State<_ResultLottie> createState() => _ResultLottieState();
+}
+
+class _ResultLottieState extends State<_ResultLottie> {
+  bool _started = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final asset =
+        widget.isSpy ? 'assets/lottie/fail.json' : 'assets/lottie/correct.json';
+    return SizedBox(
+      height: 140,
+      width: 140,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withValues(alpha: 0.05),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.1), width: 2),
+            ),
+          ),
+          ClipOval(
+            child: SizedBox(
+              width: 140,
+              height: 140,
+              child: Transform.scale(
+                scale: 1.2,
+                child: Lottie.asset(
+                  asset,
+                  controller: widget.controller,
+                  repeat: false,
+                  onLoaded: (composition) {
+                    if (_started) return;
+                    _started = true;
+                    final duration = composition.duration == Duration.zero
+                        ? const Duration(milliseconds: 900)
+                        : composition.duration;
+                    widget.controller
+                      ..duration = duration
+                      ..forward(from: 0).whenComplete(() {
+                        if (!mounted) return;
+                        widget.onComplete();
+                      });
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -430,7 +542,8 @@ class _DiscussionViewState extends State<_DiscussionView> {
   Widget build(BuildContext context) {
     final controller = context.watch<GameController>();
     final state = controller.state;
-    final gameRoomState = context.findAncestorStateOfType<_GameRoomScreenState>();
+    final gameRoomState =
+        context.findAncestorStateOfType<_GameRoomScreenState>();
     final spiesRemaining =
         state.players.where((p) => p.role == Role.spy && !p.isDead).length;
     final agentsActive =
@@ -627,7 +740,6 @@ class _DiscussionViewState extends State<_DiscussionView> {
     }
     _lastTime = time;
   }
-
 }
 
 class _VotingView extends StatefulWidget {

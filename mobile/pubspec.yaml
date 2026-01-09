@@ -17,6 +17,7 @@ dependencies:
   package_info_plus: ^8.1.1
   flutter_localizations:
     sdk: flutter
+  lottie: ^3.1.2
 
 dev_dependencies:
   flutter_test:
@@ -27,3 +28,6 @@ flutter:
   uses-material-design: true
   assets:
     - assets/audio/
+    - assets/lottie/
+    - assets/lottie/fail.json
+    - assets/lottie/correct.json
