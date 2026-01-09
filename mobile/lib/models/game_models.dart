@@ -177,6 +177,8 @@ class GameState {
     required this.themeMode,
     required this.language,
     required this.isPaused,
+    required this.spiesCaughtSignal,
+    this.lastCaughtSpy,
   });
 
   final GameMode? mode;
@@ -188,6 +190,8 @@ class GameState {
   final ThemeMode themeMode;
   final Language language;
   final bool isPaused;
+  final int spiesCaughtSignal;
+  final String? lastCaughtSpy;
 
   factory GameState.initial() {
     return GameState(
@@ -217,6 +221,8 @@ class GameState {
       themeMode: ThemeMode.dark,
       language: Language.en,
       isPaused: false,
+      spiesCaughtSignal: 0,
+      lastCaughtSpy: null,
     );
   }
 
@@ -230,6 +236,8 @@ class GameState {
     ThemeMode? themeMode,
     Language? language,
     bool? isPaused,
+    int? spiesCaughtSignal,
+    String? lastCaughtSpy,
   }) {
     return GameState(
       mode: mode ?? this.mode,
@@ -241,6 +249,8 @@ class GameState {
       themeMode: themeMode ?? this.themeMode,
       language: language ?? this.language,
       isPaused: isPaused ?? this.isPaused,
+      spiesCaughtSignal: spiesCaughtSignal ?? this.spiesCaughtSignal,
+      lastCaughtSpy: lastCaughtSpy ?? this.lastCaughtSpy,
     );
   }
 }

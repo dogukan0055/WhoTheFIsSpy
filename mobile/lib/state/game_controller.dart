@@ -349,11 +349,23 @@ class GameController extends ChangeNotifier {
       _stopTimer();
     }
 
+    final spyCaughtSignal = (eliminated.role == Role.spy && spiesLeft > 0)
+        ? _state.spiesCaughtSignal + 1
+        : _state.spiesCaughtSignal;
+    final lastCaughtSpy =
+        (eliminated.role == Role.spy && spiesLeft > 0) ? eliminated.name : _state.lastCaughtSpy;
+
     _state = _state.copyWith(
       players: updatedPlayers,
       phase: nextPhase,
       gameData: _state.gameData.copyWith(winner: winner),
+      isPaused: nextPhase == GamePhase.playing ? false : _state.isPaused,
+      spiesCaughtSignal: spyCaughtSignal,
+      lastCaughtSpy: lastCaughtSpy,
     );
+    if (winner == null && nextPhase == GamePhase.playing) {
+      _startTimerIfNeeded();
+    }
     notifyListeners();
   }
 
@@ -368,6 +380,8 @@ class GameController extends ChangeNotifier {
 
     _state = _state.copyWith(
       settings: _state.settings.copyWith(playerCount: names.length),
+      spiesCaughtSignal: 0,
+      lastCaughtSpy: null,
     );
 
     return startOfflineGame(names);
@@ -382,6 +396,8 @@ class GameController extends ChangeNotifier {
           _state.gameData.copyWith(categories: _state.gameData.categories),
       themeMode: _state.themeMode,
       language: _state.language,
+      spiesCaughtSignal: 0,
+      lastCaughtSpy: null,
     );
     notifyListeners();
   }

@@ -75,6 +75,7 @@ class HomeScreen extends StatelessWidget {
           Text(
             l10n.text('homeTagline'),
             style: textTheme.bodyMedium?.copyWith(color: Colors.white70),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 36),
           ElevatedButton.icon(

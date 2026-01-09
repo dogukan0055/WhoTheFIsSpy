@@ -153,6 +153,7 @@ class _GameRoomScreenState extends State<GameRoomScreen>
                             ? l10n.text('vote')
                             : l10n.text('results'),
               ),
+              actions: const [],
             ),
             child: body,
           ),
@@ -197,8 +198,7 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
                   controller.playClick();
                   controller.resetGame();
                   Navigator.of(ctx).pop();
-                  Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/', (route) => false);
+                  Navigator.of(context).pop();
                 },
                 icon: const Icon(Icons.exit_to_app),
                 label: Text(l10n.text('yes')),
@@ -307,10 +307,15 @@ class _RoleRevealViewState extends State<_RoleRevealView> {
           TextButton.icon(
             onPressed: () {
               controller.playClick();
-              _confirmExit(context, controller);
+              controller.resetGame();
+              Navigator.of(context)
+                  .pushNamedAndRemoveUntil(
+                    '/setup',
+                    (route) => route.settings.name == '/',
+                  );
             },
             icon: const Icon(Icons.logout),
-            label: Text(l10n.text('mainMenu')),
+            label: Text(l10n.text('backToSetup')),
           ),
         ],
       ),
@@ -427,6 +432,13 @@ class _DiscussionView extends StatefulWidget {
 
 class _DiscussionViewState extends State<_DiscussionView> {
   int? _lastTime;
+  int _lastSpySignal = 0;
+  Timer? _blinkTimer;
+  bool _blinkOn = false;
+  bool _blinking = false;
+  Timer? _timerBlinkTimer;
+  bool _timerBlinkOn = false;
+  bool _timerBlinking = false;
 
   String _format(int seconds) {
     final m = (seconds ~/ 60).toString().padLeft(2, '0');
@@ -444,6 +456,51 @@ class _DiscussionViewState extends State<_DiscussionView> {
         state.players.where((p) => p.role == Role.agent && !p.isDead).length;
     final l10n = context.l10n;
 
+    if (state.spiesCaughtSignal != _lastSpySignal) {
+      _lastSpySignal = state.spiesCaughtSignal;
+      final caughtName = state.lastCaughtSpy ?? '';
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Notifier.show(
+            context, l10n.text('spyCaught').replaceAll('{name}', caughtName),
+            warning: true);
+      });
+      _blinkTimer?.cancel();
+      _blinking = true;
+      _blinkOn = true;
+      _blinkTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        setState(() => _blinkOn = !_blinkOn);
+      });
+    }
+
+    if (state.settings.isTimerOn &&
+        state.phase == GamePhase.playing &&
+        state.gameData.timeLeft <= 10) {
+      if (!_timerBlinking) {
+        _timerBlinking = true;
+        _timerBlinkTimer?.cancel();
+        _timerBlinkTimer =
+            Timer.periodic(const Duration(milliseconds: 350), (timer) {
+          if (!mounted) {
+            timer.cancel();
+            return;
+          }
+          setState(() => _timerBlinkOn = !_timerBlinkOn);
+        });
+      }
+    } else if (_timerBlinking &&
+        (!state.settings.isTimerOn ||
+            state.phase != GamePhase.playing ||
+            state.gameData.timeLeft > 10)) {
+      _timerBlinkTimer?.cancel();
+      _timerBlinkOn = false;
+      _timerBlinking = false;
+    }
+
     _handleTimerFeedback(state, controller, l10n);
 
     return Column(
@@ -460,15 +517,19 @@ class _DiscussionViewState extends State<_DiscussionView> {
                     : Colors.lightBlueAccent,
               ),
               const SizedBox(height: 8),
-              Text(
-                _format(state.gameData.timeLeft),
-                style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                      color: state.gameData.timeLeft < 60
-                          ? Colors.redAccent
-                          : Colors.white,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
+              AnimatedOpacity(
+                opacity: _timerBlinking && _timerBlinkOn ? 0.35 : 1,
+                duration: const Duration(milliseconds: 200),
+                child: Text(
+                  _format(state.gameData.timeLeft),
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        color: state.gameData.timeLeft < 60
+                            ? Colors.redAccent
+                            : Colors.white,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                ),
               ),
             ],
           )
@@ -506,10 +567,22 @@ class _DiscussionViewState extends State<_DiscussionView> {
                 icon: Icons.badge_outlined,
               ),
               const SizedBox(height: 12),
-              _StatBlock(
-                label: l10n.text('spiesRemaining'),
-                value: spiesRemaining.toString(),
-                icon: Icons.person_search_rounded,
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _blinking && _blinkOn
+                        ? Colors.redAccent
+                        : Colors.white.withValues(alpha: 0.08),
+                    width: _blinking && _blinkOn ? 2 : 1,
+                  ),
+                ),
+                child: _StatBlock(
+                  label: l10n.text('spiesRemaining'),
+                  value: spiesRemaining.toString(),
+                  icon: Icons.person_search_rounded,
+                ),
               ),
             ],
           ),
@@ -640,18 +713,17 @@ class _DiscussionViewState extends State<_DiscussionView> {
           filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
           child: AlertDialog(
             title: Text(l10n.text('pauseTitle')),
-            content: Text(
-                overrideMessage ?? l10n.text('pauseSubtitle')),
+            content: Text(overrideMessage ?? l10n.text('pauseSubtitle')),
             actions: [
               TextButton(
                 onPressed: () {
                   controller.playClick();
-                  Navigator.of(ctx).pop();
-                  controller.startPlaying();
-                },
-                child: Text(l10n.text('continue')),
-              ),
-              ElevatedButton(
+                    Navigator.of(ctx).pop();
+                    controller.startPlaying();
+                  },
+                  child: Text(l10n.text('continue')),
+                ),
+                ElevatedButton(
                 onPressed: () {
                   controller.playClick();
                   controller.resetGame();
@@ -662,10 +734,10 @@ class _DiscussionViewState extends State<_DiscussionView> {
                 style:
                     ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
                 child: Text(l10n.text('mainMenu')),
-              ),
-            ],
-          ),
-        );
+                ),
+              ],
+            ),
+          );
       },
       barrierDismissible: false,
     );
