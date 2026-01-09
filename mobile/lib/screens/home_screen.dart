@@ -56,24 +56,17 @@ class HomeScreen extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  'WHO THE',
+                  l10n.text('appTitleTop'),
                   style: textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w900,
                     letterSpacing: -1.5,
                   ),
                 ),
                 Text(
-                  'F***',
+                  l10n.text('appTitleMid'),
                   style: textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                     color: colorScheme.primary,
-                    letterSpacing: -1.5,
-                  ),
-                ),
-                Text(
-                  'IS SPY?',
-                  style: textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w900,
                     letterSpacing: -1.5,
                   ),
                 ),

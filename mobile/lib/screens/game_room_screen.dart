@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -238,7 +239,7 @@ class _RoleCardBody extends StatelessWidget {
               ? Colors.redAccent.withValues(alpha: 0.25)
               : Colors.blueAccent.withValues(alpha: 0.2),
           child: Icon(
-            isSpy ? Icons.visibility_off_outlined : Icons.person_outline,
+            isSpy ? Icons.person_search_rounded : Icons.badge_outlined,
             size: 40,
             color: isSpy ? Colors.redAccent : Colors.blueAccent,
           ),
@@ -299,6 +300,8 @@ class _DiscussionView extends StatelessWidget {
     final state = controller.state;
     final spiesRemaining =
         state.players.where((p) => p.role == Role.spy && !p.isDead).length;
+    final agentsActive =
+        state.players.where((p) => p.role == Role.agent && !p.isDead).length;
     final l10n = context.l10n;
 
     return Column(
@@ -344,14 +347,27 @@ class _DiscussionView extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
             children: [
+              if (state.phase == GamePhase.voting)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    l10n.text('timerPaused'),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelLarge
+                        ?.copyWith(color: Colors.orangeAccent),
+                  ),
+                ),
               _StatBlock(
-                label: l10n.text('agentsActive'),
-                value: state.players.where((p) => !p.isDead).length.toString(),
+                label: l10n.text('agentsActiveField'),
+                value: agentsActive.toString(),
+                icon: Icons.badge_outlined,
               ),
               const SizedBox(height: 12),
               _StatBlock(
                 label: l10n.text('spiesRemaining'),
                 value: spiesRemaining.toString(),
+                icon: Icons.person_search_rounded,
               ),
             ],
           ),
@@ -364,6 +380,16 @@ class _DiscussionView extends StatelessWidget {
               icon: const Icon(Icons.how_to_vote),
               label: Text(l10n.text('callVote')),
               style: ElevatedButton.styleFrom(minimumSize: const Size(240, 52)),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => _showPauseDialog(context, controller),
+              icon: const Icon(Icons.pause_circle_outline),
+              label: Text(l10n.text('pause')),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(240, 52),
+                foregroundColor: Colors.orangeAccent,
+              ),
             ),
             const SizedBox(height: 12),
             ElevatedButton.icon(
@@ -383,32 +409,79 @@ class _DiscussionView extends StatelessWidget {
 
   void _confirmExit(BuildContext context, GameController controller) {
     final l10n = context.l10n;
+    controller.pauseGame();
     showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text(l10n.text('leaveMission')),
-          content: Text(l10n.text('returnToMenu')),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(l10n.text('stay')),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                controller.resetGame();
-                Navigator.of(ctx).pop();
-                Navigator.of(context)
-                    .pushNamedAndRemoveUntil('/', (route) => false);
-              },
-              icon: const Icon(Icons.exit_to_app),
-              label: Text(l10n.text('mainMenu')),
-              style:
-                  ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            ),
-          ],
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: AlertDialog(
+            title: Text(l10n.text('leaveMission')),
+            content: Text(l10n.text('returnToMenu')),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  if (controller.state.phase == GamePhase.playing) {
+                    controller.startPlaying();
+                  }
+                },
+                child: Text(l10n.text('stay')),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  controller.resetGame();
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (route) => false);
+                },
+                icon: const Icon(Icons.exit_to_app),
+                label: Text(l10n.text('yes')),
+                style:
+                    ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              ),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  void _showPauseDialog(BuildContext context, GameController controller) {
+    final l10n = context.l10n;
+    controller.pauseGame();
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: AlertDialog(
+            title: Text(l10n.text('pause')),
+            content: Text(l10n.text('timerPaused')),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  controller.startPlaying();
+                },
+                child: Text(l10n.text('continue')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  controller.resetGame();
+                  Navigator.of(ctx).pop();
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (route) => false);
+                },
+                style:
+                    ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                child: Text(l10n.text('mainMenu')),
+              ),
+            ],
+          ),
+        );
+      },
+      barrierDismissible: false,
     );
   }
 }
@@ -440,6 +513,16 @@ class _VotingViewState extends State<_VotingView> {
                 .textTheme
                 .titleLarge
                 ?.copyWith(color: Colors.redAccent),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Center(
+          child: Text(
+            l10n.text('timerPaused'),
+            style: Theme.of(context)
+                .textTheme
+                .labelLarge
+                ?.copyWith(color: Colors.orangeAccent),
           ),
         ),
         const SizedBox(height: 16),
@@ -610,10 +693,11 @@ class _ResultView extends StatelessWidget {
 }
 
 class _StatBlock extends StatelessWidget {
-  const _StatBlock({required this.label, required this.value});
+  const _StatBlock({required this.label, required this.value, this.icon});
 
   final String label;
   final String value;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -628,9 +712,18 @@ class _StatBlock extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Row(
+            children: [
+              if (icon != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: Icon(icon, size: 20, color: Colors.white70),
+                ),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 22, fontWeight: FontWeight.bold)),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(label,
               style: Theme.of(context)

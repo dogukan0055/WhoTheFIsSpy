@@ -63,6 +63,7 @@ class _NotifierToast extends StatefulWidget {
 class _NotifierToastState extends State<_NotifierToast> {
   bool _visible = false;
   Timer? _autoClose;
+  bool _closed = false;
 
   @override
   void initState() {
@@ -79,12 +80,19 @@ class _NotifierToastState extends State<_NotifierToast> {
   }
 
   void _hide() {
+    if (_closed) return;
     if (!_visible) {
-      widget.onClose();
+      _closeNow();
       return;
     }
     setState(() => _visible = false);
-    Future.delayed(const Duration(milliseconds: 500), widget.onClose);
+    Future.delayed(const Duration(milliseconds: 500), _closeNow);
+  }
+
+  void _closeNow() {
+    if (_closed) return;
+    _closed = true;
+    widget.onClose();
   }
 
   @override
@@ -97,7 +105,7 @@ class _NotifierToastState extends State<_NotifierToast> {
         child: Dismissible(
           key: const ValueKey('notifier-toast'),
           direction: DismissDirection.horizontal,
-          onDismissed: (_) => _hide(),
+          onDismissed: (_) => _closeNow(),
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 500),
             opacity: _visible ? 1 : 0,

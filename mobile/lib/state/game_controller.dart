@@ -293,6 +293,11 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void pauseGame() {
+    if (_state.phase != GamePhase.playing) return;
+    _stopTimer();
+  }
+
   void eliminatePlayer(String playerId) {
     final eliminated = _state.players.firstWhere((p) => p.id == playerId);
     final updatedPlayers = _state.players

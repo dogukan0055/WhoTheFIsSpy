@@ -30,7 +30,7 @@ class SpyApp extends StatelessWidget {
           final state = controller.state;
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            title: 'Who The F Is Spy?',
+            title: 'The Mole Within: A Spy Game',
             theme: buildSpyTheme(
               highContrast: state.appSettings.highContrast,
               mode: ThemeMode.light,
