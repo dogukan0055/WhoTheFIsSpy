@@ -66,12 +66,6 @@ class _AgentRosterScreenState extends State<AgentRosterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(context.l10n.text('agentRoster')),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: Text(context.l10n.text('save')),
-          ),
-        ],
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),

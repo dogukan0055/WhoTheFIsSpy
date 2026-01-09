@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
+import '../widgets/notifier.dart';
 import '../widgets/spy_scaffold.dart';
 import 'roster_screen.dart';
 
@@ -128,15 +129,21 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
               icon: const Icon(Icons.arrow_back),
               onPressed: () => Navigator.of(context).pop(),
             ),
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            elevation: 0,
             title: Text(l10n.text('missionSetup')),
           ),
-          bottom: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+          bottom: SafeArea(
+            minimum: const EdgeInsets.fromLTRB(16, 0, 16, 28),
             child: ElevatedButton.icon(
               onPressed: () => _startGame(controller),
               icon: const Icon(Icons.play_arrow_rounded),
               label: Text(l10n.text('startMission')),
               style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 minimumSize: const Size.fromHeight(56),
                 textStyle: const TextStyle(fontSize: 18),
               ),
@@ -165,6 +172,31 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                 helper: settings.playerCount <= 5
                     ? l10n.text('spiesHelperLocked')
                     : l10n.text('spiesHelper'),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push<List<String>>(
+                      MaterialPageRoute(
+                        builder: (_) => AgentRosterScreen(
+                            initialNames: _controllers.map((c) => c.text).toList()),
+                      ),
+                    );
+                    if (!context.mounted) return;
+                    if (result != null) {
+                      setState(() {
+                        _controllers.clear();
+                        for (final name in result) {
+                          _controllers.add(TextEditingController(text: name));
+                        }
+                      });
+                      Notifier.show(context, l10n.text('namesSaved'));
+                    }
+                  },
+                  icon: const Icon(Icons.manage_accounts),
+                  label: Text(l10n.text('manageRoster')),
+                ),
               ),
               const SizedBox(height: 12),
               Card(
@@ -226,28 +258,6 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final result = await Navigator.of(context).push<List<String>>(
-                    MaterialPageRoute(
-                      builder: (_) => AgentRosterScreen(
-                          initialNames:
-                              _controllers.map((c) => c.text).toList()),
-                    ),
-                  );
-                  if (result != null) {
-                    setState(() {
-                      _controllers.clear();
-                      for (final name in result) {
-                        _controllers.add(TextEditingController(text: name));
-                      }
-                    });
-                      }
-                    },
-                    icon: const Icon(Icons.manage_accounts),
-                    label: Text(l10n.text('manageRoster')),
-                  ),
               const SizedBox(height: 80),
             ],
           ),

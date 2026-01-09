@@ -58,6 +58,10 @@ class GameRoomScreen extends StatelessWidget {
             scrollable: false,
             appBar: AppBar(
               automaticallyImplyLeading: false,
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              scrolledUnderElevation: 0,
+              elevation: 0,
               title: Text(
                 state.phase == GamePhase.reveal
                     ? l10n.text('identityReveal')
@@ -575,7 +579,13 @@ class _ResultView extends StatelessWidget {
             child: Column(
               children: [
                 ElevatedButton.icon(
-                  onPressed: controller.resetGame,
+                  onPressed: () {
+                    final error = controller.restartGameWithSameSettings();
+                    if (error != null) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(SnackBar(content: Text(error)));
+                    }
+                  },
                   icon: const Icon(Icons.replay_outlined),
                   label: Text(l10n.text('playAgain')),
                   style: ElevatedButton.styleFrom(

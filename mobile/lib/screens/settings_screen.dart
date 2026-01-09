@@ -144,22 +144,30 @@ class _LanguageTile extends StatelessWidget {
         ),
         title: Text(label),
         subtitle: Text(subtitle),
-        trailing: DropdownButton<Language>(
-          value: current,
-          underline: const SizedBox(),
-          items: const [
-            DropdownMenuItem(
-              value: Language.en,
-              child: Text('English 🇺🇸'),
+        trailing: ToggleButtons(
+          borderRadius: BorderRadius.circular(10),
+          isSelected: [
+            current == Language.en,
+            current == Language.tr,
+          ],
+          constraints: const BoxConstraints(minHeight: 40, minWidth: 52),
+          onPressed: (index) {
+            if (index == 0 && current != Language.en) {
+              onChanged(Language.en);
+            } else if (index == 1 && current != Language.tr) {
+              onChanged(Language.tr);
+            }
+          },
+          children: const [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: Text('EN'),
             ),
-            DropdownMenuItem(
-              value: Language.tr,
-              child: Text('Türkçe 🇹🇷'),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: Text('TR'),
             ),
           ],
-          onChanged: (val) {
-            if (val != null) onChanged(val);
-          },
         ),
       ),
     );

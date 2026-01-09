@@ -346,6 +346,22 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  String? restartGameWithSameSettings() {
+    final l10n = SpyLocalizations.forLanguage(_state.language);
+    final names = _state.players.isNotEmpty
+        ? _state.players.map((p) => p.name).toList()
+        : _savedNames;
+    if (names.isEmpty) {
+      return l10n.text('codeNameRequired');
+    }
+
+    _state = _state.copyWith(
+      settings: _state.settings.copyWith(playerCount: names.length),
+    );
+
+    return startOfflineGame(names);
+  }
+
   void resetGame() {
     _stopTimer();
     _state = GameState.initial().copyWith(
