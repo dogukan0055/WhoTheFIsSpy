@@ -35,7 +35,6 @@ class GameController extends ChangeNotifier {
       final vibrate = _prefs!.getBool('vibrate');
       final music = _prefs!.getBool('music');
       final highContrast = _prefs!.getBool('highContrast');
-      final themeName = _prefs!.getString('themeMode');
       final language = _prefs!.getString('language');
       _savedNames = _prefs!.getStringList('playerNames') ?? _savedNames;
       _seenOnboarding = _prefs!.getBool('seenOnboarding') ?? false;
@@ -47,7 +46,7 @@ class GameController extends ChangeNotifier {
           music: music ?? _state.appSettings.music,
           highContrast: highContrast ?? _state.appSettings.highContrast,
         ),
-        themeMode: _themeFromString(themeName) ?? _state.themeMode,
+        themeMode: ThemeMode.dark,
         language: _languageFromString(language) ?? _state.language,
       );
       notifyListeners();
@@ -127,14 +126,7 @@ class GameController extends ChangeNotifier {
   }
 
   Future<void> toggleThemeMode() async {
-    final next =
-        _state.themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-    _state = _state.copyWith(themeMode: next);
-    notifyListeners();
-    try {
-      _prefs ??= await SharedPreferences.getInstance();
-      await _prefs!.setString('themeMode', next.name);
-    } catch (_) {}
+    // Light mode disabled; keep dark mode always.
   }
 
   Future<void> setLanguage(Language language) async {
@@ -521,15 +513,6 @@ class GameController extends ChangeNotifier {
       _musicPlayer.play(AssetSource('audio/ambient.mp3'), volume: 0.18);
     } else {
       _musicPlayer.stop();
-    }
-  }
-
-  ThemeMode? _themeFromString(String? name) {
-    if (name == null) return null;
-    try {
-      return ThemeMode.values.firstWhere((m) => m.name == name);
-    } catch (_) {
-      return null;
     }
   }
 

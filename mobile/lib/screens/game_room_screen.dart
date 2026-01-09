@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
+import '../widgets/notifier.dart';
 import '../widgets/spy_scaffold.dart';
 
 class GameRoomScreen extends StatelessWidget {
@@ -662,11 +663,10 @@ class _ResultView extends StatelessWidget {
             child: Column(
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {
+                onPressed: () {
                     final error = controller.restartGameWithSameSettings();
                     if (error != null) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text(error)));
+                      Notifier.show(context, error, error: true);
                     }
                   },
                   icon: const Icon(Icons.replay_outlined),

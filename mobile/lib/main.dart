@@ -33,13 +33,9 @@ class SpyApp extends StatelessWidget {
             title: 'The Mole Within: A Spy Game',
             theme: buildSpyTheme(
               highContrast: state.appSettings.highContrast,
-              mode: ThemeMode.light,
-            ),
-            darkTheme: buildSpyTheme(
-              highContrast: state.appSettings.highContrast,
               mode: ThemeMode.dark,
             ),
-            themeMode: state.themeMode,
+            themeMode: ThemeMode.dark,
             supportedLocales: const [
               Locale('en'),
               Locale('tr'),

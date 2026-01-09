@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
+import '../widgets/notifier.dart';
 import '../widgets/spy_scaffold.dart';
 
 enum _OnlineStep { name, menu, join, lobby }
@@ -44,9 +45,7 @@ class _OnlineMenuScreenState extends State<OnlineMenuScreen> {
       }
       const sample = ['Cipher', 'Echo', 'Phantom', 'Shade', 'Nova'];
       setState(() => players.add(sample[players.length - 1]));
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${players.last} joined the lobby')),
-      );
+      Notifier.show(context, '${players.last} joined the lobby', warning: true);
     });
   }
 
@@ -75,9 +74,7 @@ class _OnlineMenuScreenState extends State<OnlineMenuScreen> {
 
   void _submitJoin() {
     if (codeCtrl.text.length != 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid 4 digit code')),
-      );
+      Notifier.show(context, 'Enter a valid 4 digit code', error: true);
       return;
     }
     isHost = false;
@@ -88,7 +85,6 @@ class _OnlineMenuScreenState extends State<OnlineMenuScreen> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<GameController>();
-    // Ensure mode stays online for context.
     if (controller.state.mode != GameMode.online) {
       controller.setMode(GameMode.online);
     }
@@ -188,21 +184,26 @@ class _MenuStep extends StatelessWidget {
       children: [
         Text(
           'Connected as ${name.toUpperCase()}',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.greenAccent),
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(color: Colors.greenAccent),
         ),
         const SizedBox(height: 28),
         ElevatedButton.icon(
           onPressed: onHost,
           icon: const Icon(Icons.wifi_tethering),
           label: const Text('Host operation'),
-          style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+          style:
+              ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
           onPressed: onJoin,
           icon: const Icon(Icons.lock_outline),
           label: const Text('Join operation'),
-          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+          style:
+              OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
         ),
       ],
     );
@@ -225,7 +226,8 @@ class _JoinStep extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('Enter access code', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        const Text('Enter access code',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         const SizedBox(height: 16),
         TextField(
           controller: controller,
@@ -266,11 +268,18 @@ class _LobbyStep extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 16),
-        Text('Operation Code', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
+        Text('Operation Code',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: Colors.white70)),
         const SizedBox(height: 6),
         Text(
           code.isEmpty ? '----' : code,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900),
+          style: Theme.of(context)
+              .textTheme
+              .headlineMedium
+              ?.copyWith(fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 18),
         Expanded(
@@ -301,8 +310,10 @@ class _LobbyStep extends StatelessWidget {
             child: ElevatedButton(
               onPressed: players.length < 4
                   ? null
-                  : () => ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Demo online lobby ready.')),
+                  : () => Notifier.show(
+                        context,
+                        'Demo online lobby ready.',
+                        warning: true,
                       ),
               child: const Text('Start Mission'),
             ),

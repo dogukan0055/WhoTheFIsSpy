@@ -5,6 +5,7 @@ import '../l10n/spy_localizations.dart';
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../widgets/spy_scaffold.dart';
+import '../widgets/notifier.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -19,8 +20,6 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-    final controller = context.watch<GameController>();
-    final isLight = controller.state.themeMode == ThemeMode.light;
     final l10n = context.l10n;
 
     return SpyScaffold(
@@ -30,15 +29,8 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              IconButton(
-                icon: Icon(isLight
-                    ? Icons.dark_mode_outlined
-                    : Icons.light_mode_outlined),
-                tooltip: l10n.text('toggleTheme'),
-                onPressed: () => controller.toggleThemeMode(),
-              ),
               IconButton(
                 icon: const Icon(Icons.settings_outlined),
                 onPressed: () => Navigator.of(context).pushNamed('/settings'),
@@ -93,9 +85,7 @@ class HomeScreen extends StatelessWidget {
               minimumSize: const Size.fromHeight(58),
             ),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(l10n.text('onlineComing'))),
-              );
+              Notifier.show(context, l10n.text('onlineComing'), warning: true);
             },
             icon: const Icon(Icons.wifi_off_outlined),
             label: Text(l10n.text('onlineMode')),

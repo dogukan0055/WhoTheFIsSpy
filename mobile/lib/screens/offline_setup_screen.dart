@@ -110,9 +110,7 @@ class _OfflineSetupScreenState extends State<OfflineSetupScreen> {
   }
 
   void _showMessage(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
+    Notifier.show(context, text, error: true);
   }
 
   @override
