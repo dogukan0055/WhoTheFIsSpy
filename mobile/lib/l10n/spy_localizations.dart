@@ -170,6 +170,16 @@ class SpyLocalizations {
           'Through out the game, a location can be reused multiple times.',
       'noLocationsRemaining':
           'All active locations have been used. Enable repeats or add more locations.',
+      'spyGuessButton': 'Spy Guess',
+      'spyGuessConfirmTitle': 'Make a Guess, Spy?',
+      'spyGuessConfirmBody':
+          'Do you want to guess the location now? You only get one shot.',
+      'spyGuessTitle': 'Spy Guess',
+      'spyGuessPrompt':
+          '{name}, everyone knows you are the spy. You are compromised! Make your choice.',
+      'spyGuessSubmit': 'Submit Guess',
+      'spyGuessYourGuess': 'Your Guess: {location}',
+      'spyGuessYourGuessEmpty': 'Your Guess: -',
     },
     'tr': {
       'welcomeTitle': 'Hoş geldin Ajan',
@@ -323,6 +333,16 @@ class SpyLocalizations {
           'Oyun boyunca bir lokasyon birden fazla kez kullanılabilir.',
       'noLocationsRemaining':
           'Tüm aktif lokasyonlar kullanıldı. Lokasyon tekrarına izin verin veya yeni lokasyon ekleyin.',
+      'spyGuessButton': 'Casus Tahmini',
+      'spyGuessConfirmTitle': 'Casus tahmini mi yapacaksın?',
+      'spyGuessConfirmBody':
+          'Lokasyonu tahmin etmek istiyor musun? Sadece bir şansın var.',
+      'spyGuessTitle': 'Casus Tahmini',
+      'spyGuessPrompt':
+          '{name}, casus kimliğin açığa çıktı! Seçimini yapmak zorundasın.',
+      'spyGuessSubmit': 'Tahmini Gönder',
+      'spyGuessYourGuess': 'Tahminin: {location}',
+      'spyGuessYourGuessEmpty': 'Tahminin: -',
     },
   };
 

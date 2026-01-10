@@ -336,6 +336,18 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void resolveSpyGuess(String guess) {
+    _stopTimer();
+    final correct = guess == _state.gameData.currentLocation;
+    _state = _state.copyWith(
+      phase: GamePhase.result,
+      gameData:
+          _state.gameData.copyWith(winner: correct ? Role.spy : Role.agent),
+      isPaused: false,
+    );
+    notifyListeners();
+  }
+
   void startVoting() {
     _stopTimer();
     final resetVotes = _state.players.map((p) => p.copyWith(votes: 0)).toList();
@@ -491,6 +503,8 @@ class GameController extends ChangeNotifier {
     _timer = null;
     _stopTickSound();
   }
+
+  void stopTimerForce() => _stopTimer();
 
   void toggleCategory(String id) {
     final selected = List<String>.from(_state.settings.selectedCategories);

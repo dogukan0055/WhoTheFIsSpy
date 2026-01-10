@@ -704,6 +704,47 @@ class _DiscussionViewState extends State<_DiscussionView> {
                 foregroundColor: Colors.orangeAccent,
               ),
             ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () {
+                controller.playClick();
+                controller.pauseGame();
+                controller.stopTimerForce();
+                showDialog(
+                  context: context,
+                  builder: (ctx) => BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                    child: AlertDialog(
+                      title: Text(l10n.text('spyGuessConfirmTitle')),
+                      content: Text(l10n.text('spyGuessConfirmBody')),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                            controller.startPlaying();
+                          },
+                          child: Text(l10n.text('cancel')),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                            Navigator.of(context)
+                                .pushReplacementNamed('/spy-guess');
+                          },
+                          child: Text(l10n.text('yes')),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.help_center_outlined),
+              label: Text(l10n.text('spyGuessButton')),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(240, 52),
+                foregroundColor: Colors.redAccent,
+              ),
+            ),
           ],
         ),
       ],

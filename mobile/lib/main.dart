@@ -8,6 +8,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/location_manager_screen.dart';
 import 'screens/offline_setup_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/spy_guess_screen.dart';
 import 'state/game_controller.dart';
 import 'theme.dart';
 import 'models/game_models.dart';
@@ -59,6 +60,7 @@ class SpyApp extends StatelessWidget {
               '/game': (_) => const GameRoomScreen(),
               '/settings': (_) => const SettingsScreen(),
               '/onboarding': (_) => const OnboardingScreen(),
+              '/spy-guess': (_) => const SpyGuessScreen(),
             },
           );
         },
