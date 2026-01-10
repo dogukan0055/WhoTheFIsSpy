@@ -22,7 +22,11 @@ class GameController extends ChangeNotifier {
   final AudioPlayer _musicPlayer = AudioPlayer()
     ..setReleaseMode(ReleaseMode.loop);
   final AudioPlayer _tickPlayer = AudioPlayer()
-    ..setReleaseMode(ReleaseMode.loop);
+    ..setReleaseMode(ReleaseMode.loop)
+    ..setPlayerMode(PlayerMode.lowLatency);
+  StreamSubscription<Duration>? _tickPositionSub;
+  Duration? _tickDuration;
+  bool _tickPrepared = false;
   bool _tickPlaying = false;
   List<String> _savedNames = [];
   bool _seenOnboarding = false;
@@ -146,6 +150,7 @@ class GameController extends ChangeNotifier {
     int? spyCount,
     bool? isTimerOn,
     int? timerDuration,
+    bool? allowRepeatLocations,
   }) {
     var nextSettings = _state.settings;
 
@@ -169,7 +174,44 @@ class GameController extends ChangeNotifier {
       nextSettings = nextSettings.copyWith(timerDuration: timerDuration);
     }
 
+    if (allowRepeatLocations != null) {
+      nextSettings =
+          nextSettings.copyWith(allowRepeatLocations: allowRepeatLocations);
+      if (allowRepeatLocations) {
+        _state = _state.copyWith(
+          gameData: _state.gameData.copyWith(usedLocations: const []),
+        );
+      }
+    }
+
     _state = _state.copyWith(settings: nextSettings);
+    notifyListeners();
+  }
+
+  List<String> _pruneUsedLocations(
+      List<Category> categories, List<String> selectedIds) {
+    final active = <String>{};
+    for (final cat in categories) {
+      if (!selectedIds.contains(cat.id)) continue;
+      active.addAll(cat.locations
+          .where((loc) => !cat.disabledLocations.contains(loc)));
+    }
+    return _state.gameData.usedLocations
+        .where((loc) => active.contains(loc))
+        .toSet()
+        .toList();
+  }
+
+  void _applyCategoryUpdate(
+      {required List<Category> categories,
+      required List<String> selectedCategories}) {
+    final prunedUsed = _pruneUsedLocations(categories, selectedCategories);
+    _state = _state.copyWith(
+      gameData: _state.gameData
+          .copyWith(categories: categories, usedLocations: prunedUsed),
+      settings:
+          _state.settings.copyWith(selectedCategories: selectedCategories),
+    );
     notifyListeners();
   }
 
@@ -198,11 +240,15 @@ class GameController extends ChangeNotifier {
       return l10n.text('selectCategory');
     }
 
+    final allowRepeat = _state.settings.allowRepeatLocations;
+    final usedLocations =
+        allowRepeat ? <String>{} : _state.gameData.usedLocations.toSet();
     final validCategories = _state.gameData.categories
         .where((c) => _state.settings.selectedCategories.contains(c.id))
         .map((c) {
           final active = c.locations
               .where((loc) => !c.disabledLocations.contains(loc))
+              .where((loc) => allowRepeat || !usedLocations.contains(loc))
               .toList();
           return c.copyWith(locations: active);
         })
@@ -210,7 +256,9 @@ class GameController extends ChangeNotifier {
         .toList();
 
     if (validCategories.isEmpty) {
-      return l10n.text('noLocationsSelected');
+      return allowRepeat
+          ? l10n.text('noLocationsSelected')
+          : l10n.text('noLocationsRemaining');
     }
 
     final trimmed = playerNames.map((n) => n.trim()).toList();
@@ -253,6 +301,12 @@ class GameController extends ChangeNotifier {
         currentRevealIndex: 0,
         timeLeft: _state.settings.timerDuration * 60,
         winner: null,
+        usedLocations: allowRepeat
+            ? _state.gameData.usedLocations
+            : {
+                ..._state.gameData.usedLocations,
+                location,
+              }.toList(),
       ),
     );
     _persistNames(trimmed);
@@ -352,8 +406,9 @@ class GameController extends ChangeNotifier {
     final spyCaughtSignal = (eliminated.role == Role.spy && spiesLeft > 0)
         ? _state.spiesCaughtSignal + 1
         : _state.spiesCaughtSignal;
-    final lastCaughtSpy =
-        (eliminated.role == Role.spy && spiesLeft > 0) ? eliminated.name : _state.lastCaughtSpy;
+    final lastCaughtSpy = (eliminated.role == Role.spy && spiesLeft > 0)
+        ? eliminated.name
+        : _state.lastCaughtSpy;
 
     _state = _state.copyWith(
       players: updatedPlayers,
@@ -390,15 +445,22 @@ class GameController extends ChangeNotifier {
   void resetGame() {
     _stopTimer();
     _state = GameState.initial().copyWith(
-      mode: _state.mode,
-      appSettings: _state.appSettings,
-      gameData:
-          _state.gameData.copyWith(categories: _state.gameData.categories),
-      themeMode: _state.themeMode,
-      language: _state.language,
-      spiesCaughtSignal: 0,
-      lastCaughtSpy: null,
-    );
+        mode: _state.mode,
+        appSettings: _state.appSettings,
+        settings: _state.settings,
+        gameData: _state.gameData.copyWith(
+          categories: _state.gameData.categories,
+          usedLocations: const [],
+          currentLocation: '',
+          currentRevealIndex: 0,
+          timeLeft: _state.settings.timerDuration * 60,
+          winner: null,
+        ),
+        themeMode: _state.themeMode,
+        language: _state.language,
+        spiesCaughtSignal: 0,
+        lastCaughtSpy: null,
+        isPaused: false);
     notifyListeners();
   }
 
@@ -439,10 +501,9 @@ class GameController extends ChangeNotifier {
       selected.add(id);
     }
 
-    _state = _state.copyWith(
-      settings: _state.settings.copyWith(selectedCategories: selected),
-    );
-    notifyListeners();
+    _applyCategoryUpdate(
+        categories: _state.gameData.categories,
+        selectedCategories: selected);
   }
 
   void addCategory(String name) {
@@ -453,12 +514,10 @@ class GameController extends ChangeNotifier {
     final updated = List<Category>.from(_state.gameData.categories)
       ..add(Category(id: id, name: name, icon: 'Folder', locations: const []));
 
-    _state = _state.copyWith(
-      gameData: _state.gameData.copyWith(categories: updated),
-      settings: _state.settings.copyWith(
-          selectedCategories: [..._state.settings.selectedCategories, id]),
+    _applyCategoryUpdate(
+      categories: updated,
+      selectedCategories: [..._state.settings.selectedCategories, id],
     );
-    notifyListeners();
   }
 
   void deleteCategory(String id) {
@@ -472,11 +531,8 @@ class GameController extends ChangeNotifier {
       updatedSelected.add(updatedCats.first.id);
     }
 
-    _state = _state.copyWith(
-      gameData: _state.gameData.copyWith(categories: updatedCats),
-      settings: _state.settings.copyWith(selectedCategories: updatedSelected),
-    );
-    notifyListeners();
+    _applyCategoryUpdate(
+        categories: updatedCats, selectedCategories: updatedSelected);
   }
 
   void addLocation(String categoryId, String location) {
@@ -489,8 +545,11 @@ class GameController extends ChangeNotifier {
       return cat.copyWith(locations: newLocs);
     }).toList();
 
+    final prunedUsed =
+        _pruneUsedLocations(updated, _state.settings.selectedCategories);
     _state = _state.copyWith(
-      gameData: _state.gameData.copyWith(categories: updated),
+      gameData:
+          _state.gameData.copyWith(categories: updated, usedLocations: prunedUsed),
     );
     notifyListeners();
   }
@@ -521,22 +580,20 @@ class GameController extends ChangeNotifier {
       updatedCats.add(updatedCat);
     }
 
-    _state = _state.copyWith(
-      gameData: _state.gameData.copyWith(categories: updatedCats),
-      settings: _state.settings.copyWith(selectedCategories: updatedSelected),
-    );
-    notifyListeners();
+    _applyCategoryUpdate(
+        categories: updatedCats, selectedCategories: updatedSelected);
   }
 
   void updateLocations({
     required List<Category> categories,
     required List<String> selectedCategories,
+    bool? allowRepeatLocations,
   }) {
-    _state = _state.copyWith(
-      gameData: _state.gameData.copyWith(categories: categories),
-      settings: _state.settings.copyWith(selectedCategories: selectedCategories),
-    );
-    notifyListeners();
+    _applyCategoryUpdate(
+        categories: categories, selectedCategories: selectedCategories);
+    if (allowRepeatLocations != null) {
+      updateSettings(allowRepeatLocations: allowRepeatLocations);
+    }
   }
 
   void saveLocationsSelection() {
@@ -553,8 +610,11 @@ class GameController extends ChangeNotifier {
       return cat.copyWith(locations: newLocs, disabledLocations: newDisabled);
     }).toList();
 
+    final prunedUsed =
+        _pruneUsedLocations(updated, _state.settings.selectedCategories);
     _state = _state.copyWith(
-      gameData: _state.gameData.copyWith(categories: updated),
+      gameData:
+          _state.gameData.copyWith(categories: updated, usedLocations: prunedUsed),
     );
     notifyListeners();
   }
@@ -583,19 +643,37 @@ class GameController extends ChangeNotifier {
     }
   }
 
-  void _startTickSound() {
+  Future<void> _startTickSound() async {
     if (!_state.appSettings.sound || !_state.settings.isTimerOn) return;
     if (_tickPlaying) return;
     _tickPlaying = true;
-    _tickPlayer
-        .setSourceAsset('audio/tick.mp3')
-        .then((_) => _tickPlayer.resume());
+    await _ensureTickPrepared();
+    await _tickPlayer.seek(Duration.zero);
+    await _tickPlayer.resume();
   }
 
-  void _stopTickSound() {
+  Future<void> _stopTickSound() async {
     if (!_tickPlaying) return;
-    _tickPlayer.stop();
     _tickPlaying = false;
+    await _tickPlayer.pause();
+    await _tickPlayer.seek(Duration.zero);
+  }
+
+  Future<void> _ensureTickPrepared() async {
+    if (_tickPrepared) return;
+    await _tickPlayer.setSourceAsset('audio/tick.mp3');
+    _tickDuration = await _tickPlayer.getDuration() ??
+        (_tickDuration ?? const Duration(seconds: 10));
+    _tickPrepared = true;
+    _tickPositionSub ??= _tickPlayer.onPositionChanged.listen((pos) {
+      if (!_tickPlaying) return;
+      final dur = _tickDuration;
+      if (dur == null) return;
+      final remaining = dur - pos;
+      if (remaining <= const Duration(milliseconds: 120)) {
+        _tickPlayer.seek(Duration.zero);
+      }
+    });
   }
 
   Language? _languageFromString(String? name) {

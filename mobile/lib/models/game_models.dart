@@ -76,6 +76,7 @@ class GameSettings {
     required this.isTimerOn,
     required this.timerDuration,
     required this.selectedCategories,
+    required this.allowRepeatLocations,
   });
 
   final int playerCount;
@@ -83,6 +84,7 @@ class GameSettings {
   final bool isTimerOn;
   final int timerDuration;
   final List<String> selectedCategories;
+  final bool allowRepeatLocations;
 
   GameSettings copyWith({
     int? playerCount,
@@ -90,6 +92,7 @@ class GameSettings {
     bool? isTimerOn,
     int? timerDuration,
     List<String>? selectedCategories,
+    bool? allowRepeatLocations,
   }) {
     return GameSettings(
       playerCount: playerCount ?? this.playerCount,
@@ -98,6 +101,8 @@ class GameSettings {
       timerDuration: timerDuration ?? this.timerDuration,
       selectedCategories:
           selectedCategories ?? List.from(this.selectedCategories),
+      allowRepeatLocations:
+          allowRepeatLocations ?? this.allowRepeatLocations,
     );
   }
 }
@@ -141,6 +146,7 @@ class GameData {
     required this.timeLeft,
     required this.winner,
     required this.categories,
+    required this.usedLocations,
   });
 
   final String currentLocation;
@@ -148,6 +154,7 @@ class GameData {
   final int timeLeft;
   final Role? winner;
   final List<Category> categories;
+  final List<String> usedLocations;
 
   GameData copyWith({
     String? currentLocation,
@@ -155,6 +162,7 @@ class GameData {
     int? timeLeft,
     Role? winner,
     List<Category>? categories,
+    List<String>? usedLocations,
   }) {
     return GameData(
       currentLocation: currentLocation ?? this.currentLocation,
@@ -162,6 +170,7 @@ class GameData {
       timeLeft: timeLeft ?? this.timeLeft,
       winner: winner ?? this.winner,
       categories: categories ?? _cloneCategories(categories ?? this.categories),
+      usedLocations: usedLocations ?? List.from(this.usedLocations),
     );
   }
 }
@@ -209,6 +218,7 @@ class GameState {
         isTimerOn: true,
         timerDuration: 5,
         selectedCategories: initialCategories.map((c) => c.id).toList(),
+        allowRepeatLocations: true,
       ),
       gameData: GameData(
         currentLocation: '',
@@ -216,6 +226,7 @@ class GameState {
         timeLeft: 300,
         winner: null,
         categories: _cloneCategories(initialCategories),
+        usedLocations: const [],
       ),
       phase: GamePhase.setup,
       themeMode: ThemeMode.dark,

@@ -852,6 +852,18 @@ class _ResultView extends StatelessWidget {
     final winner = state.gameData.winner;
     final spies = state.players.where((p) => p.role == Role.spy).toList();
     final l10n = context.l10n;
+    final settings = state.settings;
+    final allowRepeat = settings.allowRepeatLocations;
+    final used = state.gameData.usedLocations.toSet();
+    final activeLocations = state.gameData.categories
+        .where((c) => settings.selectedCategories.contains(c.id))
+        .expand((c) =>
+            c.locations.where((loc) => !c.disabledLocations.contains(loc)))
+        .toSet();
+    final remainingLocations = allowRepeat
+        ? 1
+        : activeLocations.where((loc) => !used.contains(loc)).length;
+    final noLocationsLeft = !allowRepeat && remainingLocations == 0;
 
     return Center(
       child: Column(
@@ -931,6 +943,12 @@ class _ResultView extends StatelessWidget {
                 ElevatedButton.icon(
                   onPressed: () {
                     controller.playClick();
+                    if (noLocationsLeft) {
+                      Notifier.show(
+                          context, l10n.text('noLocationsRemaining'),
+                          error: true);
+                      return;
+                    }
                     final error = controller.restartGameWithSameSettings();
                     if (error != null) {
                       Notifier.show(context, error, error: true);
@@ -939,12 +957,16 @@ class _ResultView extends StatelessWidget {
                   icon: const Icon(Icons.replay_outlined),
                   label: Text(l10n.text('playAgain')),
                   style: ElevatedButton.styleFrom(
-                      minimumSize: const Size.fromHeight(52)),
+                    minimumSize: const Size.fromHeight(52),
+                    backgroundColor:
+                        noLocationsLeft ? Colors.grey.shade700 : null,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: () {
                     controller.playClick();
+                    controller.resetGame();
                     Navigator.of(context)
                         .pushNamedAndRemoveUntil('/', (route) => false);
                   },

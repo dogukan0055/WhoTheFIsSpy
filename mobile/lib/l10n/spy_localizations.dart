@@ -165,6 +165,11 @@ class SpyLocalizations {
       'locationsSaved': 'Locations saved.',
       'selectCategory': 'Select at least one location category.',
       'noLocationsSelected': 'Selected categories do not have any locations.',
+      'allowRepeatLocations': 'Allow location repeats',
+      'allowRepeatLocationsDesc':
+          'Through out the game, a location can be reused multiple times.',
+      'noLocationsRemaining':
+          'All active locations have been used. Enable repeats or add more locations.',
     },
     'tr': {
       'welcomeTitle': 'Hoş geldin Ajan',
@@ -314,6 +319,11 @@ class SpyLocalizations {
       'locationsSaved': 'Lokasyonlar kaydedildi.',
       'selectCategory': 'En az bir lokasyon kategorisi seçin.',
       'noLocationsSelected': 'Seçili kategorilerde lokasyon yok.',
+      'allowRepeatLocations': 'Lokasyonların tekrarlanmasına izin ver',
+      'allowRepeatLocationsDesc':
+          'Oyun boyunca bir lokasyon birden fazla kez kullanılabilir.',
+      'noLocationsRemaining':
+          'Tüm aktif lokasyonlar kullanıldı. Lokasyon tekrarına izin verin veya yeni lokasyon ekleyin.',
     },
   };
 

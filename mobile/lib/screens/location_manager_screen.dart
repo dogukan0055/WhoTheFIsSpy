@@ -21,6 +21,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
   final Map<String, bool> _expanded = {};
   late List<Category> _categories;
   late List<String> _selectedCategories;
+  late bool _allowRepeatLocations;
 
   void _confirmDelete({
     required BuildContext context,
@@ -65,6 +66,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
         )
         .toList();
     _selectedCategories = List<String>.from(state.settings.selectedCategories);
+    _allowRepeatLocations = state.settings.allowRepeatLocations;
   }
 
   void _showInputDialog({
@@ -138,8 +140,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                     hint: l10n.text('categoryHint'),
                     onSubmit: (value) {
                       if (value.isEmpty) {
-                        Notifier.show(
-                            context, l10n.text('nameRequired'),
+                        Notifier.show(context, l10n.text('nameRequired'),
                             warning: true);
                         return false;
                       }
@@ -164,7 +165,9 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         Notifier.show(
                             context,
-                            l10n.text('addedCategory').replaceAll('{name}', value));
+                            l10n
+                                .text('addedCategory')
+                                .replaceAll('{name}', value));
                       });
                       return true;
                     },
@@ -182,15 +185,31 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                   alignment: Alignment.centerLeft,
                   child: Text(
                     l10n.text('customCategoryHint'),
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(
-                            fontWeight: FontWeight.w600, color: Colors.white),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600, color: Colors.white),
                   ),
                 ),
               ),
               const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: SwitchListTile(
+                  value: _allowRepeatLocations,
+                  activeThumbColor: colorScheme.primary,
+                  onChanged: (val) {
+                    context.read<GameController>().playClick();
+                    setState(() => _allowRepeatLocations = val);
+                  },
+                  title: Text(l10n.text('allowRepeatLocations'),
+                      style: TextStyle(
+                          color: Colors.orangeAccent.withValues(alpha: 0.8))),
+                  subtitle: Text(
+                    l10n.text('allowRepeatLocationsDesc'),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+              ),
+              const SizedBox(height: 4),
               ..._categories.map((cat) {
                 final isSelected = _selectedCategories.contains(cat.id);
                 final isCore = initialCategories.any((c) => c.id == cat.id);
@@ -200,8 +219,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                     .where((loc) => !cat.disabledLocations.contains(loc))
                     .length;
 
-                final isPartial =
-                    activeLocations > 0 && activeLocations < cat.locations.length;
+                final isPartial = activeLocations > 0 &&
+                    activeLocations < cat.locations.length;
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
@@ -225,8 +244,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                             if (!isCore) ...[
                               Icon(Icons.star_rounded,
                                   size: 16,
-                                  color:
-                                      Colors.amberAccent.withValues(alpha: 0.9)),
+                                  color: Colors.amberAccent
+                                      .withValues(alpha: 0.9)),
                               const SizedBox(width: 6),
                             ],
                             Expanded(
@@ -280,8 +299,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                 final idx = _categories
                                     .indexWhere((c) => c.id == cat.id);
                                 if (idx != -1) {
-                                  _categories[idx] = _categories[idx].copyWith(
-                                      disabledLocations: const []);
+                                  _categories[idx] = _categories[idx]
+                                      .copyWith(disabledLocations: const []);
                                 }
                               }
                             });
@@ -291,56 +310,57 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(
-                                  expanded ? Icons.expand_less : Icons.expand_more),
+                              icon: Icon(expanded
+                                  ? Icons.expand_less
+                                  : Icons.expand_more),
                               onPressed: () {
                                 controller.playClick();
                                 setState(() => _expanded[cat.id] = !expanded);
                               },
                             ),
-                           if (!isCore)
-                             IconButton(
-                               icon: const Icon(Icons.edit),
-                               onPressed: () {
-                                 controller.playClick();
-                                 _showInputDialog(
-                                   context: context,
-                                   title: l10n.text('renameCategory'),
-                                   hint: cat.name,
-                                   onSubmit: (value) {
-                                     if (value.isEmpty) {
-                                       Notifier.show(
-                                           context, l10n.text('nameRequired'),
-                                           warning: true);
-                                       return false;
-                                     }
-                                     if (value.length > 16) {
-                                       Notifier.show(
-                                           context, l10n.text('max16'),
-                                           warning: true);
-                                       return false;
-                                     }
-                                     setState(() {
-                                       final idx = _categories.indexWhere(
-                                           (element) => element.id == cat.id);
-                                       if (idx != -1) {
-                                         _categories[idx] = _categories[idx]
-                                             .copyWith(name: value);
-                                       }
-                                     });
-                                     WidgetsBinding.instance
-                                         .addPostFrameCallback((_) {
-                                       Notifier.show(
-                                           context,
+                            if (!isCore)
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () {
+                                  controller.playClick();
+                                  _showInputDialog(
+                                    context: context,
+                                    title: l10n.text('renameCategory'),
+                                    hint: cat.name,
+                                    onSubmit: (value) {
+                                      if (value.isEmpty) {
+                                        Notifier.show(
+                                            context, l10n.text('nameRequired'),
+                                            warning: true);
+                                        return false;
+                                      }
+                                      if (value.length > 16) {
+                                        Notifier.show(
+                                            context, l10n.text('max16'),
+                                            warning: true);
+                                        return false;
+                                      }
+                                      setState(() {
+                                        final idx = _categories.indexWhere(
+                                            (element) => element.id == cat.id);
+                                        if (idx != -1) {
+                                          _categories[idx] = _categories[idx]
+                                              .copyWith(name: value);
+                                        }
+                                      });
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                        Notifier.show(
+                                            context,
                                             l10n
                                                 .text('categoryRenamed')
                                                 .replaceAll('{name}', value));
-                                     });
-                                     return true;
-                                   },
-                                 );
-                               },
-                             ),
+                                      });
+                                      return true;
+                                    },
+                                  );
+                                },
+                              ),
                             if (!isCore)
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
@@ -355,8 +375,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                         .replaceAll('{name}', cat.name),
                                     onConfirm: () {
                                       setState(() {
-                                        _categories.removeWhere(
-                                            (existing) => existing.id == cat.id);
+                                        _categories.removeWhere((existing) =>
+                                            existing.id == cat.id);
                                         _selectedCategories.remove(cat.id);
                                       });
                                       WidgetsBinding.instance
@@ -365,7 +385,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                             context,
                                             l10n
                                                 .text('deletedCategory')
-                                                .replaceAll('{name}', cat.name));
+                                                .replaceAll(
+                                                    '{name}', cat.name));
                                       });
                                     },
                                   );
@@ -383,7 +404,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                           duration: const Duration(milliseconds: 220),
                           switchInCurve: Curves.easeOut,
                           switchOutCurve: Curves.easeIn,
-                          transitionBuilder: (child, animation) => FadeTransition(
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(
                             opacity: animation,
                             child: SizeTransition(
                               sizeFactor: animation,
@@ -396,14 +418,15 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 8),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Wrap(
                                         spacing: 8,
                                         runSpacing: 8,
                                         children: cat.locations.map((loc) {
-                                          final disabled =
-                                              cat.disabledLocations.contains(loc);
+                                          final disabled = cat.disabledLocations
+                                              .contains(loc);
                                           final activeColor = isPartial
                                               ? Colors.orangeAccent
                                               : Theme.of(context)
@@ -415,8 +438,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                     controller.playClick();
                                                     _showInputDialog(
                                                       context: context,
-                                                      title: l10n
-                                                          .text('renameLocation'),
+                                                      title: l10n.text(
+                                                          'renameLocation'),
                                                       hint: loc,
                                                       onSubmit: (value) {
                                                         if (value.isEmpty) {
@@ -427,8 +450,7 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                               warning: true);
                                                           return false;
                                                         }
-                                                        if (value.length >
-                                                            16) {
+                                                        if (value.length > 16) {
                                                           Notifier.show(
                                                               context,
                                                               l10n.text(
@@ -437,30 +459,32 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                           return false;
                                                         }
                                                         final catIndex =
-                                                            _categories.indexWhere(
-                                                                (element) =>
-                                                                    element.id ==
-                                                                    cat.id);
+                                                            _categories
+                                                                .indexWhere(
+                                                                    (element) =>
+                                                                        element
+                                                                            .id ==
+                                                                        cat.id);
                                                         if (catIndex == -1) {
                                                           return false;
                                                         }
                                                         setState(() {
-                                                          final newLocs =
-                                                              List<String>.from(
-                                                                  _categories[
-                                                                          catIndex]
-                                                                      .locations);
+                                                          final newLocs = List<
+                                                                  String>.from(
+                                                              _categories[
+                                                                      catIndex]
+                                                                  .locations);
                                                           final locIndex =
                                                               newLocs
                                                                   .indexOf(loc);
                                                           if (locIndex != -1) {
                                                             newLocs[locIndex] =
                                                                 value;
-                                                            final newDisabled =
-                                                                List<String>.from(
-                                                                    _categories[
-                                                                            catIndex]
-                                                                        .disabledLocations);
+                                                            final newDisabled = List<
+                                                                    String>.from(
+                                                                _categories[
+                                                                        catIndex]
+                                                                    .disabledLocations);
                                                             final disabledIdx =
                                                                 newDisabled
                                                                     .indexOf(
@@ -472,14 +496,13 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                                   value;
                                                             }
                                                             _categories[
-                                                                    catIndex] =
-                                                                _categories[
-                                                                        catIndex]
-                                                                    .copyWith(
-                                                                        locations:
-                                                                            newLocs,
-                                                                        disabledLocations:
-                                                                            newDisabled);
+                                                                catIndex] = _categories[
+                                                                    catIndex]
+                                                                .copyWith(
+                                                                    locations:
+                                                                        newLocs,
+                                                                    disabledLocations:
+                                                                        newDisabled);
                                                           }
                                                         });
                                                         WidgetsBinding.instance
@@ -502,11 +525,9 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                             onTap: () {
                                               controller.playClick();
                                               setState(() {
-                                                final catIndex =
-                                                    _categories.indexWhere(
-                                                        (element) =>
-                                                            element.id ==
-                                                            cat.id);
+                                                final catIndex = _categories
+                                                    .indexWhere((element) =>
+                                                        element.id == cat.id);
                                                 if (catIndex == -1) return;
                                                 final disabledList =
                                                     List<String>.from(
@@ -552,12 +573,12 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                       message: l10n
                                                           .text(
                                                               'confirmDeleteLocation')
-                                                          .replaceAll('{name}',
-                                                              loc),
+                                                          .replaceAll(
+                                                              '{name}', loc),
                                                       onConfirm: () {
                                                         setState(() {
-                                                          final catIndex = _categories
-                                                              .indexWhere(
+                                                          final catIndex =
+                                                              _categories.indexWhere(
                                                                   (element) =>
                                                                       element
                                                                           .id ==
@@ -565,35 +586,33 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                           if (catIndex == -1) {
                                                             return;
                                                           }
-                                                          final newLocs =
-                                                              List<String>.from(
-                                                                  _categories[
-                                                                          catIndex]
-                                                                      .locations)
-                                                                ..remove(loc);
-                                                          final newDisabled =
-                                                              List<String>.from(
-                                                                  _categories[
-                                                                          catIndex]
-                                                                      .disabledLocations)
-                                                                ..remove(loc);
-                                                          var updatedCat =
+                                                          final newLocs = List<
+                                                                  String>.from(
                                                               _categories[
                                                                       catIndex]
-                                                                  .copyWith(
-                                                                      locations:
-                                                                          newLocs,
-                                                                      disabledLocations:
-                                                                          newDisabled);
-                                                          final activeCount =
-                                                              updatedCat
-                                                                  .locations
-                                                                  .where((l) =>
-                                                                      !updatedCat
-                                                                          .disabledLocations
-                                                                          .contains(
-                                                                              l))
-                                                                  .length;
+                                                                  .locations)
+                                                            ..remove(loc);
+                                                          final newDisabled = List<
+                                                                  String>.from(
+                                                              _categories[
+                                                                      catIndex]
+                                                                  .disabledLocations)
+                                                            ..remove(loc);
+                                                          var updatedCat = _categories[
+                                                                  catIndex]
+                                                              .copyWith(
+                                                                  locations:
+                                                                      newLocs,
+                                                                  disabledLocations:
+                                                                      newDisabled);
+                                                          final activeCount = updatedCat
+                                                              .locations
+                                                              .where((l) =>
+                                                                  !updatedCat
+                                                                      .disabledLocations
+                                                                      .contains(
+                                                                          l))
+                                                              .length;
                                                           if (activeCount ==
                                                               0) {
                                                             _selectedCategories
@@ -629,17 +648,15 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                               decoration: BoxDecoration(
                                                 color: disabled
                                                     ? Colors.white
-                                                        .withValues(
-                                                            alpha: 0.08)
+                                                        .withValues(alpha: 0.08)
                                                     : activeColor.withValues(
                                                         alpha: 0.18),
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                                 border: Border.all(
                                                   color: disabled
-                                                      ? Colors.white
-                                                          .withValues(
-                                                              alpha: 0.2)
+                                                      ? Colors.white.withValues(
+                                                          alpha: 0.2)
                                                       : activeColor.withValues(
                                                           alpha: 0.5),
                                                 ),
@@ -666,8 +683,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                               controller.playClick();
                                               _showInputDialog(
                                                 context: context,
-                                                title:
-                                                    l10n.addLocationTo(cat.name),
+                                                title: l10n
+                                                    .addLocationTo(cat.name),
                                                 hint: l10n.text('locationHint'),
                                                 onSubmit: (value) {
                                                   if (value.isEmpty) {
@@ -725,8 +742,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                                 },
                                               );
                                             },
-                                            icon: const Icon(
-                                                Icons.add_location_alt_outlined),
+                                            icon: const Icon(Icons
+                                                .add_location_alt_outlined),
                                             label:
                                                 Text(l10n.text('addLocation')),
                                           ),
@@ -749,7 +766,8 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                     controller.playClick();
                     controller.updateLocations(
                         categories: _categories,
-                        selectedCategories: _selectedCategories);
+                        selectedCategories: _selectedCategories,
+                        allowRepeatLocations: _allowRepeatLocations);
                     Notifier.show(context, l10n.text('locationsSaved'));
                     Navigator.of(context).pop();
                   },
