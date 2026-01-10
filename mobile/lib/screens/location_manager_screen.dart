@@ -279,14 +279,9 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                                   error: true);
                               return;
                             }
-                            if (isSelected && _selectedCategories.length <= 1) {
-                              Notifier.show(context, l10n.text('needCategory'),
-                                  error: true);
-                              return;
-                            }
-                            setState(() {
-                              if (isSelected) {
-                                _selectedCategories.remove(cat.id);
+                          setState(() {
+                            if (isSelected) {
+                              _selectedCategories.remove(cat.id);
                                 final idx = _categories
                                     .indexWhere((c) => c.id == cat.id);
                                 if (idx != -1) {
@@ -759,18 +754,22 @@ class _LocationManagerScreenState extends State<LocationManagerScreen>
                 );
               }),
               const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    controller.playClick();
-                    controller.updateLocations(
-                        categories: _categories,
-                        selectedCategories: _selectedCategories,
-                        allowRepeatLocations: _allowRepeatLocations);
-                    Notifier.show(context, l10n.text('locationsSaved'));
-                    Navigator.of(context).pop();
-                  },
+  Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    child: ElevatedButton.icon(
+      onPressed: () {
+        controller.playClick();
+        if (_selectedCategories.isEmpty) {
+          Notifier.show(context, l10n.text('needCategory'), error: true);
+          return;
+        }
+        controller.updateLocations(
+            categories: _categories,
+            selectedCategories: _selectedCategories,
+            allowRepeatLocations: _allowRepeatLocations);
+        Notifier.show(context, l10n.text('locationsSaved'));
+        Navigator.of(context).pop();
+      },
                   icon: const Icon(Icons.save_outlined),
                   label: Text(l10n.text('save')),
                   style: ElevatedButton.styleFrom(
