@@ -196,7 +196,6 @@ class _RoleRevealViewState extends State<_RoleRevealView>
   late final AnimationController _resultController;
   bool _playingResult = false;
   bool _currentIsSpy = false;
-  bool _resultCompleted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -236,6 +235,7 @@ class _RoleRevealViewState extends State<_RoleRevealView>
               child: Container(
                 padding: const EdgeInsets.all(24),
                 width: 300,
+                constraints: const BoxConstraints(minHeight: 240),
                 child: revealed
                     ? _RoleCardBody(
                         player: player,
@@ -253,7 +253,6 @@ class _RoleRevealViewState extends State<_RoleRevealView>
                                 _playingResult = false;
                                 revealed = true;
                                 progress = 0;
-                                _resultCompleted = true;
                               });
                             },
                           )
@@ -320,18 +319,13 @@ class _RoleRevealViewState extends State<_RoleRevealView>
       progress = 1;
       _playingResult = true;
       _currentIsSpy = isSpy;
-      _resultCompleted = false;
     });
   }
 
   void _stopScan() {
-    if (_playingResult && !_resultCompleted) {
-      _resultController.stop();
-      setState(() {
-        _playingResult = false;
-        progress = 0;
-      });
-    } else if (!revealed) {
+    // Once the reveal animation starts, let it finish even if the user lifts.
+    if (_playingResult) return;
+    if (!revealed) {
       setState(() {
         progress = 0;
       });
@@ -423,21 +417,25 @@ class _ResultLottieState extends State<_ResultLottie> {
                 scale: 1.2,
                 child: Lottie.asset(
                   asset,
-                  controller: widget.controller,
-                  repeat: false,
-                  onLoaded: (composition) {
-                    if (_started) return;
-                    _started = true;
-                    final duration = composition.duration == Duration.zero
-                        ? const Duration(milliseconds: 900)
-                        : composition.duration;
-                    widget.controller
-                      ..duration = duration
-                      ..forward(from: 0).whenComplete(() {
-                        if (!mounted) return;
-                        widget.onComplete();
-                      });
-                  },
+                controller: widget.controller,
+                repeat: false,
+                onLoaded: (composition) {
+                  if (_started) return;
+                  _started = true;
+                  final duration = composition.duration == Duration.zero
+                      ? const Duration(milliseconds: 900)
+                      : composition.duration;
+                  final adjustedDuration = widget.isSpy
+                      ? Duration(
+                          microseconds: (duration.inMicroseconds / 2).round())
+                      : duration;
+                  widget.controller
+                    ..duration = adjustedDuration
+                    ..forward(from: 0).whenComplete(() {
+                      if (!mounted) return;
+                      widget.onComplete();
+                    });
+                },
                 ),
               ),
             ),
@@ -944,8 +942,7 @@ class _ResultView extends StatelessWidget {
                   onPressed: () {
                     controller.playClick();
                     if (noLocationsLeft) {
-                      Notifier.show(
-                          context, l10n.text('noLocationsRemaining'),
+                      Notifier.show(context, l10n.text('noLocationsRemaining'),
                           error: true);
                       return;
                     }
