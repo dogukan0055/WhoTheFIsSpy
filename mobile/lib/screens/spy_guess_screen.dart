@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/spy_localizations.dart';
@@ -160,9 +161,16 @@ class _SpyGuessScreenState extends State<SpyGuessScreen> {
                                             final isSelected =
                                                 _selectedLocation == loc;
                                             return ListTile(
-                                              onTap: () => setState(
-                                                  () => _selectedLocation =
-                                                      loc),
+                                              onTap: () {
+                                                setState(() =>
+                                                    _selectedLocation = loc);
+                                                if (controller
+                                                    .state.appSettings
+                                                    .vibrate) {
+                                                  HapticFeedback
+                                                      .selectionClick();
+                                                }
+                                              },
                                               leading: Icon(
                                                 isSelected
                                                     ? Icons
